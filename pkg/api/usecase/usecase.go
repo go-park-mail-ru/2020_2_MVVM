@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/storage"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/models"
 	logger "github.com/rowdyroad/go-simple-logger"
 )
 
@@ -30,4 +31,22 @@ func (u *Usecase) DoNothing() error {
 		return err
 	}
 	return nil
+}
+
+func (u *Usecase) GetUserByID(id string) (models.User, error) {
+	user, err := u.strg.GetUserByID(id)
+	if err != nil {
+		err = fmt.Errorf("error in user get by id func : %w", err)
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+func (u *Usecase) CreateUser(user models.User) (models.User, error) {
+	user, err := u.strg.CreateUser(user)
+	if err != nil {
+		err = fmt.Errorf("error in user get by id func : %w", err)
+		return models.User{}, err
+	}
+	return user, nil
 }
