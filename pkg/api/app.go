@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
+	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
+	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/delivery/rest"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/storage"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/common"
+
 	"github.com/go-pg/pg/v9"
 	logger "github.com/rowdyroad/go-simple-logger"
 	"net/http"
@@ -87,7 +91,15 @@ func NewApp(config Config) *App {
 	strg := storage.NewPostgresStorage(db)
 
 	usecase := usecase.NewUsecase(log.InfoLogger, log.ErrorLogger, strg)
+
 	rest.NewRest(r.Group("/v1"), *usecase)
+
+
+	resumeRep := ResumeRepository.NewPgRepository(db)
+	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
+	ResumeHandler.NewRest(r.Group("/v1"), resume)
+
+
 
 	app := App{
 		config:   config,

@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/models"
+import "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 
 type Storage interface {
 	NothingFunc() error

@@ -2,7 +2,7 @@ package storage
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-pg/pg/v9"
 )
 

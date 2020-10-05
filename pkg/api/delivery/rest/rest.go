@@ -2,8 +2,8 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/models"
 	"github.com/google/uuid"
 	"net/http"
 )
