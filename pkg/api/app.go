@@ -99,6 +99,7 @@ func NewApp(config Config) *App {
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
 	ResumeHandler.NewRest(r.Group("/v1"), resume)
 
+	vacancyRep := Repos
 
 
 	app := App{
