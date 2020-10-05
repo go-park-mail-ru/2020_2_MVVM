@@ -24,30 +24,44 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u *UseCaseResume) CreateResume(resume models.Resume) (models.Resume, error) {
+func (u *UseCaseResume) CreateResume(resume models.Resume) (*models.Resume, error) {
 	r, err := u.strg.CreateResume(resume)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
-		return models.Resume{}, err
+		return nil, err
 	}
 	return r, nil
 }
-//UpdateResume(id uint) (models.Resume, bool)
-func (u *UseCaseResume) GetResume(id string) (models.Resume, error) {
+
+func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, error) {
+	//if resume.ID == uuid.Nil {
+	//	err := fmt.Errorf("error in update resume: resume does not exist")
+	//	return nil, err
+	//}
+
+	// ID from Session
+	r, err := u.strg.UpdateResume(resume.ID, &resume)
+	if err != nil {
+		err = fmt.Errorf("error in update resume: %w", err)
+		return nil, err
+	}
+	return r, nil
+}
+
+func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 	r, err := u.strg.GetResumeById(id)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
-		return models.Resume{}, err
+		return nil, err
 	}
 	return r, nil
 }
 
-//func (u *UseCaseResume) GetResumeList(begin, end uint) (models.Resume, error) {
-//	r, ok := u.strg.GetResume(id)
-//	if !ok {
-//		return models.Films{}, false
-//	}
-//	return *films, true
-//}
-
-
+func (u *UseCaseResume) GetResumeList(begin, end uint) ([]models.Resume, error) {
+	r, err := u.strg.GetResumeArr(begin, end)
+	if err != nil {
+		err = fmt.Errorf("USE error in resume get list from %v to %v: error: %w", begin, end, err)
+		return nil, err
+	}
+	return r, nil
+}
