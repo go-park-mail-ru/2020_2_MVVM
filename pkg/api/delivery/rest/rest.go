@@ -39,20 +39,15 @@ func (r *rest) handlerGetNothing(c *gin.Context) {
 
 func (r *rest) handlerGetUserByID(c *gin.Context) {
 	var req struct {
-		UserID string `uri:"user_id" binding:"required,uuid"`
+		UserID uuid.UUID `json:"user_id" binding:"required"`
 	}
 
-	if err := c.ShouldBindUri(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	user, err := r.Usecase.GetUserByID(userID.String())
+	user, err := r.Usecase.GetUserByID(req.UserID.String())
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return

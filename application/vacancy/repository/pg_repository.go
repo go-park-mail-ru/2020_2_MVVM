@@ -25,7 +25,7 @@ func (P *pgRepository) CreateVacancy(vac models.Vacancy) (models.Vacancy, error)
 }
 
 func (P *pgRepository) GetVacancyById(id string) (models.Vacancy, error) {
-	return dbSelector(P, "resume_id = ?", id)
+	return dbSelector(P, "vacancy_id = ?", id)
 }
 
 func (P *pgRepository) GetVacancyByName(name string) (models.Vacancy, error) {
@@ -34,7 +34,7 @@ func (P *pgRepository) GetVacancyByName(name string) (models.Vacancy, error) {
 
 func dbSelector(P *pgRepository, pattern string, attribute string) (models.Vacancy, error){
 	var vac models.Vacancy
-	err := P.db.Model(&vac).Where(attribute, pattern).Select()
+	err := P.db.Model(&vac).Where(pattern, attribute).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select resume with pattern: %s : error: %w", pattern, err)
 		return models.Vacancy{}, err
