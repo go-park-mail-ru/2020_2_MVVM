@@ -7,14 +7,17 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/delivery/rest"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/storage"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/common"
+	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
+	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
+	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
+	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
+	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
+	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
@@ -102,11 +105,11 @@ func NewApp(config Config) *App {
 		MaxRefresh:  time.Hour,
 		IdentityKey: identityKey,
 
-		SendCookie: true,
-		SecureCookie:     false, //non HTTPS dev environments
-		CookieHTTPOnly:   true,  // JS can't modify
+		SendCookie:     true,
+		SecureCookie:   false, //non HTTPS dev environments
+		CookieHTTPOnly: true,  // JS can't modify
 		//CookieDomain:     "localhost",
-		CookieDomain:     "95.163.212.36",
+		CookieDomain: "95.163.212.36",
 
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			// This function should verify the user credentials given the gin context
@@ -117,7 +120,7 @@ func NewApp(config Config) *App {
 				Password string `form:"password" json:"password" binding:"required"`
 			}
 			if err := c.ShouldBind(&credentials); err != nil {
-				return "", errors.New("missing Username, Password, or Password") // make error constant
+				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 
 			// go to the database and fetch the user
@@ -147,8 +150,8 @@ func NewApp(config Config) *App {
 			if v, ok := data.(*models.JWTUserData); ok {
 				return jwt.MapClaims{
 					identityKey: v.ID,
-					"nickname": v.Nickname,
-					"email": v.Email,
+					"nickname":  v.Nickname,
+					"email":     v.Email,
 				}
 			}
 			return jwt.MapClaims{}
@@ -201,19 +204,19 @@ func NewApp(config Config) *App {
 	}
 
 	r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
+	// end jwt middleware
 
-	strg := storage.NewPostgresStorage(db)
-
-	usecase := usecase.NewUsecase(log.InfoLogger, log.ErrorLogger, strg)
-
-
-	rest.NewRest(r.Group("/api/v1"), *usecase, authMiddleware)
+	UserRep := UserRepository.NewPgRepository(db)
+	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
+	UserHandler.NewRest(r.Group("/v1"), userCase)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(r.Group("/api/v1"), resume)
+	ResumeHandler.NewRest(r.Group("/v2"), resume)
 
-	// end jwt middleware
+	vacancyRep := RepositoryVacancy.NewPgRepository(db)
+	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
+	VacancyHandler.NewRest(r.Group("/v3"), vacancy)
 
 	app := App{
 		config:   config,
