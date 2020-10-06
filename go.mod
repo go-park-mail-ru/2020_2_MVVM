@@ -10,6 +10,6 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880
 	github.com/rowdyroad/go-yaml-config v0.0.0-20200117233205-1189970f36fb
+	github.com/satori/go.uuid v1.2.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect
 )
