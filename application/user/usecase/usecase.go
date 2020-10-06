@@ -34,12 +34,21 @@ func (U *UserUseCase) GetUserByID(id string) (models.User, error) {
 func (U *UserUseCase) CreateUser(user models.User) (models.User, error) {
 	userNew, err := U.repos.CreateUser(user)
 	if err != nil {
-		err = fmt.Errorf("error in user get by id func : %w", err)
+		if err.Error() != "user already exists" {
+			err = fmt.Errorf("error in user get by id func : %w", err)
+		}
 		return models.User{}, err
 	}
 	return userNew, nil
 }
 
 func (U *UserUseCase) UpdateUser(userNew models.User) (models.User, error) {
+	userNew, err := U.repos.UpdateUser(userNew)
+	if err != nil {
+		if errMsg := err.Error(); errMsg != "user already exists" && errMsg != "nothing to update" {
+			err = fmt.Errorf("error in user update by id func : %w", err)
+		}
+		return models.User{}, err
+	}
 	return userNew, nil
 }

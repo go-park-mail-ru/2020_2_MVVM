@@ -14,18 +14,25 @@ import (
 	"path/filepath"
 )
 
-const IMAGE_DIR = ""
+const IMAGE_DIR = "static"
 
 type UserHandler struct {
 	UserUseCase user.IUseCaseUser
 }
 
-func NewRest(router *gin.RouterGroup,  useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
+type Resp struct {
+	User models.User `json:"user"`
+}
+
+type RespError struct {
+	Err string `json:"error"`
+}
+
+func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
 	rest.routes(router, authMiddleware)
 	return rest
 }
-
 
 func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	router.GET("/users/by/id/:user_id", U.handlerGetUserByID)
@@ -70,9 +77,6 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		User models.User `json:"user"`
-	}
 
 	ctx.JSON(http.StatusOK, Resp{User: user})
 }
@@ -84,8 +88,9 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname  string               `form:"surname" json:"surname" binding:"required"`
 		Email    string               `form:"email" json:"email" binding:"required"`
 		Password string               `form:"password" json:"password" binding:"required"`
-		Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
+		Avatar   multipart.FileHeader `form:"img" json:"img"`
 	}
+
 	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -101,22 +106,60 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname:      req.Surname,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
-		AvatarPath:   uuid.New().String(),
 	})
-
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		if errMsg := err.Error(); errMsg == "user already exists" {
+			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+		} else {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
 		return
 	}
-	type Resp struct {
-		User models.User `json:"user"`
+	img, err := req.Avatar.Open()
+	if err := addOrUpdateUserImage(userNew.ID.String(), img); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
+	var req struct {
+		UserId   uuid.UUID            `form:"userId" json:"user_id"`
+		NickName string               `form:"nickname" json:"nickname"`
+		Name     string               `form:"name" json:"name"`
+		Surname  string               `form:"surname" json:"surname"`
+		Email    string               `form:"email" json:"email"`
+		Password string               `form:"password" json:"password"`
+		Avatar   multipart.FileHeader `form:"img" json:"img"`
+	}
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
+	userNew, err := U.UserUseCase.UpdateUser(models.User{
+		Nickname:     req.NickName,
+		Name:         req.Name,
+		Surname:      req.Surname,
+		Email:        req.Email,
+		PasswordHash: passwordHash,
+	})
+	if err != nil {
+		if errMsg := err.Error(); errMsg == "user already exists" {
+			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+		} else {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+		return
+	}
+	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
 func addOrUpdateUserImage(imgPath string, data io.Reader) error {
