@@ -30,7 +30,7 @@ create table resume
 );
 
 create table vacancy
-(
+(   vacancy_idx         serial,
     vacancy_id          uuid default uuid_generate_v4() not null
         constraint vacancy_pkey
             primary key,
