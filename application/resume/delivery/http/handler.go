@@ -1,6 +1,7 @@
 package http
 
 import (
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
@@ -12,33 +13,78 @@ type ResumeHandler struct {
 	Usecase resume.IUseCaseResume
 }
 
-func NewRest(router *gin.RouterGroup, usecase resume.IUseCaseResume) *ResumeHandler {
+func NewRest(router *gin.RouterGroup, usecase resume.IUseCaseResume, authMiddleware *jwt.GinJWTMiddleware) *ResumeHandler {
 	rest := &ResumeHandler{Usecase: usecase}
-	rest.routes(router)
+	rest.routes(router, authMiddleware)
 	return rest
 }
 
-func (r *ResumeHandler) routes(router *gin.RouterGroup) {
-	router.GET("/resume/:resume_id", r.handlerGetResumeByID)
-	router.POST("/resume/add", r.handlerCreateResume)
-	//router.GET("/resume/list", r.handlerGetResumeList)
-	router.PUT("/resume/update", r.handlerUpdateResume)
+func (r *ResumeHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+	router.GET("/resume/by/id/:resume_id", r.handlerGetResumeByID)
 
+	router.Use(authMiddleware.MiddlewareFunc())
+	{
+		router.GET("/resume/mine", r.handlerGetAllCurrentUserResume)
+		router.POST("/resume/add", r.handlerCreateResume)
+	}
+	router.GET("/resume/page", r.handlerGetResumeList)
+	//router.PUT("/resume/update", r.handlerUpdateResume)
+}
+
+func (r *ResumeHandler) handlerGetAllCurrentUserResume(c *gin.Context) {
+	identityKey := "myid"
+	jwtuser, _ := c.Get(identityKey)
+	userID := jwtuser.(*models.JWTUserData).ID
+
+	pResume, err := r.Usecase.GetAllUserResume(userID)
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	type Resp struct {
+		Resume []models.Resume `json:"resume"`
+	}
+
+	c.JSON(http.StatusOK, Resp{Resume: pResume})
 }
 
 func (r *ResumeHandler) handlerCreateResume(c *gin.Context) {
+	// move to constants
+	identityKey := "myid"
+	jwtuser, _ := c.Get(identityKey)
+	userID := jwtuser.(*models.JWTUserData).ID
+
+	// TODO:
+	// 1. Сделать в модели поля указателями
+	// 2. Биндить тут указатели
 	var reqResume struct {
-		UserID uuid.UUID `json:"userID" binding:"required"`
-		Title    string `json:"title" binding:"required"`
+		SalaryMin       *int       `json:"salary_min"`
+		SalaryMax       *int       `json:"salary_max"`
+		Description     *string    `json:"description"`
+		Gender          *string    `json:"gender"`
+		Level           *string    `json:"level"`
+		ExperienceMonth *int       `json:"experience_month"`
+		Education       *string    `json:"education"`
 	}
 	if err := c.ShouldBindJSON(&reqResume); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
+	//"salary_min":123,
+	//	"description":"dfcds",
+	//	"gender":"male"
+
+
 	resume := models.Resume{
-		FK:    reqResume.UserID,
-		Title: reqResume.Title,
+		UserID: userID,
+		SalaryMin: reqResume.SalaryMin,
+		SalaryMax: reqResume.SalaryMax,
+		Description: reqResume.Description,
+		Gender: reqResume.Gender,
+		Level: reqResume.Level,
+		ExperienceMonth: reqResume.ExperienceMonth,
+		Education: reqResume.Education,
 	}
 
 	pResume, err := r.Usecase.CreateResume(resume)
@@ -82,8 +128,8 @@ func (r *ResumeHandler) handlerGetResumeByID(c *gin.Context) {
 
 func (r *ResumeHandler) handlerGetResumeList(c *gin.Context) {
 	var reqResume struct {
-		Begin uint `json:"begin"`
-		End   uint `json:"end"`
+		Start uint `json:"start"`
+		Limit uint `json:"limit" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&reqResume); err != nil {
@@ -91,7 +137,7 @@ func (r *ResumeHandler) handlerGetResumeList(c *gin.Context) {
 		return
 	}
 
-	rList, err := r.Usecase.GetResumeList(reqResume.Begin, reqResume.End)
+	rList, err := r.Usecase.GetResumePage(reqResume.Start, reqResume.Limit)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -103,46 +149,50 @@ func (r *ResumeHandler) handlerGetResumeList(c *gin.Context) {
 	c.JSON(http.StatusOK, Resp{Resume: rList})
 }
 
-func (r *ResumeHandler) handlerUpdateResume(c *gin.Context) {
-	var reqResume struct {
-		ResumeID 	string `json:"resume_id" binding:"required,uuid"`
-		Title       string    `json:"title"`
-		Salary      int       `json:"salary"`
-		Description string    `json:"description"`
-		Skills      string    `json:"skills"`
-		Views       int       `json:"views"`
-	}
-
-	if err := c.ShouldBindJSON(&reqResume); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	resumeID, err := uuid.Parse(reqResume.ResumeID)
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	resume := models.Resume{
-		ID: resumeID,
-		Title: reqResume.Title,
-		Salary: reqResume.Salary,
-		Description: reqResume.Description,
-		Skills: reqResume.Skills,
-		Views: reqResume.Views,
-	}
-
-	pResume, err := r.Usecase.UpdateResume(resume)
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	type Resp struct {
-		Resume models.Resume `json:"resume"`
-	}
-
-	c.JSON(http.StatusOK, Resp{Resume: *pResume})
-
-}
+//func (r *ResumeHandler) handlerUpdateResume(c *gin.Context) {
+//	var reqResume struct {
+//		ResumeID 	string `json:"resume_id" binding:"required,uuid"`
+//		SalaryMin       int       `json:"salary_min"`
+//		SalaryMax       int       `json:"salary_max"`
+//		Description     string    `json:"description"`
+//		Gender          string    `json:"gender"`
+//		Level           string    `json:"level"`
+//		ExperienceMonth int       `json:"experience_month"`
+//		Education       string    `json:"education"`
+//	}
+//
+//	if err := c.ShouldBindJSON(&reqResume); err != nil {
+//		c.AbortWithError(http.StatusBadRequest, err)
+//		return
+//	}
+//
+//	resumeID, err := uuid.Parse(reqResume.ResumeID)
+//	if err != nil {
+//		c.AbortWithError(http.StatusBadRequest, err)
+//		return
+//	}
+//
+//	resume := models.Resume{
+//		ID: resumeID,
+//		SalaryMin: reqResume.SalaryMin,
+//		SalaryMax: reqResume.SalaryMax,
+//		Description: reqResume.Description,
+//		Gender: reqResume.Gender,
+//		Level: reqResume.Level,
+//		ExperienceMonth: reqResume.ExperienceMonth,
+//		Education: reqResume.Education,
+//	}
+//
+//	pResume, err := r.Usecase.UpdateResume(resume)
+//	if err != nil {
+//		c.AbortWithError(http.StatusInternalServerError, err)
+//		return
+//	}
+//
+//	type Resp struct {
+//		Resume models.Resume `json:"resume"`
+//	}
+//
+//	c.JSON(http.StatusOK, Resp{Resume: *pResume})
+//
+//}

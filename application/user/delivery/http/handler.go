@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -84,7 +83,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname  string               `form:"surname" json:"surname" binding:"required"`
 		Email    string               `form:"email" json:"email" binding:"required"`
 		Password string               `form:"password" json:"password" binding:"required"`
-		Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
+		//Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
 	}
 	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -101,7 +100,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname:      req.Surname,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
-		AvatarPath:   uuid.New().String(),
+		//AvatarPath:   uuid.New().String(),
 	})
 
 	if err != nil {

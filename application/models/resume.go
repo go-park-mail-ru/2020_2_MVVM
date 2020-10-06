@@ -5,11 +5,13 @@ import "github.com/google/uuid"
 type Resume struct {
 	tableName struct{} `pg:"main.resume,discard_unknown_columns"`
 
-	ID          uuid.UUID `pg:"resume_id,pk,type:uuid"`
-	FK          uuid.UUID `pg:"user_id, fk, type:uuid"`
-	Title       string    `pg:"title,notnull" json:"title"`
-	Salary      int       `pg:"salary" json:"salary"`
-	Description string    `pg:"description" json:"description"`
-	Skills      string    `pg:"skills" json:"skills"`
-	Views       int       `pg:"views" json:"views"`
+	ID              uuid.UUID `pg:"resume_id,pk,type:uuid"`
+	UserID          uuid.UUID `pg:"user_id, fk, type:uuid"`
+	SalaryMin       *int       `pg:"salary_min" json:"salary_min"`
+	SalaryMax       *int       `pg:"salary_max" json:"salary_max"`
+	Description     *string    `pg:"description" json:"description"`
+	Gender          *string    `pg:"gender" json:"gender"`
+	Level           *string    `pg:"level" json:"level"`
+	ExperienceMonth *int       `pg:"experience_month" json:"experience_month"`
+	Education       *string    `pg:"education" json:"education"`
 }

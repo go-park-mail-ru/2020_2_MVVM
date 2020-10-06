@@ -203,18 +203,18 @@ func NewApp(config Config) *App {
 		log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
 	}
 
-	r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
+	api := r.Group("/api/v1")
+	api.POST("/auth/login", authMiddleware.LoginHandler)
 	// end jwt middleware
 
-	api := r.Group("/api/v1")
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api, userCase)
+	UserHandler.NewRest(api, userCase, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(api, resume)
+	ResumeHandler.NewRest(api, resume, authMiddleware)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
