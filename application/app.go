@@ -206,17 +206,19 @@ func NewApp(config Config) *App {
 	r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
 	// end jwt middleware
 
+	api := r.Group("/api/v1")
+
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(r.Group("/v1"), userCase)
+	UserHandler.NewRest(api, userCase)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(r.Group("/v2"), resume)
+	ResumeHandler.NewRest(api, resume)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(r.Group("/v3"), vacancy)
+	VacancyHandler.NewRest(api, vacancy)
 
 	app := App{
 		config:   config,

@@ -23,4 +23,6 @@ create table vacancy
     text,
     salary              int
 );
+
 -- +migrate Down
+drop table main.vacancy;
