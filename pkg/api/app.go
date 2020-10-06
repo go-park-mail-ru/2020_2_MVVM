@@ -2,9 +2,12 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
@@ -12,9 +15,10 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/storage"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/common"
-
 	"github.com/go-pg/pg/v9"
+	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
+	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -88,18 +92,128 @@ func NewApp(config Config) *App {
 		Database: config.Db.Name,
 	})
 
+	// the jwt middleware
+	identityKey := "myid"
+
+	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
+		Realm:       "my super test zone",
+		Key:         []byte("my super secret and long secret-secret key"),
+		Timeout:     time.Hour,
+		MaxRefresh:  time.Hour,
+		IdentityKey: identityKey,
+
+		SendCookie: true,
+		SecureCookie:     false, //non HTTPS dev environments
+		CookieHTTPOnly:   true,  // JS can't modify
+		//CookieDomain:     "localhost",
+		CookieDomain:     "95.163.212.36",
+
+		Authenticator: func(c *gin.Context) (interface{}, error) {
+			// This function should verify the user credentials given the gin context
+			//(i.e. password matches hashed password for a given user email, and any other authentication logic).
+			var credentials struct {
+				Nickname string `form:"nickname" json:"nickname" binding:"required"`
+				Email    string `form:"email" json:"email" binding:"required"`
+				Password string `form:"password" json:"password" binding:"required"`
+			}
+			if err := c.ShouldBind(&credentials); err != nil {
+				return "", errors.New("missing Username, Password, or Password") // make error constant
+			}
+
+			// go to the database and fetch the user
+			var user models.User
+			err := db.Model(&user).
+				Where("email = ?", credentials.Email).
+				Where("nickname = ?", credentials.Nickname).
+				Select()
+			if err != nil {
+				return nil, err
+			}
+
+			// compare password with the hashed one
+			err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(credentials.Password))
+			if err != nil {
+				return nil, err
+			}
+
+			// user is OK
+			return &models.JWTUserData{
+				ID:       user.ID,
+				Nickname: user.Nickname,
+				Email:    user.Email,
+			}, nil
+		},
+		PayloadFunc: func(data interface{}) jwt.MapClaims {
+			if v, ok := data.(*models.JWTUserData); ok {
+				return jwt.MapClaims{
+					identityKey: v.ID,
+					"nickname": v.Nickname,
+					"email": v.Email,
+				}
+			}
+			return jwt.MapClaims{}
+		},
+		IdentityHandler: func(c *gin.Context) interface{} {
+			claims := jwt.ExtractClaims(c)
+			uid, _ := uuid.Parse(claims[identityKey].(string))
+			return &models.JWTUserData{
+				ID:       uid,
+				Nickname: claims["nickname"].(string),
+				Email:    claims["email"].(string),
+			}
+		},
+		Authorizator: func(data interface{}, c *gin.Context) bool {
+			return true
+		},
+		Unauthorized: func(c *gin.Context, code int, message string) {
+			c.JSON(code, gin.H{
+				"code":    code,
+				"message": message,
+			})
+		},
+		// TokenLookup is a string in the form of "<source>:<name>" that is used
+		// to extract token from the request.
+		// Optional. Default value "header:Authorization".
+		// Possible values:
+		// - "header:<name>"
+		// - "query:<name>"
+		// - "cookie:<name>"
+		// - "param:<name>"
+		TokenLookup: "header: Authorization, query: token, cookie: jwt",
+		// TokenLookup: "query:token",
+		// TokenLookup: "cookie:token",
+
+		// TokenHeadName is a string in the header. Default value is "Bearer"
+		TokenHeadName: "Bearer",
+
+		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
+		TimeFunc: time.Now,
+	})
+
+	if err != nil {
+		log.ErrorLogger.Fatal("JWT Error:" + err.Error())
+	}
+
+	errInit := authMiddleware.MiddlewareInit()
+
+	if errInit != nil {
+		log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
+	}
+
+	r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
+
 	strg := storage.NewPostgresStorage(db)
 
 	usecase := usecase.NewUsecase(log.InfoLogger, log.ErrorLogger, strg)
 
-	rest.NewRest(r.Group("/v1"), *usecase)
 
+	rest.NewRest(r.Group("/api/v1"), *usecase, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(r.Group("/v1"), resume)
+	ResumeHandler.NewRest(r.Group("/api/v1"), resume)
 
-
+	// end jwt middleware
 
 	app := App{
 		config:   config,

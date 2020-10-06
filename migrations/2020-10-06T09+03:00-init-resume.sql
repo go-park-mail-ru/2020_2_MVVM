@@ -4,8 +4,6 @@
 
 set search_path to main;
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 create table resume
 (
     resume_id uuid default uuid_generate_v4() not null
@@ -20,4 +18,7 @@ create table resume
     skills text,
     views int
 );
+
 -- +migrate Down
+
+drop table main.resume;
