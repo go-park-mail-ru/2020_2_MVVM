@@ -1,80 +1,135 @@
 package http
 
 import (
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
+	"path/filepath"
 )
+
+const IMAGE_DIR = ""
 
 type UserHandler struct {
 	UserUseCase user.IUseCaseUser
 }
 
-func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser) *UserHandler {
+func NewRest(router *gin.RouterGroup,  useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
-	rest.routes(router)
+	rest.routes(router, authMiddleware)
 	return rest
 }
 
-func (U *UserHandler) routes(router *gin.RouterGroup) {
-	router.GET("/users/:user_id", U.handlerGetUserByID)
+
+func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+	router.GET("/users/by/id/:user_id", U.handlerGetUserByID)
 	router.POST("/users/add", U.handlerCreateUser)
 	router.PUT("/users/update/:user_id", U.handlerUpdateUser)
+	router.Use(authMiddleware.MiddlewareFunc())
+	{
+		router.GET("/users/me", U.handlerGetCurrentUser)
+	}
 }
 
-func (U *UserHandler) handlerGetUserByID(c *gin.Context) {
+func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
+	// move to constants
+	identityKey := "myid"
+	jwtuser, _ := ctx.Get(identityKey)
+	userID := jwtuser.(*models.JWTUserData).ID
+
+	userById, err := U.UserUseCase.GetUserByID(userID.String())
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	type Resp struct {
+		User models.User `json:"user"`
+	}
+
+	ctx.JSON(http.StatusOK, Resp{User: userById})
+}
+
+func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	var req struct {
 		UserID uuid.UUID `json:"user_id" binding:"required"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	user, err := U.UserUseCase.GetUserByID(req.UserID.String())
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	type Resp struct {
 		User models.User `json:"user"`
 	}
 
-	c.JSON(http.StatusOK, Resp{User: user})
+	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
-func (U *UserHandler) handlerCreateUser(c *gin.Context) {
-	var reqPayload struct {
-		Name    string `json:"name" binding:"required"`
-		Surname string `json:"surname" binding:"required"`
-		Avatar  os.File ``
+func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
+	var req struct {
+		NickName string               `form:"nickname" json:"nickname" binding:"required"`
+		Name     string               `form:"name" json:"name" binding:"required"`
+		Surname  string               `form:"surname" json:"surname" binding:"required"`
+		Email    string               `form:"email" json:"email" binding:"required"`
+		Password string               `form:"password" json:"password" binding:"required"`
+		Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
 	}
-	if err := c.ShouldBindJSON(&reqPayload); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
-	user := models.User{
-		Name:    reqPayload.Name,
-		Surname: reqPayload.Surname,
-	}
-
-	user, err := U.UserUseCase.CreateUser(user)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	userNew, err := U.UserUseCase.CreateUser(models.User{
+		Nickname:     req.NickName,
+		Name:         req.Name,
+		Surname:      req.Surname,
+		Email:        req.Email,
+		PasswordHash: passwordHash,
+		AvatarPath:   uuid.New().String(),
+	})
+
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	type Resp struct {
 		User models.User `json:"user"`
 	}
 
-	c.JSON(http.StatusOK, Resp{User: user})
+	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 
+}
+
+func addOrUpdateUserImage(imgPath string, data io.Reader) error {
+	path := filepath.Join(IMAGE_DIR, imgPath)
+
+	dst, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, data); err != nil {
+		return err
+	}
+	return nil
 }
