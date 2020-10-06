@@ -1,43 +1,31 @@
-package rest
+package http
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
 	"net/http"
+	"os"
 )
 
-type rest struct {
-	Usecase usecase.Usecase
+type UserHandler struct {
+	UserUseCase user.IUseCaseUser
 }
 
-func NewRest(router *gin.RouterGroup, usecase usecase.Usecase) *rest {
-	rest := &rest{Usecase: usecase}
+func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser) *UserHandler {
+	rest := &UserHandler{UserUseCase: useCase}
 	rest.routes(router)
 	return rest
 }
 
-func (r *rest) routes(router *gin.RouterGroup) {
-	router.GET("/nothing", r.handlerGetNothing)
-	router.GET("/users/:user_id", r.handlerGetUserByID)
-	router.POST("/users/add", r.handlerCreateUser)
+func (U *UserHandler) routes(router *gin.RouterGroup) {
+	router.GET("/users/:user_id", U.handlerGetUserByID)
+	router.POST("/users/add", U.handlerCreateUser)
+	router.PUT("/users/update/:user_id", U.handlerUpdateUser)
 }
 
-func (r *rest) handlerGetNothing(c *gin.Context) {
-	err := r.Usecase.DoNothing()
-	if err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	type Resp struct {
-		Status string
-	}
-
-	c.JSON(http.StatusOK, Resp{Status: "ok"})
-}
-
-func (r *rest) handlerGetUserByID(c *gin.Context) {
+func (U *UserHandler) handlerGetUserByID(c *gin.Context) {
 	var req struct {
 		UserID uuid.UUID `json:"user_id" binding:"required"`
 	}
@@ -47,7 +35,7 @@ func (r *rest) handlerGetUserByID(c *gin.Context) {
 		return
 	}
 
-	user, err := r.Usecase.GetUserByID(req.UserID.String())
+	user, err := U.UserUseCase.GetUserByID(req.UserID.String())
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -59,10 +47,11 @@ func (r *rest) handlerGetUserByID(c *gin.Context) {
 	c.JSON(http.StatusOK, Resp{User: user})
 }
 
-func (r *rest) handlerCreateUser(c *gin.Context) {
+func (U *UserHandler) handlerCreateUser(c *gin.Context) {
 	var reqPayload struct {
 		Name    string `json:"name" binding:"required"`
 		Surname string `json:"surname" binding:"required"`
+		Avatar  os.File ``
 	}
 	if err := c.ShouldBindJSON(&reqPayload); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -74,7 +63,7 @@ func (r *rest) handlerCreateUser(c *gin.Context) {
 		Surname: reqPayload.Surname,
 	}
 
-	user, err := r.Usecase.CreateUser(user)
+	user, err := U.UserUseCase.CreateUser(user)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -84,4 +73,8 @@ func (r *rest) handlerCreateUser(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, Resp{User: user})
+}
+
+func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
+
 }

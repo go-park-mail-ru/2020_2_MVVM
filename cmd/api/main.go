@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/pkg/api"
+	api "github.com/go-park-mail-ru/2020_2_MVVM.git/application"
 	yconfig "github.com/rowdyroad/go-yaml-config"
 )
 
