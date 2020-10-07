@@ -40,3 +40,5 @@ func NewErr(code int, message string, meta interface{}) Err {
 
 var ErrBadRequest = NewErr(400, "Неправильный запрос к серверу", nil)
 var ErrInternalServerError = NewErr(500, "Внутренняя ошибка сервера", nil)
+
+var ErrInvalidUpdatePassword = NewErr(1001, "неверный пароль", nil)

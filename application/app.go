@@ -116,7 +116,7 @@ func NewApp(config Config) *App {
 				Email    string `form:"email" json:"email" binding:"required"`
 				Password string `form:"password" json:"password" binding:"required"`
 			}
-			if err := c.ShouldBind(&credentials); err != nil {
+			if err := c.ShouldBindJSON(&credentials); err != nil {
 				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 
@@ -203,7 +203,6 @@ func NewApp(config Config) *App {
 	api := r.Group("/api/v1")
 	api.POST("/auth/login", authMiddleware.LoginHandler)
 	// end jwt middleware
-
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)

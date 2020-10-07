@@ -3,6 +3,7 @@ package http
 import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"golang.org/x/crypto/bcrypt"
@@ -18,12 +19,11 @@ type UserHandler struct {
 	UserUseCase user.IUseCaseUser
 }
 
-func NewRest(router *gin.RouterGroup,  useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
+func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
 	rest.routes(router, authMiddleware)
 	return rest
 }
-
 
 func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	router.GET("/by/id/:user_id", U.handlerGetUserByID)
@@ -32,6 +32,7 @@ func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWT
 	router.Use(authMiddleware.MiddlewareFunc())
 	{
 		router.GET("/me", U.handlerGetCurrentUser)
+		router.PUT("/update", U.handlerUpdateUser)
 	}
 }
 
@@ -55,7 +56,7 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 
 func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	var req struct {
-		UserID string`uri:"user_id" binding:"required,uuid"`
+		UserID string `uri:"user_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -77,14 +78,14 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
-		NickName string               `form:"nickname" json:"nickname" binding:"required"`
-		Name     string               `form:"name" json:"name" binding:"required"`
-		Surname  string               `form:"surname" json:"surname" binding:"required"`
-		Email    string               `form:"email" json:"email" binding:"required"`
-		Password string               `form:"password" json:"password" binding:"required"`
+		NickName string `form:"nickname" json:"nickname" binding:"required"`
+		Name     string `form:"name" json:"name" binding:"required"`
+		Surname  string `form:"surname" json:"surname" binding:"required"`
+		Email    string `form:"email" json:"email" binding:"required"`
+		Password string `form:"password" json:"password" binding:"required"`
 		//Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
 	}
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -114,7 +115,33 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 }
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
+	var req struct {
+		NickName    string `json:"nickname"`
+		Name        string `json:"name"`
+		Surname     string `json:"surname"`
+		Email       string `json:"email"`
+		NewPassword string `json:"new_password"`
+		OldPassword string `json:"old_password"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
+	identityKey := "myid"
+	jwtuser, _ := ctx.Get(identityKey)
+	userID := jwtuser.(*models.JWTUserData).ID
+	user, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
+	if err != nil {
+		if err == common.ErrInvalidUpdatePassword {
+			ctx.AbortWithError(http.StatusForbidden, err)
+			return
+		}
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
 }
 
 func addOrUpdateUserImage(imgPath string, data io.Reader) error {
