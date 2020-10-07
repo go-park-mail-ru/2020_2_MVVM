@@ -20,14 +20,14 @@ func NewRest(router *gin.RouterGroup, usecase resume.IUseCaseResume, authMiddlew
 }
 
 func (r *ResumeHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
-	router.GET("/resume/by/id/:resume_id", r.handlerGetResumeByID)
+	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)
+	router.GET("/page", r.handlerGetResumeList)
 
 	router.Use(authMiddleware.MiddlewareFunc())
 	{
-		router.GET("/resume/mine", r.handlerGetAllCurrentUserResume)
-		router.POST("/resume/add", r.handlerCreateResume)
+		router.GET("/mine", r.handlerGetAllCurrentUserResume)
+		router.POST("/add", r.handlerCreateResume)
 	}
-	router.GET("/resume/page", r.handlerGetResumeList)
 	//router.PUT("/resume/update", r.handlerUpdateResume)
 }
 
@@ -128,11 +128,11 @@ func (r *ResumeHandler) handlerGetResumeByID(c *gin.Context) {
 
 func (r *ResumeHandler) handlerGetResumeList(c *gin.Context) {
 	var reqResume struct {
-		Start uint `json:"start"`
-		Limit uint `json:"limit" binding:"required"`
+		Start uint `form:"start"`
+		Limit uint `form:"limit" binding:"required"`
 	}
 
-	if err := c.ShouldBindJSON(&reqResume); err != nil {
+	if err := c.ShouldBindQuery(&reqResume); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}

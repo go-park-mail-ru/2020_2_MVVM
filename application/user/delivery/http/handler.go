@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
@@ -27,12 +26,12 @@ func NewRest(router *gin.RouterGroup,  useCase user.IUseCaseUser, authMiddleware
 
 
 func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
-	router.GET("/users/by/id/:user_id", U.handlerGetUserByID)
-	router.POST("/users/add", U.handlerCreateUser)
-	router.PUT("/users/update/:user_id", U.handlerUpdateUser)
+	router.GET("/by/id/:user_id", U.handlerGetUserByID)
+	router.POST("/add", U.handlerCreateUser)
+	router.PUT("/update/:user_id", U.handlerUpdateUser)
 	router.Use(authMiddleware.MiddlewareFunc())
 	{
-		router.GET("/users/me", U.handlerGetCurrentUser)
+		router.GET("/me", U.handlerGetCurrentUser)
 	}
 }
 
@@ -56,15 +55,15 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 
 func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	var req struct {
-		UserID uuid.UUID `json:"user_id" binding:"required"`
+		UserID string`uri:"user_id" binding:"required,uuid"`
 	}
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	user, err := U.UserUseCase.GetUserByID(req.UserID.String())
+	user, err := U.UserUseCase.GetUserByID(req.UserID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

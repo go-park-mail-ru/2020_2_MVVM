@@ -15,9 +15,6 @@ import (
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
-	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
-	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
-	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
@@ -210,15 +207,15 @@ func NewApp(config Config) *App {
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api, userCase, authMiddleware)
+	UserHandler.NewRest(api.Group("/users"), userCase, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(api, resume, authMiddleware)
+	ResumeHandler.NewRest(api.Group("/resume"), resume, authMiddleware)
 
-	vacancyRep := RepositoryVacancy.NewPgRepository(db)
-	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api, vacancy)
+	//vacancyRep := RepositoryVacancy.NewPgRepository(db)
+	//vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
+	//VacancyHandler.NewRest(api, vacancy)
 
 	app := App{
 		config:   config,

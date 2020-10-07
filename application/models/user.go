@@ -7,7 +7,7 @@ import (
 type User struct {
 	tableName struct{} `pg:"main.users,discard_unknown_columns"`
 
-	ID           uuid.UUID `pg:"user_id,pk,type:uuid"`
+	ID           uuid.UUID `pg:"user_id,pk,type:uuid" json:"id"`
 	Nickname     string    `pg:"nickname,notnull" json:"nickname"`
 	//AvatarPath   string    `pg:"avatar_path" json:"avatar"`
 	Name         string    `pg:"name,notnull" json:"name"`
