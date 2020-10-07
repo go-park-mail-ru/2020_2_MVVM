@@ -50,16 +50,22 @@ func (P *pgRepository) UpdateVacancy(id string, newVac models.Vacancy) (models.V
 	switch {
 	case newVac.VacancyName != "":
 		oldVac.VacancyName = newVac.VacancyName
+		fallthrough
 	case newVac.CompanyName != "":
 		oldVac.CompanyName = newVac.CompanyName
+		fallthrough
 	case newVac.VacancyDescription != "":
 		oldVac.VacancyDescription = newVac.VacancyDescription
+		fallthrough
 	case newVac.CompanyAddress != "":
 		oldVac.CompanyAddress = newVac.CompanyAddress
+		fallthrough
 	case newVac.WorkExperience != "":
 		oldVac.WorkExperience = newVac.WorkExperience
+		fallthrough
 	case newVac.Skills != "":
 		oldVac.Skills = newVac.Skills
+		fallthrough
 	case newVac.Salary != 0:
 		oldVac.Salary = newVac.Salary
 	}

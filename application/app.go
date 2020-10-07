@@ -9,15 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
-	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
-	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
-	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
-	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
-	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
@@ -203,22 +197,22 @@ func NewApp(config Config) *App {
 		log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
 	}
 
-	r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
+	//r.POST("/api/v1/auth/login", authMiddleware.LoginHandler)
 	// end jwt middleware
 
-	api := r.Group("/api/v1")
+	//api := r.Group("/api/v1")
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api, userCase, authMiddleware)
+	UserHandler.NewRest(r.Group("/v1"), userCase, authMiddleware)
 
-	resumeRep := ResumeRepository.NewPgRepository(db)
+	/*resumeRep := ResumeRepository.NewPgRepository(db)
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(api, resume)
+	ResumeHandler.NewRest(r.Group("/v1"), resume)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api, vacancy)
+	VacancyHandler.NewRest(r.Group("/v1"), vacancy)*/
 
 	app := App{
 		config:   config,

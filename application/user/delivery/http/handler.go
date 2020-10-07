@@ -55,9 +55,6 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		User models.User `json:"user"`
-	}
 
 	ctx.JSON(http.StatusOK, Resp{User: userById})
 }
@@ -72,13 +69,13 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := U.UserUseCase.GetUserByID(req.UserID.String())
+	userById, err := U.UserUseCase.GetUserByID(req.UserID.String())
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	ctx.JSON(http.StatusOK, Resp{User: userById})
 }
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
@@ -126,7 +123,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
-		UserId   uuid.UUID            `form:"userId" json:"user_id"`
+		UserId   string               `form:"user_id" json:"user_id" binding:"required"`
 		NickName string               `form:"nickname" json:"nickname"`
 		Name     string               `form:"name" json:"name"`
 		Surname  string               `form:"surname" json:"surname"`
@@ -144,7 +141,9 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		return
 	}
 
+	uid, _ := uuid.Parse(req.UserId)
 	userNew, err := U.UserUseCase.UpdateUser(models.User{
+		ID:           uid,
 		Nickname:     req.NickName,
 		Name:         req.Name,
 		Surname:      req.Surname,
@@ -157,6 +156,11 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		} else {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
+		return
+	}
+	img, err := req.Avatar.Open()
+	if err := addOrUpdateUserImage(userNew.ID.String(), img); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, Resp{User: userNew})

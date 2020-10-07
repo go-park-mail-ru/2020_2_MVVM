@@ -47,12 +47,16 @@ func (P *pgStorage) UpdateUser(newUser models.User) (models.User, error) {
 	switch {
 	case newUser.Nickname != "":
 		oldUser.Nickname = newUser.Nickname
+		fallthrough
 	case newUser.Email != "":
 		oldUser.Email = newUser.Nickname
+		fallthrough
 	case newUser.Surname != "":
 		oldUser.Surname = newUser.Surname
+		fallthrough
 	case newUser.Name != "":
 		oldUser.Name = newUser.Name
+		fallthrough
 	case newUser.PasswordHash != nil:
 		oldUser.PasswordHash = newUser.PasswordHash
 	}
