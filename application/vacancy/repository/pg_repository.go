@@ -50,16 +50,22 @@ func (P *pgRepository) UpdateVacancy(id string, newVac models.Vacancy) (models.V
 	switch {
 	case newVac.VacancyName != "":
 		oldVac.VacancyName = newVac.VacancyName
+		fallthrough
 	case newVac.CompanyName != "":
 		oldVac.CompanyName = newVac.CompanyName
+		fallthrough
 	case newVac.VacancyDescription != "":
 		oldVac.VacancyDescription = newVac.VacancyDescription
+		fallthrough
 	case newVac.CompanyAddress != "":
 		oldVac.CompanyAddress = newVac.CompanyAddress
+		fallthrough
 	case newVac.WorkExperience != "":
 		oldVac.WorkExperience = newVac.WorkExperience
+		fallthrough
 	case newVac.Skills != "":
 		oldVac.Skills = newVac.Skills
+		fallthrough
 	case newVac.Salary != 0:
 		oldVac.Salary = newVac.Salary
 	}
@@ -76,7 +82,7 @@ func (P *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, e
 		return nil, fmt.Errorf("selection with useless positions")
 	}
 	var vacList []models.Vacancy
-	err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx > %v", end)).Limit(int(start)).Select()
+	err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx >= %v", start)).Limit(int(end)).Select()
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
 		return nil, err

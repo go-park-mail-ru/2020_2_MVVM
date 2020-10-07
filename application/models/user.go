@@ -9,7 +9,6 @@ type User struct {
 
 	ID           uuid.UUID `pg:"user_id,pk,type:uuid" json:"id"`
 	Nickname     string    `pg:"nickname,notnull" json:"nickname"`
-	//AvatarPath   string    `pg:"avatar_path" json:"avatar"`
 	Name         string    `pg:"name,notnull" json:"name"`
 	Surname      string    `pg:"surname" json:"surname"`
 	Email        string    `pg:"email,notnull" json:"email"`

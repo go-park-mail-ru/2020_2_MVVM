@@ -19,8 +19,8 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy) *VacancyH
 }
 
 func (V *VacancyHandler) routes(router *gin.RouterGroup) {
-	router.GET("/vacancy/:vacancy_id", V.handlerGetVacancyById)
-	router.GET("/vacancies", V.handlerGetVacancyList)
+	router.GET("/vacancy/id/:vacancy_id", V.handlerGetVacancyById)
+	router.GET("/vacancy/page", V.handlerGetVacancyList)
 	router.PUT("/vacancy/update/:vacancy_id", V.handlerUpdateVacancy)
 	router.POST("/vacancy/add", V.handlerCreateVacancy)
 }
@@ -78,10 +78,10 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 
 func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	var req struct {
-		Start uint `json:"start"`
-		End   uint `json:"end"`
+		Start uint `form:"start"`
+		End   uint `form:"end"`
 	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
