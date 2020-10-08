@@ -42,33 +42,44 @@ func dbSelector(P *pgRepository, pattern string, attribute string) (models.Vacan
 	return vac, nil
 }
 
-func (P *pgRepository) UpdateVacancy(id string, newVac models.Vacancy) (models.Vacancy, error) {
-	oldVac, err := P.GetVacancyById(id)
+// TODO:
+//у пользователя мб несколько вакансий, которые привязаны к одному user_id (FK)
+
+func (P *pgRepository) UpdateVacancy(newVac models.Vacancy) (models.Vacancy, error) {
+	/*oldVac, err := P.GetVacancyById(newVac.FK.String())
 	if err != nil {
 		return models.Vacancy{}, err
 	}
 	switch {
 	case newVac.VacancyName != "":
 		oldVac.VacancyName = newVac.VacancyName
+		fallthrough
 	case newVac.CompanyName != "":
 		oldVac.CompanyName = newVac.CompanyName
+		fallthrough
 	case newVac.VacancyDescription != "":
 		oldVac.VacancyDescription = newVac.VacancyDescription
+		fallthrough
 	case newVac.CompanyAddress != "":
 		oldVac.CompanyAddress = newVac.CompanyAddress
+		fallthrough
 	case newVac.WorkExperience != "":
 		oldVac.WorkExperience = newVac.WorkExperience
+		fallthrough
 	case newVac.Skills != "":
 		oldVac.Skills = newVac.Skills
+		fallthrough
 	case newVac.Salary != 0:
 		oldVac.Salary = newVac.Salary
 	}
 	_, err = P.db.Model(&oldVac).WherePK().Update()
 	if err != nil {
-		err = fmt.Errorf("error in update resume with id: %s : error: %w", id, err)
+		err = fmt.Errorf("error in update resume with id: %s : error: %w", newVac.ID, err)
 		return models.Vacancy{}, err
 	}
 	return oldVac, nil
+	*/
+	return newVac, nil
 }
 
 func (P *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, error) {
@@ -76,7 +87,7 @@ func (P *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, e
 		return nil, fmt.Errorf("selection with useless positions")
 	}
 	var vacList []models.Vacancy
-	err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx > %v", end)).Limit(int(start)).Select()
+	err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx >= %v", start)).Limit(int(end)).Select()
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
 		return nil, err

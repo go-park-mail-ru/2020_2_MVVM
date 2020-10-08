@@ -13,10 +13,18 @@ import (
 	"path/filepath"
 )
 
-const IMAGE_DIR = ""
+const IMAGE_DIR = "static"
 
 type UserHandler struct {
 	UserUseCase user.IUseCaseUser
+}
+
+type Resp struct {
+	User models.User `json:"user"`
+}
+
+type RespError struct {
+	Err string `json:"error"`
 }
 
 func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
@@ -47,9 +55,6 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		User models.User `json:"user"`
-	}
 
 	ctx.JSON(http.StatusOK, Resp{User: userById})
 }
@@ -69,9 +74,6 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		User models.User `json:"user"`
-	}
 
 	ctx.JSON(http.StatusOK, Resp{User: user})
 }
@@ -83,7 +85,6 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname  string `form:"surname" json:"surname" binding:"required"`
 		Email    string `form:"email" json:"email" binding:"required"`
 		Password string `form:"password" json:"password" binding:"required"`
-		//Avatar   multipart.FileHeader `form:"img" json:"img" binding:"required"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -100,15 +101,14 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Surname:      req.Surname,
 		Email:        req.Email,
 		PasswordHash: passwordHash,
-		//AvatarPath:   uuid.New().String(),
 	})
-
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		if errMsg := err.Error(); errMsg == "user already exists" {
+			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+		} else {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
 		return
-	}
-	type Resp struct {
-		User models.User `json:"user"`
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
@@ -116,32 +116,43 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
-		NickName    string `json:"nickname"`
-		Name        string `json:"name"`
-		Surname     string `json:"surname"`
-		Email       string `json:"email"`
-		NewPassword string `json:"new_password"`
-		OldPassword string `json:"old_password"`
+		NickName    string `form:"nickname" json:"nickname"`
+		Name        string `form:"name" json:"name"`
+		Surname     string `form:"surname" json:"surname"`
+		Email       string `form:"email" json:"email"`
+		NewPassword string `form:"new_password" json:"new_password"`
+		OldPassword string `form:"old_password" json:"old_password"`
+		//Avatar   multipart.FileHeader `form:"img" json:"img"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	identityKey := "myid"
 	jwtuser, _ := ctx.Get(identityKey)
 	userID := jwtuser.(*models.JWTUserData).ID
-	user, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
+	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
 			ctx.AbortWithError(http.StatusForbidden, err)
 			return
 		}
+	}
+	if err != nil {
+		if errMsg := err.Error(); errMsg == "user already exists" {
+			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+		} else {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+		return
+	}
+	/*img, err := req.Avatar.Open()
+	if err := addOrUpdateUserImage(userNew.ID.String(), img); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, Resp{User: userNew})*/
+	ctx.JSON(http.StatusOK, userUpdate)
 }
 
 func addOrUpdateUserImage(imgPath string, data io.Reader) error {
