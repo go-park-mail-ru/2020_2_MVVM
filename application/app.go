@@ -119,7 +119,7 @@ func NewApp(config Config) *App {
 				Email    string `form:"email" json:"email" binding:"required"`
 				Password string `form:"password" json:"password" binding:"required"`
 			}
-			if err := c.ShouldBind(&credentials); err != nil {
+			if err := c.ShouldBindJSON(&credentials); err != nil {
 				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 

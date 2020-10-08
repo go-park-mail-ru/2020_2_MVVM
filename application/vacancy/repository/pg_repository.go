@@ -42,8 +42,11 @@ func dbSelector(P *pgRepository, pattern string, attribute string) (models.Vacan
 	return vac, nil
 }
 
-func (P *pgRepository) UpdateVacancy(id string, newVac models.Vacancy) (models.Vacancy, error) {
-	oldVac, err := P.GetVacancyById(id)
+// TODO:
+//у пользователя мб несколько вакансий, которые привязаны к одному user_id (FK)
+
+func (P *pgRepository) UpdateVacancy(newVac models.Vacancy) (models.Vacancy, error) {
+	/*oldVac, err := P.GetVacancyById(newVac.FK.String())
 	if err != nil {
 		return models.Vacancy{}, err
 	}
@@ -71,10 +74,12 @@ func (P *pgRepository) UpdateVacancy(id string, newVac models.Vacancy) (models.V
 	}
 	_, err = P.db.Model(&oldVac).WherePK().Update()
 	if err != nil {
-		err = fmt.Errorf("error in update resume with id: %s : error: %w", id, err)
+		err = fmt.Errorf("error in update resume with id: %s : error: %w", newVac.ID, err)
 		return models.Vacancy{}, err
 	}
 	return oldVac, nil
+	*/
+	return newVac, nil
 }
 
 func (P *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, error) {

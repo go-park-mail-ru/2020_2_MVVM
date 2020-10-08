@@ -40,8 +40,8 @@ func (V VacancyUseCase) GetVacancy(id string) (models.Vacancy, error) {
 	return vac, nil
 }
 
-func (V VacancyUseCase) UpdateVacancy(id string, newVac models.Vacancy) (models.Vacancy, error) {
-	vac, err := V.repos.UpdateVacancy(id, newVac)
+func (V VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (models.Vacancy, error) {
+	vac, err := V.repos.UpdateVacancy(newVac)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy update: %w", err)
 		return models.Vacancy{}, err

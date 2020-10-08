@@ -49,20 +49,22 @@ func (V *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 
 func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
-		UserID             uuid.UUID `json:"employer_id" binding:"required"`
-		VacancyName        string    `json:"vacancy_name" binding:"required"`
-		CompanyName        string    `json:"company_name" binding:"required"`
-		VacancyDescription string    `json:"vacancy_description" binding:"required"`
-		WorkExperience     string    `json:"work_experience" binding:"required"`
-		CompanyAddress     string    `json:"company_address" binding:"required"`
-		Skills             string    `json:"skills" binding:"required"`
-		Salary             int       `json:"salary" binding:"required"`
+		VacancyName        string `json:"vacancy_name" binding:"required"`
+		CompanyName        string `json:"company_name" binding:"required"`
+		VacancyDescription string `json:"vacancy_description" binding:"required"`
+		WorkExperience     string `json:"work_experience" binding:"required"`
+		CompanyAddress     string `json:"company_address" binding:"required"`
+		Skills             string `json:"skills" binding:"required"`
+		Salary             int    `json:"salary" binding:"required"`
 	}
+	identityKey := "myid"
+	jwtUser, _ := ctx.Get(identityKey)
+	userID := jwtUser.(*models.JWTUserData).ID
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vac, err := V.VacUseCase.CreateVacancy(models.Vacancy{FK: req.UserID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
+	vac, err := V.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
 		Skills: req.Skills, Salary: req.Salary})
 	if err != nil {
@@ -99,20 +101,22 @@ func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 
 func (V *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 	var req struct {
-		VacID              uuid.UUID `json:"vacancy_id" binding:"required"`
-		VacancyName        string    `json:"vacancy_name" binding:"required"`
-		CompanyName        string    `json:"company_name" binding:"required"`
-		VacancyDescription string    `json:"vacancy_description" binding:"required"`
-		WorkExperience     string    `json:"work_experience" binding:"required"`
-		CompanyAddress     string    `json:"company_address" binding:"required"`
-		Skills             string    `json:"skills" binding:"required"`
-		Salary             int       `json:"salary" binding:"required"`
+		VacancyName        string `json:"vacancy_name" binding:"required"`
+		CompanyName        string `json:"company_name" binding:"required"`
+		VacancyDescription string `jsnewon:"vacancy_description" binding:"required"`
+		WorkExperience     string `json:"work_experience" binding:"required"`
+		CompanyAddress     string `json:"company_address" binding:"required"`
+		Skills             string `json:"skills" binding:"required"`
+		Salary             int    `json:"salary" binding:"required"`
 	}
+	identityKey := "myid"
+	jwtUser, _ := ctx.Get(identityKey)
+	userID := jwtUser.(*models.JWTUserData).ID
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vac, err := V.VacUseCase.UpdateVacancy(req.VacID.String(), models.Vacancy{VacancyName: req.VacancyName, CompanyName: req.CompanyName,
+	vac, err := V.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
 		Skills: req.Skills, Salary: req.Salary})
 	if err != nil {
