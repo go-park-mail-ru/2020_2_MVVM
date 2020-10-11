@@ -86,7 +86,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		Email    string `form:"email" json:"email" binding:"required"`
 		Password string `form:"password" json:"password" binding:"required"`
 	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}

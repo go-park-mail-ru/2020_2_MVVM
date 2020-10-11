@@ -119,7 +119,7 @@ func NewApp(config Config) *App {
 				Email    string `form:"email" json:"email" binding:"required"`
 				Password string `form:"password" json:"password" binding:"required"`
 			}
-			if err := c.ShouldBindJSON(&credentials); err != nil {
+			if err := c.ShouldBind(&credentials); err != nil {
 				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 
@@ -204,7 +204,10 @@ func NewApp(config Config) *App {
 	}
 
 	api := r.Group("/api/v1")
-	api.POST("/auth/login", authMiddleware.LoginHandler)
+	api.POST("/auth/login", func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://95.163.212.36")
+		authMiddleware.LoginHandler(c)
+	})
 	// end jwt middleware
 
 	UserRep := UserRepository.NewPgRepository(db)
