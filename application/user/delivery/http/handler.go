@@ -80,13 +80,13 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
-		NickName string `form:"nickname" json:"nickname" binding:"required"`
-		Name     string `form:"name" json:"name" binding:"required"`
-		Surname  string `form:"surname" json:"surname" binding:"required"`
-		Email    string `form:"email" json:"email" binding:"required"`
-		Password string `form:"password" json:"password" binding:"required"`
+		NickName string `form:"nickname"  binding:"required"`
+		Name     string `form:"name"  binding:"required"`
+		Surname  string `form:"surname"  binding:"required"`
+		Email    string `form:"email" binding:"required"`
+		Password string `form:"password"  binding:"required"`
 	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
