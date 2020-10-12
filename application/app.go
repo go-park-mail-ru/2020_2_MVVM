@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -101,8 +102,8 @@ func NewApp(config Config) *App {
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "my super test zone",
 		Key:         []byte("my super secret and long secret-secret key"),
-		Timeout:     time.Hour,
-		MaxRefresh:  time.Hour,
+		Timeout:     20 * time.Hour,
+		MaxRefresh:  20 * time.Hour,
 		IdentityKey: identityKey,
 
 		SendCookie:     true,
@@ -190,7 +191,8 @@ func NewApp(config Config) *App {
 		TokenHeadName: "Bearer",
 
 		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-		TimeFunc: time.Now,
+		TimeFunc:       time.Now,
+		CookieSameSite: http.SameSiteNoneMode,
 	})
 
 	if err != nil {
@@ -204,8 +206,21 @@ func NewApp(config Config) *App {
 	}
 
 	api := r.Group("/api/v1")
+
+	api.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://95.163.212.36"},
+		AllowMethods:     []string{"GET", "POST"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return strings.HasPrefix(origin, "http://localhost") ||
+				strings.HasPrefix(origin, "https://localhost")
+		},
+		MaxAge: 12 * time.Hour,
+	}))
+
 	api.POST("/auth/login", func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://95.163.212.36")
 		authMiddleware.LoginHandler(c)
 	})
 	// end jwt middleware
