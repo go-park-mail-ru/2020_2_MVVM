@@ -120,7 +120,7 @@ func NewApp(config Config) *App {
 				Email    string `form:"email" json:"email" binding:"required"`
 				Password string `form:"password" json:"password" binding:"required"`
 			}
-			if err := c.ShouldBind(&credentials); err != nil {
+			if err := c.ShouldBindJSON(&credentials); err != nil {
 				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 
@@ -209,7 +209,7 @@ func NewApp(config Config) *App {
 
 	api.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://95.163.212.36"},
-		AllowMethods:     []string{"GET", "POST"},
+		AllowMethods:     []string{"GET", "POST", "PUT"},
 		AllowHeaders:     []string{"Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -220,9 +220,7 @@ func NewApp(config Config) *App {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	api.POST("/auth/login", func(c *gin.Context) {
-		authMiddleware.LoginHandler(c)
-	})
+	api.POST("/auth/login", authMiddleware.LoginHandler)
 	// end jwt middleware
 
 	UserRep := UserRepository.NewPgRepository(db)
