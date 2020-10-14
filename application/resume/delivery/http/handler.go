@@ -54,9 +54,6 @@ func (r *ResumeHandler) handlerCreateResume(c *gin.Context) {
 	jwtuser, _ := c.Get(identityKey)
 	userID := jwtuser.(*models.JWTUserData).ID
 
-	// TODO:
-	// 1. Сделать в модели поля указателями
-	// 2. Биндить тут указатели
 	var reqResume struct {
 		SalaryMin       *int       `json:"salary_min"`
 		SalaryMax       *int       `json:"salary_max"`
@@ -70,11 +67,6 @@ func (r *ResumeHandler) handlerCreateResume(c *gin.Context) {
 		c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
-	//"salary_min":123,
-	//	"description":"dfcds",
-	//	"gender":"male"
-
 
 	resume := models.Resume{
 		UserID: userID,

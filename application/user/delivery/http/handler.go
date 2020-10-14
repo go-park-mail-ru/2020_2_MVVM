@@ -36,7 +36,7 @@ func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware 
 func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
 	router.GET("/by/id/:user_id", U.handlerGetUserByID)
 	router.POST("/add", U.handlerCreateUser)
-	router.PUT("/update/:user_id", U.handlerUpdateUser)
+	//router.PUT("/update/:user_id", U.handlerUpdateUser)
 	router.Use(authMiddleware.MiddlewareFunc())
 	{
 		router.GET("/me", U.handlerGetCurrentUser)
@@ -104,7 +104,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == "user already exists" {
-			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+			ctx.JSON(http.StatusConflict, RespError{Err: errMsg})
 		} else {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
