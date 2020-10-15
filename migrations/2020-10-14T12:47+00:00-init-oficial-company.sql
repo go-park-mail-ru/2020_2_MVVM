@@ -15,6 +15,8 @@ create table official_companies
     phone text null
 );
 
+
+
 -- +migrate Down
 
 drop table main.official_companies;

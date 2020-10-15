@@ -25,22 +25,22 @@ func NewUserUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
-func (U *UserUseCase) GetUserByID(id string) (models.User, error) {
+func (U *UserUseCase) GetUserByID(id string) (*models.User, error) {
 	userById, err := U.repos.GetUserByID(id)
 	if err != nil {
 		err = fmt.Errorf("error in user get by id func : %w", err)
-		return models.User{}, err
+		return nil, err
 	}
 	return userById, nil
 }
 
-func (U *UserUseCase) CreateUser(user models.User) (models.User, error) {
+func (U *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	userNew, err := U.repos.CreateUser(user)
 	if err != nil {
 		if err.Error() != "user already exists" {
 			err = fmt.Errorf("error in user get by id func : %w", err)
 		}
-		return models.User{}, err
+		return nil, err
 	}
 	return userNew, nil
 }
@@ -57,11 +57,12 @@ func (U *UserUseCase) UpdateUser(userNew models.User) (models.User, error) {
 	return userNew, nil
 }
 */
-func (U *UserUseCase) UpdateUser(user_id uuid.UUID, newPassword, oldPassword, nick, name, surname, email string) (models.User, error) {
+func (U *UserUseCase) UpdateUser(user_id uuid.UUID, newPassword, oldPassword, nick, name, surname, email, phone,
+								areaSearch string, socialNetwork []string) (*models.User, error) {
 	user, err := U.GetUserByID(user_id.String())
 	if err != nil {
 		err = fmt.Errorf("error get user with id %s : %w", user_id.String(), err)
-		return models.User{}, err
+		return nil, err
 	}
 
 	if nick != "" {
@@ -76,22 +77,32 @@ func (U *UserUseCase) UpdateUser(user_id uuid.UUID, newPassword, oldPassword, ni
 	if email != "" {
 		user.Email = email
 	}
+	if phone != "" {
+		user.Phone = phone
+	}
+	if areaSearch != "" {
+		user.AreaSearch = areaSearch
+	}
+	if socialNetwork != nil {
+		user.SocialNetwork = socialNetwork
+	}
 	if oldPassword != "" {
 		isEqual := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(oldPassword))
 		if isEqual != nil {
-			return models.User{}, common.ErrInvalidUpdatePassword
+			return nil, common.ErrInvalidUpdatePassword
 		}
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 		if err != nil {
 			err = fmt.Errorf("error in crypting password : %W", err)
-			return models.User{}, err
+			return nil, err
 		}
 		user.PasswordHash = passwordHash
 	}
-	newUser, err := U.repos.UpdateUser(user)
+
+	newUser, err := U.repos.UpdateUser(*user)
 	if err != nil {
 		err = fmt.Errorf("error in updating user with id = %s : %w", user.ID.String(), err)
-		return models.User{}, err
+		return nil, err
 	}
 
 	return newUser, nil

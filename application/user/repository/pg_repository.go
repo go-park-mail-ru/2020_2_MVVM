@@ -16,17 +16,17 @@ type pgStorage struct {
 	db *pg.DB
 }
 
-func (P *pgStorage) GetUserByID(id string) (models.User, error) {
+func (P *pgStorage) GetUserByID(id string) (*models.User, error) {
 	var newUser models.User
-	err := P.db.Model(&newUser).Where("user_id = ?", id).Select()
+	err := P.db.Model(&newUser).Where("cand_id = ?", id).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select user with id: %s : error: %w", id, err)
-		return models.User{}, err
+		return nil, err
 	}
-	return newUser, nil
+	return &newUser, nil
 }
 
-func (P *pgStorage) CreateUser(user models.User) (models.User, error) {
+func (P *pgStorage) CreateUser(user models.User) (*models.User, error) {
 	_, errInsert := P.db.Model(&user).Returning("*").Insert()
 	if errInsert != nil {
 		if isExist, err := P.db.Model(&user).Exists(); err != nil {
@@ -34,9 +34,9 @@ func (P *pgStorage) CreateUser(user models.User) (models.User, error) {
 		} else if isExist {
 			errInsert = errors.New("user already exists")
 		}
-		return models.User{}, errInsert
+		return nil, errInsert
 	}
-	return user, nil
+	return &user, nil
 }
 
 /*
@@ -72,11 +72,11 @@ func (P *pgStorage) UpdateUser(newUser models.User) (models.User, error) {
 	}
 	return newUser, nil
 */
-func (P *pgStorage) UpdateUser(userNew models.User) (models.User, error) {
+func (P *pgStorage) UpdateUser(userNew models.User) (*models.User, error) {
 	_, err := P.db.Model(&userNew).WherePK().Returning("*").Update()
 	if err != nil {
 		err = fmt.Errorf("error in updating user with id %s, : %w", userNew.ID.String(), err)
-		return models.User{}, err
+		return nil, err
 	}
-	return userNew, nil
+	return &userNew, nil
 }

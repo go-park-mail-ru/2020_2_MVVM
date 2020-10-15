@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
 	"net/http"
+	"time"
 )
 
 type ResumeHandler struct {
@@ -55,13 +56,15 @@ func (r *ResumeHandler) handlerCreateResume(c *gin.Context) {
 	userID := jwtuser.(*models.JWTUserData).ID
 
 	var reqResume struct {
-		SalaryMin       *int       `json:"salary_min"`
-		SalaryMax       *int       `json:"salary_max"`
-		Description     *string    `json:"description"`
-		Gender          *string    `json:"gender"`
-		Level           *string    `json:"level"`
-		ExperienceMonth *int       `json:"experience_month"`
-		Education       *string    `json:"education"`
+		Title           *string   `json:"title" binding:"required"`
+		AboutMe         *string   `json:"about_me" binding:"required"`
+		SalaryMin       *int      `json:"salary_min"`
+		SalaryMax       *int      `json:"salary_max"`
+		Gender          *string   `json:"gender" binding:"required"`
+		CareerLevel     *string   `json:"career_level"`
+		EducationLevel  *string   `json:"education_level"`
+		ExperienceMonth *int      `json:"experience_month"`
+		Skills          *[]string `json:"skills"`
 	}
 	if err := c.ShouldBindJSON(&reqResume); err != nil {
 		c.AbortWithError(http.StatusBadRequest, err)
@@ -69,14 +72,16 @@ func (r *ResumeHandler) handlerCreateResume(c *gin.Context) {
 	}
 
 	resume := models.Resume{
-		UserID: userID,
-		SalaryMin: reqResume.SalaryMin,
-		SalaryMax: reqResume.SalaryMax,
-		Description: reqResume.Description,
-		Gender: reqResume.Gender,
-		Level: reqResume.Level,
+		UserID:          userID,
+		Title:           reqResume.Title,
+		AboutMe:         reqResume.AboutMe,
+		SalaryMin:       reqResume.SalaryMin,
+		SalaryMax:       reqResume.SalaryMax,
+		Gender:          reqResume.Gender,
+		EducationLevel:  reqResume.EducationLevel,
+		CareerLevel:     reqResume.CareerLevel,
 		ExperienceMonth: reqResume.ExperienceMonth,
-		Education: reqResume.Education,
+		DateCreate: time.Now(),
 	}
 
 	pResume, err := r.Usecase.CreateResume(resume)

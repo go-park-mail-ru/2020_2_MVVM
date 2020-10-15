@@ -56,7 +56,7 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userById})
+	ctx.JSON(http.StatusOK, Resp{User: *userById})
 }
 
 func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
@@ -75,7 +75,7 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	ctx.JSON(http.StatusOK, Resp{User: *user})
 }
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
@@ -111,17 +111,21 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userNew})
+	ctx.JSON(http.StatusOK, Resp{User: *userNew})
 }
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
-		NickName    string `form:"nickname" json:"nickname"`
-		Name        string `form:"name" json:"name"`
-		Surname     string `form:"surname" json:"surname"`
-		Email       string `form:"email" json:"email"`
-		NewPassword string `form:"new_password" json:"new_password"`
-		OldPassword string `form:"old_password" json:"old_password"`
+		NickName      string   `form:"nickname" json:"nickname"`
+		Name          string   `form:"name" json:"name"`
+		Surname       string   `form:"surname" json:"surname"`
+		Email         string   `form:"email" json:"email"`
+		NewPassword   string   `form:"new_password" json:"new_password"`
+		OldPassword   string   `form:"old_password" json:"old_password"`
+		Phone         string   `form:"phone" json:"phone"`
+		AreaSearch    string `form:"area_search" json:"area_search"`
+		SocialNetwork []string `form:"social_network" json:"social_network"`
+		Avatar        string   `form:"avatar" json:"avatar"`
 		//Avatar   multipart.FileHeader `form:"img" json:"img"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -131,7 +135,8 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	identityKey := "myid"
 	jwtuser, _ := ctx.Get(identityKey)
 	userID := jwtuser.(*models.JWTUserData).ID
-	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
+	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name,
+												req.Surname, req.Email, req.Phone, req.AreaSearch, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
 			ctx.AbortWithError(http.StatusForbidden, err)

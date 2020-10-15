@@ -4,7 +4,7 @@
 set search_path to main;
 create type gender_type as enum ('male', 'female');
 create type career_level_type as enum ('junior', 'middle', 'senior');
-create type ed_level_type as enum ('middle', 'bachelor', 'master', 'doctoral');
+create type ed_level_type as enum ('middle school', 'high school', 'bachelor', 'master', 'doctoral');
 
 create table resume
 (
