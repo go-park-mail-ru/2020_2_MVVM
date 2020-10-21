@@ -156,7 +156,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: userNew})*/
+	ctx.JSON(http.StatusOK, RespResume{User: userNew})*/
 	ctx.JSON(http.StatusOK, userUpdate)
 }
 

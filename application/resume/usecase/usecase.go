@@ -63,6 +63,9 @@ func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 }
 
 func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.Resume, error) {
+	if limit >= 20 {
+		return nil, fmt.Errorf("Limit is too high. ")
+	}
 	r, err := u.strg.GetResumeArr(start, limit)
 	if err != nil {
 		err = fmt.Errorf("USE error in resume get list from %v to %v: error: %w", start, limit, err)

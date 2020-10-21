@@ -48,9 +48,6 @@ func (p *pgReopository) GetResumeByName(name string) (*models.Resume, error) {
 }
 
 func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
-	if limit >= 20 {
-		return nil, fmt.Errorf("Limit is too high. ")  // TODO MOVE TO USECASE
-	}
 	var r []models.Resume
 	err := p.db.Model(&r).Offset(int(start)).Limit(int(limit)).Select()
 	if err != nil {
@@ -63,7 +60,7 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error)
 func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, error) {
 	var r[]models.Resume
 
-	err := p.db.Model(&r).Where("user_id = ?", userID).Limit(5).Select()
+	err := p.db.Model(&r).Where("cand_id = ?", userID).Select()
 	if err != nil {
 		return nil, err
 	}

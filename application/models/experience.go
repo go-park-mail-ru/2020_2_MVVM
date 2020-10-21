@@ -32,7 +32,7 @@ type ExperienceOfficialComp struct {
 	Description string    `pg:"description" json:"description"`
 }
 
-type ReqCustomExperience struct {
+type CustomExperienceWithCompanies struct {
 	CompanyName string   `json:"name" binding:"required"`
 	Location    *string   `json:"location"`
 	Sphere      []string  `json:"sphere"`
@@ -43,5 +43,5 @@ type ReqCustomExperience struct {
 }
 
 type ListReqCustomExperience struct {
-	ListReqCustomExperience []ReqCustomExperience `json:"custom_experience"`
+	ListReqCustomExperience []CustomExperienceWithCompanies `json:"custom_experience"`
 }

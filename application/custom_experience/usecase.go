@@ -10,4 +10,5 @@ type IUseCaseCustomExperience interface {
 	//UpdateResume(resume models.Resume) (*models.Resume, error)
 	GetCustomExperience(id string) (*models.ExperienceCustomComp, error)
 	GetAllResumeCustomExperience(ResumeID uuid.UUID) ([]models.ExperienceCustomComp, error)
+	GetAllResumeCustomExperienceWithCompanies(ResumeID uuid.UUID) ([]models.CustomExperienceWithCompanies, error)
 }

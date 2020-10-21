@@ -26,7 +26,7 @@ func (p *pgReopository) CreateCustomCompany(company models.CustomCompany) (*mode
 
 func (p *pgReopository) GetCustomCompanyById(id string) (*models.CustomCompany, error) {
 	var company models.CustomCompany
-	err := p.db.Model(&company).Where("custom_company_id = ?", id).Select()
+	err := p.db.Model(&company).Where("company_id = ?", id).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select custom company with id: %s : error: %w", id, err)
 		return nil, err
