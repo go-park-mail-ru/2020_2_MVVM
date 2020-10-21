@@ -10,10 +10,15 @@ type Education struct {
 
 	EdId        uuid.UUID `pg:"ed_id,pk,type:uuid" json:"id"`
 	CandId      uuid.UUID `pg:"cand_id,fk,type:uuid" json:"cand_id"`
-	University  *string    `pg:"university" json:"university"`
-	Level       *string    `pg:"level" json:"level"`
+	ResumeId    uuid.UUID `pg:"resume_id,fk,type:uuid" json:"resume_id"`
+	University  *string   `pg:"university, notnull" json:"university"`
+	Level       *string   `pg:"level" json:"level"`
 	Begin       time.Time `pg:"begin" json:"begin"`
 	Finish      time.Time `pg:"finish" json:"finish"`
-	Department  *string    `pg:"department" json:"department"`
-	Description *string    `pg:"description" json:"description"`
+	Department  *string   `pg:"department" json:"department"`
+	Description *string   `pg:"description" json:"description"`
+}
+
+type ListEducations struct {
+	Education []Education `json:"education"`
 }

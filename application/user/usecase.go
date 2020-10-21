@@ -6,6 +6,7 @@ import (
 )
 
 type IUseCaseUser interface {
+	Login(user models.User) (*models.User, error)
 	GetUserByID(id string) (*models.User, error)
 	CreateUser(user models.User) (*models.User, error)
 	UpdateUser(user_id uuid.UUID, newPassword, oldPassword, nick, name, surname, email, phone,

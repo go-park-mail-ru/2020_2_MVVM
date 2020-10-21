@@ -8,6 +8,12 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	CustomCompanyRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/repository"
+	CustomCompanyUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/usecase"
+	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
+	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
+	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
+	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
@@ -228,8 +234,16 @@ func NewApp(config Config) *App {
 	UserHandler.NewRest(api.Group("/users"), userCase, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
+	educationRep := EducationRepository.NewPgRepository(db)
+	customCompanyRep := CustomCompanyRepository.NewPgRepository(db)
+	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
+
 	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(api.Group("/resume"), resume, authMiddleware)
+	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
+	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
+	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep)
+
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, authMiddleware)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)

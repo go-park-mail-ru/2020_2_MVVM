@@ -25,6 +25,17 @@ func NewUserUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
+func (U *UserUseCase) Login(user models.User) (*models.User, error) {
+	userNew, err := U.repos.CreateUser(user)
+	if err != nil {
+		if err.Error() != "user already exists" {
+			err = fmt.Errorf("error in user get by id func : %w", err)
+		}
+		return nil, err
+	}
+	return userNew, nil
+}
+
 func (U *UserUseCase) GetUserByID(id string) (*models.User, error) {
 	userById, err := U.repos.GetUserByID(id)
 	if err != nil {
