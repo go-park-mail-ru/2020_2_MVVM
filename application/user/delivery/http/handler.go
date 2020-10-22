@@ -7,13 +7,10 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"golang.org/x/crypto/bcrypt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
-const IMAGE_DIR = "static"
+//const IMAGE_DIR = "static"
 
 type UserHandler struct {
 	UserUseCase user.IUseCaseUser
@@ -155,6 +152,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, userUpdate)
 }
 
+/*
 func addOrUpdateUserImage(imgPath string, data io.Reader) error {
 	path := filepath.Join(IMAGE_DIR, imgPath)
 
@@ -168,4 +166,4 @@ func addOrUpdateUserImage(imgPath string, data io.Reader) error {
 		return err
 	}
 	return nil
-}
+}*/

@@ -108,8 +108,8 @@ func NewApp(config Config) *App {
 		SendCookie:     true,
 		SecureCookie:   false, //non HTTPS dev environments
 		CookieHTTPOnly: true,  // JS can't modify
-		//CookieDomain:     "localhost",
-		CookieDomain: "95.163.212.36",
+		CookieDomain:     "localhost",
+		//CookieDomain: "95.163.212.36",
 
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			// This function should verify the user credentials given the gin context
@@ -119,7 +119,7 @@ func NewApp(config Config) *App {
 				Email    string `form:"email" json:"email" binding:"required"`
 				Password string `form:"password" json:"password" binding:"required"`
 			}
-			if err := c.ShouldBindJSON(&credentials); err != nil {
+			if err := c.ShouldBind(&credentials); err != nil {
 				return "", errors.New("missing Username, Password, or Email") // make error constant
 			}
 
