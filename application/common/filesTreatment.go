@@ -9,10 +9,7 @@ import (
 	"path/filepath"
 )
 
-const imgDir = "static"
-const maxImgSize = 32 << 13
-
-func fileValidation(file multipart.File, header multipart.FileHeader, allowedFormats []string, allowedSize int64) error{
+func FileValidation(header *multipart.FileHeader, allowedFormats []string, allowedSize int64) error {
 	fileExt := filepath.Ext(header.Filename)
 	extWasFind := false
 	for i := 0; i < len(allowedFormats); i++ {
@@ -20,8 +17,8 @@ func fileValidation(file multipart.File, header multipart.FileHeader, allowedFor
 			extWasFind = true
 		}
 	}
-	if extWasFind == false || (fileExt != ".png" && fileExt != ".jpeg")  {
-		return errors.New("not supported file extension")
+	if extWasFind == false || (fileExt != ".png" && fileExt != ".jpeg") {
+		return NewErr(uploadImgError, "not supported file extension", allowedFormats)
 	}
 	if header.Size > allowedSize {
 		return errors.New(fmt.Sprintf("file size too big, max allowed: %d", allowedSize))

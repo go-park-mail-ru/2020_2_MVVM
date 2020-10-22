@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
@@ -61,8 +62,8 @@ type Image struct {
 
 func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
-		VacancyName        string `form:"vacancy_name" binding:"required"`
-		CompanyName        string `form:"company_name" binding:"required"`
+		VacancyName string `form:"vacancy_name" binding:"required"`
+		CompanyName string `form:"company_name" binding:"required"`
 		//VacancyDescription string `json:"vacancy_description" binding:"required"`
 		//WorkExperience     string `json:"work_experience" binding:"required"`
 		//CompanyAddress     string `json:"company_address" binding:"required"`
@@ -71,31 +72,14 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	}
 
 	file, header, err := ctx.Request.FormFile("Avatar")
-	if err != nil {
-		if err.Error() == "http: no such file" {
-			return
-		}
+	if err != nil && err.Error() != "http: no such file" {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if err := common.FileValidation(header, []string{".jpeg", ".png"}, maxImgSize); err != nil {
 
-	img := Image{
-		Path: filepath.Dir(header.Filename),
-		Filename: filepath.Base(header.Filename),
-		Ext: filepath.Ext(header.Filename),
-		ContentType: header.Header.Get("Content-Type"),
-		Bytes: header.Size,
-	}
-	if ext := filepath.Ext(header.Filename); ext == ".png" || ext == ".jpeg" {
-		if header.Size > 1200000 {
-			fmt.Println("too big!")
-		} else if err := addOrUpdateUserImage("temp.jpeg", file); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
 	}
 
-	fmt.Println(img)
 	//identityKey := "myid"
 	//jwtUser, _ := ctx.Get(identityKey)
 	//userID := jwtUser.(*models.JWTUserData).ID
@@ -104,8 +88,8 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		return
 	}
 	/*vac, err := V.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
-		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
-		Skills: req.Skills, Salary: req.Salary})*/
+	VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
+	Skills: req.Skills, Salary: req.Salary})*/
 	/*if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -132,7 +116,6 @@ func addOrUpdateUserImage(imgPath string, data io.Reader) error {
 	return nil
 }
 
-
 func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
@@ -158,7 +141,7 @@ func (V *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 	var req struct {
 		VacancyName        string `json:"vacancy_name" binding:"required"`
 		CompanyName        string `json:"company_name" binding:"required"`
-		VacancyDescription string `jsnewon:"vacancy_description" binding:"required"`
+		VacancyDescription string `json:"vacancy_description" binding:"required"`
 		WorkExperience     string `json:"work_experience" binding:"required"`
 		CompanyAddress     string `json:"company_address" binding:"required"`
 		Skills             string `json:"skills" binding:"required"`
