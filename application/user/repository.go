@@ -6,4 +6,5 @@ type RepositoryUser interface {
 	GetUserByID(id string) (*models.User, error)
 	CreateUser(user models.User) (*models.User, error)
 	UpdateUser(user models.User) (*models.User, error)
+	Login(user models.UserLogin) (*models.User, error)
 }

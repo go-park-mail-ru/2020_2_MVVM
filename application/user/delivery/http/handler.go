@@ -1,11 +1,12 @@
 package http
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"net/http"
@@ -27,30 +28,35 @@ type RespError struct {
 	Err string `json:"error"`
 }
 
-func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
+func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gin.HandlerFunc) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
-	rest.routes(router, authMiddleware)
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+func (U *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:user_id", U.handlerGetUserByID)
 	router.POST("/add", U.handlerCreateUser)
-	//router.PUT("/update/:user_id", U.handlerUpdateUser)
-	router.Use(authMiddleware.MiddlewareFunc())
+	router.POST("/login", U.handlerLogin)
+	router.Use(AuthRequired)
 	{
+		router.POST("/logout", U.handlerLogout)
 		router.GET("/me", U.handlerGetCurrentUser)
 		router.PUT("/update", U.handlerUpdateUser)
 	}
 }
 
-func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
-	// move to constants
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
 
-	userById, err := U.UserUseCase.GetUserByID(userID.String())
+
+func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+	userID := session.Get("user_id")
+
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+
+	userById, err := U.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -76,6 +82,44 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: *user})
+}
+
+func (U *UserHandler) handlerLogin(ctx *gin.Context) {
+	var reqUser models.UserLogin
+	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+		//return "", errors.New("missing Username, Password, or Email") // make error constant
+	}
+
+	user, err := U.UserUseCase.Login(reqUser)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	session := sessions.Default(ctx)
+	session.Set("user_id", user.ID.String())
+	err = session.Save()
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Resp{User: *user})
+
+}
+
+func (U *UserHandler) handlerLogout(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+	session.Clear()
+	session.Options(sessions.Options{MaxAge: -1})
+	err := session.Save()
+	if err != nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+	ctx.Status(http.StatusOK)
 }
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
@@ -132,10 +176,14 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
-	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name,
+
+	session := sessions.Default(ctx)
+	userID := session.Get("user_id")
+
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+	userUpdate, err := U.UserUseCase.UpdateUser(userID.(uuid.UUID), req.NewPassword, req.OldPassword, req.NickName, req.Name,
 												req.Surname, req.Email, req.Phone, req.AreaSearch, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {

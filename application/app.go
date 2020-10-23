@@ -2,10 +2,10 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	CustomCompanyRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/repository"
@@ -14,7 +14,6 @@ import (
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
 	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
 	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
@@ -25,9 +24,7 @@ import (
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/go-pg/pg/v9"
-	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -62,8 +59,6 @@ type App struct {
 	route    *gin.Engine
 	db       *pg.DB
 }
-
-var log *Logger
 
 func NewApp(config Config) *App {
 	log := &Logger{
@@ -103,113 +98,120 @@ func NewApp(config Config) *App {
 	})
 
 	// the jwt middleware
-	identityKey := "myid"
+	//identityKey := "myid"
 
-	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:       "my super test zone",
-		Key:         []byte("my super secret and long secret-secret key"),
-		Timeout:     20 * time.Hour,
-		MaxRefresh:  20 * time.Hour,
-		IdentityKey: identityKey,
+	//authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
+	//	Realm:       "my super test zone",
+	//	Key:         []byte("my super secret and long secret-secret key"),
+	//	Timeout:     20 * time.Hour,
+	//	MaxRefresh:  20 * time.Hour,
+	//	IdentityKey: identityKey,
+	//
+	//	SendCookie:     true,
+	//	SecureCookie:   false, //non HTTPS dev environments
+	//	CookieHTTPOnly: true,  // JS can't modify
+	//	//CookieDomain:     "localhost",
+	//	CookieDomain: "95.163.212.36",
+	//
+	//	Authenticator: func(c *gin.Context) (interface{}, error) {
+	//		// This function should verify the user credentials given the gin context
+	//		//(i.e. password matches hashed password for a given user email, and any other authentication logic).
+	//		var credentials struct {
+	//			Nickname string `form:"nickname" json:"nickname" binding:"required"`
+	//			Email    string `form:"email" json:"email" binding:"required"`
+	//			Password string `form:"password" json:"password" binding:"required"`
+	//		}
+	//		if err := c.ShouldBindJSON(&credentials); err != nil {
+	//			return "", errors.New("missing Username, Password, or Email") // make error constant
+	//		}
+	//
+	//		// go to the database and fetch the user
+	//		var user models.User
+	//		err := db.Model(&user).
+	//			Where("email = ?", credentials.Email).
+	//			Where("nickname = ?", credentials.Nickname).
+	//			Select()
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//
+	//		// compare password with the hashed one
+	//		err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(credentials.Password))
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//
+	//		// user is OK
+	//		return &models.JWTUserData{
+	//			ID:       user.ID,
+	//			Nickname: user.Nickname,
+	//			Email:    user.Email,
+	//		}, nil
+	//	},
+	//	PayloadFunc: func(data interface{}) jwt.MapClaims {
+	//		if v, ok := data.(*models.JWTUserData); ok {
+	//			return jwt.MapClaims{
+	//				identityKey: v.ID,
+	//				"nickname":  v.Nickname,
+	//				"email":     v.Email,
+	//			}
+	//		}
+	//		return jwt.MapClaims{}
+	//	},
+	//	IdentityHandler: func(c *gin.Context) interface{} {
+	//		claims := jwt.ExtractClaims(c)
+	//		uid, _ := uuid.Parse(claims[identityKey].(string))
+	//		return &models.JWTUserData{
+	//			ID:       uid,
+	//			Nickname: claims["nickname"].(string),
+	//			Email:    claims["email"].(string),
+	//		}
+	//	},
+	//	Authorizator: func(data interface{}, c *gin.Context) bool {
+	//		return true
+	//	},
+	//	Unauthorized: func(c *gin.Context, code int, message string) {
+	//		c.JSON(code, gin.H{
+	//			"code":    code,
+	//			"message": message,
+	//		})
+	//	},
+	//	// TokenLookup is a string in the form of "<source>:<name>" that is used
+	//	// to extract token from the request.
+	//	// Optional. Default value "header:Authorization".
+	//	// Possible values:
+	//	// - "header:<name>"
+	//	// - "query:<name>"
+	//	// - "cookie:<name>"
+	//	// - "param:<name>"
+	//	TokenLookup: "header: Authorization, query: token, cookie: jwt",
+	//	// TokenLookup: "query:token",
+	//	// TokenLookup: "cookie:token",
+	//
+	//	// TokenHeadName is a string in the header. Default value is "Bearer"
+	//	TokenHeadName: "Bearer",
+	//
+	//	// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
+	//	TimeFunc:       time.Now,
+	//	CookieSameSite: http.SameSiteNoneMode,
+	//})
 
-		SendCookie:     true,
-		SecureCookie:   false, //non HTTPS dev environments
-		CookieHTTPOnly: true,  // JS can't modify
-		//CookieDomain:     "localhost",
-		CookieDomain: "95.163.212.36",
+	//cookie.NewStore()
 
-		Authenticator: func(c *gin.Context) (interface{}, error) {
-			// This function should verify the user credentials given the gin context
-			//(i.e. password matches hashed password for a given user email, and any other authentication logic).
-			var credentials struct {
-				Nickname string `form:"nickname" json:"nickname" binding:"required"`
-				Email    string `form:"email" json:"email" binding:"required"`
-				Password string `form:"password" json:"password" binding:"required"`
-			}
-			if err := c.ShouldBindJSON(&credentials); err != nil {
-				return "", errors.New("missing Username, Password, or Email") // make error constant
-			}
+	gin.Default()
+	//store := cookie.NewStore([]byte("secret"))
+	store, _ := redis.NewStore(10, "tcp", "localhost:7001", "", []byte("secret"))
+	r.Use(sessions.Sessions("mysession", store))
 
-			// go to the database and fetch the user
-			var user models.User
-			err := db.Model(&user).
-				Where("email = ?", credentials.Email).
-				Where("nickname = ?", credentials.Nickname).
-				Select()
-			if err != nil {
-				return nil, err
-			}
+	//if err != nil {
+	//	log.ErrorLogger.Fatal("JWT Error:" + err.Error())
+	//}
 
-			// compare password with the hashed one
-			err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(credentials.Password))
-			if err != nil {
-				return nil, err
-			}
+	//errInit := authMiddleware.MiddlewareInit()
 
-			// user is OK
-			return &models.JWTUserData{
-				ID:       user.ID,
-				Nickname: user.Nickname,
-				Email:    user.Email,
-			}, nil
-		},
-		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*models.JWTUserData); ok {
-				return jwt.MapClaims{
-					identityKey: v.ID,
-					"nickname":  v.Nickname,
-					"email":     v.Email,
-				}
-			}
-			return jwt.MapClaims{}
-		},
-		IdentityHandler: func(c *gin.Context) interface{} {
-			claims := jwt.ExtractClaims(c)
-			uid, _ := uuid.Parse(claims[identityKey].(string))
-			return &models.JWTUserData{
-				ID:       uid,
-				Nickname: claims["nickname"].(string),
-				Email:    claims["email"].(string),
-			}
-		},
-		Authorizator: func(data interface{}, c *gin.Context) bool {
-			return true
-		},
-		Unauthorized: func(c *gin.Context, code int, message string) {
-			c.JSON(code, gin.H{
-				"code":    code,
-				"message": message,
-			})
-		},
-		// TokenLookup is a string in the form of "<source>:<name>" that is used
-		// to extract token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		// - "param:<name>"
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-		// TokenLookup: "query:token",
-		// TokenLookup: "cookie:token",
-
-		// TokenHeadName is a string in the header. Default value is "Bearer"
-		TokenHeadName: "Bearer",
-
-		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-		TimeFunc:       time.Now,
-		CookieSameSite: http.SameSiteNoneMode,
-	})
-
-	if err != nil {
-		log.ErrorLogger.Fatal("JWT Error:" + err.Error())
-	}
-
-	errInit := authMiddleware.MiddlewareInit()
-
-	if errInit != nil {
-		log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
-	}
+	//if errInit != nil {
+	//	log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
+	//}
 
 	api := r.Group("/api/v1")
 
@@ -226,12 +228,9 @@ func NewApp(config Config) *App {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	api.POST("/auth/login", authMiddleware.LoginHandler)
-	// end jwt middleware
-
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api.Group("/users"), userCase, authMiddleware)
+	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
@@ -243,7 +242,7 @@ func NewApp(config Config) *App {
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, authMiddleware)
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)

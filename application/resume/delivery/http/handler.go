@@ -1,7 +1,7 @@
 package http
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
@@ -26,22 +26,22 @@ func NewRest(router *gin.RouterGroup,
 	usecaseEducation education.IUseCaseEducation,
 	usecaseCustomCompany custom_company.IUseCaseCustomCompany,
 	usecaseCustomExperience custom_experience.IUseCaseCustomExperience,
-	authMiddleware *jwt.GinJWTMiddleware) *ResumeHandler {
+	AuthRequired gin.HandlerFunc) *ResumeHandler {
 	rest := &ResumeHandler{
 		UsecaseResume:           usecaseResume,
 		UsecaseEducation:        usecaseEducation,
 		UsecaseCustomCompany:    usecaseCustomCompany,
 		UsecaseCustomExperience: usecaseCustomExperience,
 	}
-	rest.routes(router, authMiddleware)
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (r *ResumeHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)
 	router.GET("/page", r.handlerGetResumeList)
 
-	router.Use(authMiddleware.MiddlewareFunc())
+	router.Use(AuthRequired)
 	{
 		router.GET("/mine", r.handlerGetAllCurrentUserResume)
 		router.POST("/add", r.handlerCreateResume)
@@ -50,9 +50,16 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJ
 }
 
 func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+	session := sessions.Default(ctx)
+	userIDStr := session.Get("user_id")
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
 	pResume, err := r.UsecaseResume.GetAllUserResume(userID)
 	if err != nil {
@@ -68,9 +75,17 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	// move to constants
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+
+	session := sessions.Default(ctx)
+	userIDStr := session.Get("user_id")
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
 	var reqResume models.Resume
 	if err := ctx.ShouldBindBodyWith(&reqResume, binding.JSON); err != nil {

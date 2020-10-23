@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/go-pg/pg/v9"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func NewPgRepository(db *pg.DB) user.RepositoryUser {
@@ -14,6 +15,23 @@ func NewPgRepository(db *pg.DB) user.RepositoryUser {
 
 type pgStorage struct {
 	db *pg.DB
+}
+
+func (P *pgStorage) Login(user models.UserLogin) (*models.User, error) {
+	var userDB models.User
+	err := P.db.Model(&userDB).
+		Where("email = ?", user.Email).
+		Where("nickname = ?", user.Nickname).
+		Select()
+	if err != nil {
+		return nil, err
+	}
+	// compare password with the hashed one
+	err = bcrypt.CompareHashAndPassword(userDB.PasswordHash, []byte(user.Password))
+	if err != nil {
+		return nil, err
+	}
+	return &userDB, nil
 }
 
 func (P *pgStorage) GetUserByID(id string) (*models.User, error) {
