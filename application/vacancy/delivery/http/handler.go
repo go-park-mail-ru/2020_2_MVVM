@@ -7,9 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
-	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 )
 
@@ -23,14 +21,14 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy) *VacancyH
 	return rest
 }
 
-func (V *VacancyHandler) routes(router *gin.RouterGroup) {
-	router.GET("/vacancy/id/:vacancy_id", V.handlerGetVacancyById)
-	router.GET("/vacancy/page", V.handlerGetVacancyList)
-	router.PUT("/vacancy/update/:vacancy_id", V.handlerUpdateVacancy)
-	router.POST("/vacancy/add", V.handlerCreateVacancy)
+func (v *VacancyHandler) routes(router *gin.RouterGroup) {
+	router.GET("/vacancy/id/:vacancy_id", v.handlerGetVacancyById)
+	router.GET("/vacancy/page", v.handlerGetVacancyList)
+	router.PUT("/vacancy/update/:vacancy_id", v.handlerUpdateVacancy)
+	router.POST("/vacancy/add", v.handlerCreateVacancy)
 }
 
-func (V *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
+func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 	var req struct {
 		VacID uuid.UUID `json:"vacancy_id" binding:"required"`
 	}
@@ -40,7 +38,7 @@ func (V *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 		return
 	}
 
-	vac, err := V.VacUseCase.GetVacancy(req.VacID.String())
+	vac, err := v.VacUseCase.GetVacancy(req.VacID.String())
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -60,7 +58,7 @@ type Image struct {
 	Bytes       int64  `validate:"required,gt=0"`
 }
 
-func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
+func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
 		VacancyName string `form:"vacancy_name" binding:"required"`
 		CompanyName string `form:"company_name" binding:"required"`
@@ -72,12 +70,19 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	}
 
 	file, header, err := ctx.Request.FormFile("Avatar")
-	if err != nil && err.Error() != "http: no such file" {
+	if err == nil {
+		if err := common.FileValidation(header, []string{".jpeg", ".png"}, common.MaxImgSize); err.Code() == common.FileValid {
+			if err := common.AddOrUpdateUserImage(file, fmt.Sprintf("temp%s", filepath.Ext(header.Filename))); err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			ctx.JSON(http.StatusOK, err)
+			return
+		}
+	} else if err.Error() != "http: no such file" {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
-	}
-	if err := common.FileValidation(header, []string{".jpeg", ".png"}, maxImgSize); err != nil {
-
 	}
 
 	//identityKey := "myid"
@@ -87,7 +92,7 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	/*vac, err := V.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
+	/*vac, err := v.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 	VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
 	Skills: req.Skills, Salary: req.Salary})*/
 	/*if err != nil {
@@ -101,22 +106,7 @@ func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{})
 }
 
-func addOrUpdateUserImage(imgPath string, data io.Reader) error {
-	path := filepath.Join("static", imgPath)
-
-	dst, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
+func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
 		End   uint `form:"end"`
@@ -125,7 +115,7 @@ func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vacList, err := V.VacUseCase.GetVacancyList(req.Start, req.End)
+	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -137,7 +127,7 @@ func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vacList})
 }
 
-func (V *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
+func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 	var req struct {
 		VacancyName        string `json:"vacancy_name" binding:"required"`
 		CompanyName        string `json:"company_name" binding:"required"`
@@ -154,7 +144,7 @@ func (V *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vac, err := V.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
+	vac, err := v.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
 		Skills: req.Skills, Salary: req.Salary})
 	if err != nil {

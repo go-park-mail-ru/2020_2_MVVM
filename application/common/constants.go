@@ -1,5 +1,6 @@
 package common
 
-const imgDir = "static"
-const maxImgSize = 32 << 13
-const uploadImgError = -1
+const ImgDir = "static"
+const MaxImgSize = 32 << 13
+const UploadFileError = -1
+const FileValid = 0

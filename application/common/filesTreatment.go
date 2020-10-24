@@ -1,7 +1,6 @@
 package common
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -9,7 +8,10 @@ import (
 	"path/filepath"
 )
 
-func FileValidation(header *multipart.FileHeader, allowedFormats []string, allowedSize int64) error {
+func FileValidation(header *multipart.FileHeader, allowedFormats []string, allowedSize int64) Err {
+	if header == nil {
+		return NewErr(UploadFileError, "something went wrong", nil)
+	}
 	fileExt := filepath.Ext(header.Filename)
 	extWasFind := false
 	for i := 0; i < len(allowedFormats); i++ {
@@ -18,16 +20,16 @@ func FileValidation(header *multipart.FileHeader, allowedFormats []string, allow
 		}
 	}
 	if extWasFind == false || (fileExt != ".png" && fileExt != ".jpeg") {
-		return NewErr(uploadImgError, "not supported file extension", allowedFormats)
+		return NewErr(UploadFileError, "not supported file extension", allowedFormats)
 	}
 	if header.Size > allowedSize {
-		return errors.New(fmt.Sprintf("file size too big, max allowed: %d", allowedSize))
+		return NewErr(UploadFileError, fmt.Sprintf("file size too big, max allowed: %d kB", allowedSize / 1000), nil)
 	}
-	return nil
+	return NewErr(FileValid, "", nil)
 }
 
-func addOrUpdateUserImage(imgPath string, data io.Reader) error {
-	path := filepath.Join(imgDir, imgPath)
+func AddOrUpdateUserImage(data io.Reader, imgPath string) error {
+	path := filepath.Join(ImgDir, imgPath)
 
 	dst, err := os.Create(path)
 	if err != nil {
