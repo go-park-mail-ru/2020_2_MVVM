@@ -115,8 +115,8 @@ func NewApp(config Config) *App {
 	}
 	r.Use(sessions.Sessions("mysession", store))
 	store.Options(sessions.Options{
-		//Domain:   "95.163.212.36",
-		Domain:   "localhost",
+		Domain:   "studhunt",
+		//Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
