@@ -11,8 +11,8 @@ create table vacancy
     vacancy_id          uuid default uuid_generate_v4() not null
         constraint vacancy_pkey
             primary key,
-    user_id             uuid default uuid_generate_v4() not null
-        references users (user_id),
+--     user_id             uuid default uuid_generate_v4() not null
+--         references candidates (cand_id),
     vacancy_name        varchar(128)                    not null,
     company_name        varchar(128)                    not null,
     vacancy_description text,

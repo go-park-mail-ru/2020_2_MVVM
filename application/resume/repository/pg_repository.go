@@ -48,9 +48,6 @@ func (p *pgReopository) GetResumeByName(name string) (*models.Resume, error) {
 }
 
 func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
-	if limit >= 20 {
-		return nil, fmt.Errorf("Limit is too high. ")  // TODO MOVE TO USECASE
-	}
 	var r []models.Resume
 	err := p.db.Model(&r).Offset(int(start)).Limit(int(limit)).Select()
 	if err != nil {
@@ -63,42 +60,18 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error)
 func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, error) {
 	var r[]models.Resume
 
-	err := p.db.Model(&r).Where("user_id = ?", userID).Limit(5).Select()
+	err := p.db.Model(&r).Where("cand_id = ?", userID).Select()
 	if err != nil {
 		return nil, err
 	}
 	return r, nil
 }
 
-//func (p *pgReopository) UpdateResume(id uuid.UUID, updResume *models.Resume) (*models.Resume, error) {
-//	var r models.Resume
-//	err := p.db.Model(&r).Where("resume_id = ?", id).Select()
-//	if err != nil {
-//		err = fmt.Errorf("error in select resume with id: %s : error: %w", id, err)
-//		return nil, err
-//	}
-//
-//	updResume.ID = id
-//	if updResume.Title != "" {
-//		r.Title = updResume.Title
-//	}
-//	if updResume.Salary != 0 {
-//		r.Salary = updResume.Salary
-//	}
-//	if updResume.Description != "" {
-//		r.Description = updResume.Description
-//	}
-//	if updResume.Skills != "" {
-//		r.Skills = updResume.Skills
-//	}
-//	if updResume.Views != 0 {
-//		r.Views = updResume.Views
-//	}
-//
-//	_, err = p.db.Model(&r).WherePK().Update()
-//	if err != nil {
-//		err = fmt.Errorf("error in select resume with id: %s : error: %w", id, err)
-//		return nil, err
-//	}
-//	return &r, nil
-//}
+func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, error) {
+	_, err := p.db.Model(newResume).WherePK().Returning("*").Update()
+	if err != nil {
+		err = fmt.Errorf("error in updating resume with id %s, : %w", newResume.ID.String(), err)
+		return nil, err
+	}
+	return newResume, nil
+}

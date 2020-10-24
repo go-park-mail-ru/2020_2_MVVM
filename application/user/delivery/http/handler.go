@@ -1,7 +1,7 @@
 package http
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -23,40 +23,39 @@ type Resp struct {
 	User models.User `json:"user"`
 }
 
-type RespError struct {
-	Err string `json:"error"`
-}
-
-func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
+func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gin.HandlerFunc) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
-	rest.routes(router, authMiddleware)
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
+func (U *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:user_id", U.handlerGetUserByID)
-	router.POST("/add", U.handlerCreateUser)
-	//router.PUT("/update/:user_id", U.handlerUpdateUser)
-	router.Use(authMiddleware.MiddlewareFunc())
+	router.POST("/", U.handlerCreateUser)
+	router.POST("/login", U.handlerLogin)
+	router.Use(AuthRequired)
 	{
+		router.POST("/logout", U.handlerLogout)
 		router.GET("/me", U.handlerGetCurrentUser)
-		router.PUT("/update", U.handlerUpdateUser)
+		router.PUT("/", U.handlerUpdateUser)
 	}
 }
 
 func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
-	// move to constants
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
+	session := sessions.Default(ctx)
+	userID := session.Get("user_id")
 
-	userById, err := U.UserUseCase.GetUserByID(userID.String())
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+
+	userById, err := U.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userById})
+	ctx.JSON(http.StatusOK, Resp{User: *userById})
 }
 
 func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
@@ -75,16 +74,57 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	ctx.JSON(http.StatusOK, Resp{User: *user})
+}
+
+func (U *UserHandler) handlerLogin(ctx *gin.Context) {
+	var reqUser models.UserLogin
+	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
+		if errMsg := err.Error(); errMsg == "missing Nickname, Password, or Email" {
+			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+		} else {
+			ctx.AbortWithError(http.StatusForbidden, err)
+		}
+		return
+	}
+
+	user, err := U.UserUseCase.Login(reqUser)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	session := sessions.Default(ctx)
+	session.Set("user_id", user.ID.String())
+	err = session.Save()
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Resp{User: *user})
+
+}
+
+func (U *UserHandler) handlerLogout(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+	session.Clear()
+	session.Options(sessions.Options{MaxAge: -1})
+	err := session.Save()
+	if err != nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+	ctx.Status(http.StatusOK)
 }
 
 func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
-		NickName string `form:"nickname" json:"nickname" binding:"required"`
-		Name     string `form:"name" json:"name" binding:"required"`
-		Surname  string `form:"surname" json:"surname" binding:"required"`
-		Email    string `form:"email" json:"email" binding:"required"`
-		Password string `form:"password" json:"password" binding:"required"`
+		NickName string `json:"nickname" binding:"required"`
+		Name     string `json:"name" binding:"required"`
+		Surname  string `json:"surname" binding:"required"`
+		Email    string `json:"email" binding:"required"`
+		Password string `json:"password" binding:"required"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -104,34 +144,43 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == "user already exists" {
-			ctx.JSON(http.StatusConflict, RespError{Err: errMsg})
+			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
 		} else {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userNew})
+	ctx.JSON(http.StatusOK, Resp{User: *userNew})
 }
 
 func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
-		NickName    string `form:"nickname" json:"nickname"`
-		Name        string `form:"name" json:"name"`
-		Surname     string `form:"surname" json:"surname"`
-		Email       string `form:"email" json:"email"`
-		NewPassword string `form:"new_password" json:"new_password"`
-		OldPassword string `form:"old_password" json:"old_password"`
+		NickName      string `json:"nickname"`
+		Name          string `json:"name"`
+		Surname       string `json:"surname"`
+		Email         string `json:"email"`
+		NewPassword   string `json:"new_password"`
+		OldPassword   string `json:"old_password"`
+		Phone         string `json:"phone"`
+		AreaSearch    string `json:"area_search"`
+		SocialNetwork string `json:"social_network"`
+		Avatar        string `json:"avatar"`
 		//Avatar   multipart.FileHeader `form:"img" json:"img"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
-	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
+
+	session := sessions.Default(ctx)
+	userID := session.Get("user_id")
+
+	//identityKey := "myid"
+	//jwtuser, _ := ctx.Get(identityKey)
+	//userID := jwtuser.(*models.JWTUserData).ID
+	userUpdate, err := U.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.NickName, req.Name,
+		req.Surname, req.Email, req.Phone, req.AreaSearch, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
 			ctx.AbortWithError(http.StatusForbidden, err)
@@ -139,11 +188,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		}
 	}
 	if err != nil {
-		if errMsg := err.Error(); errMsg == "user already exists" {
-			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
-		} else {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-		}
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	/*img, err := req.Avatar.Open()
@@ -151,7 +196,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: userNew})*/
+	ctx.JSON(http.StatusOK, RespResume{User: userNew})*/
 	ctx.JSON(http.StatusOK, userUpdate)
 }
 
