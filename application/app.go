@@ -45,6 +45,7 @@ type Config struct {
 	Listen  string    `yaml:"listen"`
 	Db      *dbConfig `yaml:"db"`
 	DocPath string    `yaml:"docPath"`
+	Redis   string    `yaml:"redis_address"`
 }
 
 type Logger struct {
@@ -97,121 +98,12 @@ func NewApp(config Config) *App {
 		Database: config.Db.Name,
 	})
 
-	// the jwt middleware
-	//identityKey := "myid"
-
-	//authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-	//	Realm:       "my super test zone",
-	//	Key:         []byte("my super secret and long secret-secret key"),
-	//	Timeout:     20 * time.Hour,
-	//	MaxRefresh:  20 * time.Hour,
-	//	IdentityKey: identityKey,
-	//
-	//	SendCookie:     true,
-	//	SecureCookie:   false, //non HTTPS dev environments
-	//	CookieHTTPOnly: true,  // JS can't modify
-	//	//CookieDomain:     "localhost",
-	//	CookieDomain: "95.163.212.36",
-	//
-	//	Authenticator: func(c *gin.Context) (interface{}, error) {
-	//		// This function should verify the user credentials given the gin context
-	//		//(i.e. password matches hashed password for a given user email, and any other authentication logic).
-	//		var credentials struct {
-	//			Nickname string `form:"nickname" json:"nickname" binding:"required"`
-	//			Email    string `form:"email" json:"email" binding:"required"`
-	//			Password string `form:"password" json:"password" binding:"required"`
-	//		}
-	//		if err := c.ShouldBindJSON(&credentials); err != nil {
-	//			return "", errors.New("missing Username, Password, or Email") // make error constant
-	//		}
-	//
-	//		// go to the database and fetch the user
-	//		var user models.User
-	//		err := db.Model(&user).
-	//			Where("email = ?", credentials.Email).
-	//			Where("nickname = ?", credentials.Nickname).
-	//			Select()
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//
-	//		// compare password with the hashed one
-	//		err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(credentials.Password))
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//
-	//		// user is OK
-	//		return &models.JWTUserData{
-	//			ID:       user.ID,
-	//			Nickname: user.Nickname,
-	//			Email:    user.Email,
-	//		}, nil
-	//	},
-	//	PayloadFunc: func(data interface{}) jwt.MapClaims {
-	//		if v, ok := data.(*models.JWTUserData); ok {
-	//			return jwt.MapClaims{
-	//				identityKey: v.ID,
-	//				"nickname":  v.Nickname,
-	//				"email":     v.Email,
-	//			}
-	//		}
-	//		return jwt.MapClaims{}
-	//	},
-	//	IdentityHandler: func(c *gin.Context) interface{} {
-	//		claims := jwt.ExtractClaims(c)
-	//		uid, _ := uuid.Parse(claims[identityKey].(string))
-	//		return &models.JWTUserData{
-	//			ID:       uid,
-	//			Nickname: claims["nickname"].(string),
-	//			Email:    claims["email"].(string),
-	//		}
-	//	},
-	//	Authorizator: func(data interface{}, c *gin.Context) bool {
-	//		return true
-	//	},
-	//	Unauthorized: func(c *gin.Context, code int, message string) {
-	//		c.JSON(code, gin.H{
-	//			"code":    code,
-	//			"message": message,
-	//		})
-	//	},
-	//	// TokenLookup is a string in the form of "<source>:<name>" that is used
-	//	// to extract token from the request.
-	//	// Optional. Default value "header:Authorization".
-	//	// Possible values:
-	//	// - "header:<name>"
-	//	// - "query:<name>"
-	//	// - "cookie:<name>"
-	//	// - "param:<name>"
-	//	TokenLookup: "header: Authorization, query: token, cookie: jwt",
-	//	// TokenLookup: "query:token",
-	//	// TokenLookup: "cookie:token",
-	//
-	//	// TokenHeadName is a string in the header. Default value is "Bearer"
-	//	TokenHeadName: "Bearer",
-	//
-	//	// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-	//	TimeFunc:       time.Now,
-	//	CookieSameSite: http.SameSiteNoneMode,
-	//})
-
-	//cookie.NewStore()
-
 	gin.Default()
-	//store := cookie.NewStore([]byte("secret"))
-	store, _ := redis.NewStore(10, "tcp", "localhost:7001", "", []byte("secret"))
+	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
+	if err != nil {
+		log.ErrorLogger.Fatal("connection to redis db failed...")
+	}
 	r.Use(sessions.Sessions("mysession", store))
-
-	//if err != nil {
-	//	log.ErrorLogger.Fatal("JWT Error:" + err.Error())
-	//}
-
-	//errInit := authMiddleware.MiddlewareInit()
-
-	//if errInit != nil {
-	//	log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
-	//}
 
 	api := r.Group("/api/v1")
 
