@@ -6,8 +6,8 @@ import (
 )
 
 type IUseCaseEducation interface {
-	CreateEducation(resume []models.Education) ([]models.Education, error)
-	//UpdateResume(resume models.Resume) (*models.Resume, error)
+	CreateEducation(educations []models.Education) ([]models.Education, error)
+	UpdateEducation(education []models.Education, resumeID uuid.UUID) ([]models.Education, error)
 	GetEducation(id string) (*models.Education, error)
-	GetAllResumeEducation(ResumeID uuid.UUID) ([]models.Education, error)
+	GetAllResumeEducation(resumeID uuid.UUID) ([]models.Education, error)
 }

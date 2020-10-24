@@ -12,7 +12,7 @@ create table education
             references candidates(cand_id),
     resume_id uuid default uuid_generate_v4() not null
             references resume(resume_id),
-    level ed_level_type null,
+    level ed_level_item_type null,
     begin date null,
     finish date not null,
     university text not null,

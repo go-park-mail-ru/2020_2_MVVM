@@ -33,35 +33,6 @@ func (u *UseCase) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]models.Exp
 	return u.customExperienceRepository.GetAllResumeCustomExperience(resumeID)
 }
 
-func (u *UseCase) GetAllResumeCustomExperienceWithCompanies(resumeID uuid.UUID) ([]models.CustomExperienceWithCompanies, error) {
-	exp, err := u.customExperienceRepository.GetAllResumeCustomExperience(resumeID)
-	if err != nil {
-		err = fmt.Errorf("error in get custom experience function: %w", err)
-		return nil, err
-	}
-
-	var expWithComp []models.CustomExperienceWithCompanies
-
-	for _, item := range exp {
-		company, err := u.customCompanyRepository.GetCustomCompanyById(item.CompanyID.String())
-		if err != nil {
-			err = fmt.Errorf("error in get custom company function: %w", err)
-			return nil, err
-		}
-		insert := models.CustomExperienceWithCompanies{
-			CompanyName: company.Name,
-			Location:    company.Location,
-			Sphere:      company.Sphere,
-			Position:    item.Position,
-			Begin:       item.Begin,
-			Finish:      item.Finish,
-			Description: item.Description,
-		}
-		expWithComp = append(expWithComp, insert)
-	}
-	return expWithComp, nil
-}
-
 func (u *UseCase) CreateCustomExperience(experience []models.ExperienceCustomComp) ([]models.ExperienceCustomComp, error) {
 	ed, err := u.customExperienceRepository.CreateCustomExperience(experience)
 	if err != nil {
@@ -78,4 +49,17 @@ func (u *UseCase) GetCustomExperience(id string) (*models.ExperienceCustomComp, 
 		return nil, err
 	}
 	return experience, nil
+}
+
+func (u *UseCase) UpdateCustomExperience(newExperience []models.ExperienceCustomComp, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+	err := u.customExperienceRepository.DeleteAllResumeCustomExperience(resumeID)
+	if err != nil {
+		return nil, err
+	}
+	exp, err := u.customExperienceRepository.CreateCustomExperience(newExperience)
+	if err != nil {
+		err = fmt.Errorf("error in update custom experience function: %w", err)
+		return nil, err
+	}
+	return exp, nil
 }

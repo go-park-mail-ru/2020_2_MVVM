@@ -10,4 +10,5 @@ type CustomExperienceRepository interface {
 	//UpdateEducation(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
 	GetCustomExperienceById(id string) (*models.ExperienceCustomComp, error)
 	GetAllResumeCustomExperience(experienceID uuid.UUID) ([]models.ExperienceCustomComp, error)
+	DeleteAllResumeCustomExperience(experienceID uuid.UUID) error
 }

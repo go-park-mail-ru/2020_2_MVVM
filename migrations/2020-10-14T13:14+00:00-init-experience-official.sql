@@ -16,7 +16,8 @@ create table experience_in_official_company
     position text,
     begin date not null,
     finish date null,
-    description text null
+    duties text null,
+    continue_to_today boolean
 );
 
 -- +migrate Down

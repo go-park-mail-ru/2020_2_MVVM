@@ -2,16 +2,6 @@
 
 set search_path to main;
 
-create table custom_company
-(
-    company_id uuid default uuid_generate_v4() not null
-        constraint company_id_pkey
-            primary key,
-    name text not null,
-    location text null,
-    sphere text null
-);
-
 create table experience_in_custom_company
 (
     exp_custom_id uuid default uuid_generate_v4() not null
@@ -21,12 +11,12 @@ create table experience_in_custom_company
             references candidates(cand_id),
     resume_id uuid default uuid_generate_v4() not null
             references resume(resume_id),
-    company_id uuid default uuid_generate_v4() not null
-            references custom_company(company_id),
-    position text,
+    name_job text not null,
+    position text null,
+    duties text null,
     begin date not null,
     finish date null,
-    description text null
+    continue_to_today boolean default false
 );
 
 -- +migrate Down

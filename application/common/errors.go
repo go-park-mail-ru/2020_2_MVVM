@@ -10,6 +10,10 @@ type Err struct {
 	meta    interface{} `json:"meta"`
 }
 
+type RespError struct {
+	Err string `json:"error"`
+}
+
 func (e Err) Code() int         { return e.code }
 func (e Err) Error() string     { return e.message }
 func (e Err) Meta() interface{} { return e.meta }

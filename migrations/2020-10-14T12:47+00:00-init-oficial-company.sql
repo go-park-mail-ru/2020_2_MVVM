@@ -12,10 +12,8 @@ create table official_companies
     location text not null,
     link text null,
     avatar text null,
-    phone text null
+    count_vacancy int default 0
 );
-
-
 
 -- +migrate Down
 

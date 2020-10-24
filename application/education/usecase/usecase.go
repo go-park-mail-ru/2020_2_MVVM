@@ -46,3 +46,16 @@ func (u *UseCaseEducation) GetEducation(id string) (*models.Education, error) {
 	}
 	return ed, nil
 }
+
+func (u *UseCaseEducation) UpdateEducation(newEducations []models.Education, resumeID uuid.UUID) ([]models.Education, error) {
+	err := u.strg.DeleteAllResumeEducation(resumeID)
+	if err != nil {
+		return nil, err
+	}
+	ed, err := u.strg.CreateEducation(newEducations)
+	if err != nil {
+		err = fmt.Errorf("error in update educations function: %w", err)
+		return nil, err
+	}
+	return ed, nil
+}

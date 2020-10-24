@@ -57,39 +57,6 @@ func (P *pgStorage) CreateUser(user models.User) (*models.User, error) {
 	return &user, nil
 }
 
-/*
-func (P *pgStorage) UpdateUser(newUser models.User) (models.User, error) {
-	oldUser, err := P.GetUserByID(newUser.ID.String())
-	if err != nil {
-		return models.User{}, err
-	}
-	switch {
-	case newUser.Nickname != "":
-		oldUser.Nickname = newUser.Nickname
-		fallthrough
-	case newUser.Email != "":
-		oldUser.Email = newUser.Nickname
-		fallthrough
-	case newUser.Surname != "":
-		oldUser.Surname = newUser.Surname
-		fallthrough
-	case newUser.Name != "":
-		oldUser.Name = newUser.Name
-		fallthrough
-	case newUser.PasswordHash != nil:
-		oldUser.PasswordHash = newUser.PasswordHash
-	}
-	_, errUpdate := P.db.Model(&oldUser).WherePK().Update()
-	if errUpdate != nil {
-		if isExist, err := P.db.Model(&oldUser).Exists(); err != nil {
-			errUpdate = fmt.Errorf("error in update user with name: %s : error: %w", oldUser.Name, err)
-		} else if isExist {
-			errUpdate = errors.New("user already exists")
-		}
-		return models.User{}, errUpdate
-	}
-	return newUser, nil
-*/
 func (P *pgStorage) UpdateUser(userNew models.User) (*models.User, error) {
 	_, err := P.db.Model(&userNew).WherePK().Returning("*").Update()
 	if err != nil {

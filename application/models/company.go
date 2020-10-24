@@ -16,18 +16,9 @@ type OfficialCompany struct {
 	Avatar     string    `pg:"avatar" json:"avatar"`
 }
 
+
+//dont work
 type CustomCompany struct {
-	tableName struct{} `pg:"main.custom_company,discard_unknown_columns"`
-
-	ID         uuid.UUID `pg:"company_id,pk,type:uuid" json:"id"`
-	Name       string    `pg:"name,notnull" json:"name"`
-	Sphere     []string  `pg:"sphere,notnull" json:"sphere"`
-	Location   *string    `pg:"location" json:"location"`
 }
-
-
 type ReqCustomCompany struct {
-	CompanyName string   `json:"name" binding:"required"`
-	Location    *string   `json:"location"`
-	Sphere      []string  `json:"sphere"`
 }

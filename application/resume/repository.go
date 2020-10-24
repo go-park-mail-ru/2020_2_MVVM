@@ -7,7 +7,7 @@ import (
 
 type ResumeRepository interface {
 	CreateResume(resume models.Resume) (*models.Resume, error)
-	//UpdateResume(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
+	UpdateResume(newResume *models.Resume) (*models.Resume, error)
 	GetResumeById(id string) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	GetResumeByName(name string) (*models.Resume, error)

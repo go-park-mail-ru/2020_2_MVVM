@@ -39,11 +39,21 @@ func (p *pgReopository) GetCustomExperienceById(id string) (*models.ExperienceCu
 	return &experience, nil
 }
 
-func (p *pgReopository) GetAllResumeCustomExperience(experienceID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+func (p *pgReopository) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
 	var experience []models.ExperienceCustomComp
-	err := p.db.Model(&experience).Where("resume_id = ?", experienceID).Limit(5).Select()
+	err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Limit(5).Select()
 	if err != nil {
 		return nil, err
 	}
 	return experience, nil
+}
+
+
+func (p *pgReopository) DeleteAllResumeCustomExperience(resumeID uuid.UUID) error {
+	var experience models.ExperienceCustomComp
+	_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
+	if err != nil {
+		return err
+	}
+	return nil
 }

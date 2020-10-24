@@ -38,20 +38,14 @@ func (u *UseCaseResume) CreateResume(resume models.Resume) (*models.Resume, erro
 	return r, nil
 }
 
-//func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, error) {
-//	//if resume.ID == uuid.Nil {
-//	//	err := fmt.Errorf("error in update resume: resume does not exist")
-//	//	return nil, err
-//	//}
-//
-//	// ID from Session
-//	r, err := u.strg.UpdateResume(resume.ID, &resume)
-//	if err != nil {
-//		err = fmt.Errorf("error in update resume: %w", err)
-//		return nil, err
-//	}
-//	return r, nil
-//}
+func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, error) {
+	r, err := u.strg.UpdateResume(&resume)
+	if err != nil {
+		err = fmt.Errorf("error in update resume: %w", err)
+		return nil, err
+	}
+	return r, nil
+}
 
 func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 	r, err := u.strg.GetResumeById(id)

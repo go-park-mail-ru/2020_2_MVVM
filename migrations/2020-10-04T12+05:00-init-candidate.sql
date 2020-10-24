@@ -17,8 +17,8 @@ create table candidates
     name varchar(128) not null,
     surname varchar(128),
     phone varchar(32),
-    area_search text[],
-    social_network text[],
+    area_search text,
+    social_network text,
     avatar text
 );
 -- +migrate Down

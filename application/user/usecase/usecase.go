@@ -5,7 +5,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
-	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49,23 +48,11 @@ func (U *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	return userNew, nil
 }
 
-/*
-func (U *UserUseCase) UpdateUser(userNew models.User) (models.User, error) {
-	userNew, err := U.repos.UpdateUser(userNew)
+func (U *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick, name, surname, email, phone,
+								areaSearch, socialNetwork string) (*models.User, error) {
+	user, err := U.GetUserByID(user_id)
 	if err != nil {
-		if errMsg := err.Error(); errMsg != "user already exists" && errMsg != "nothing to update" {
-			err = fmt.Errorf("error in user update by id func : %w", err)
-		}
-		return models.User{}, err
-	}
-	return userNew, nil
-}
-*/
-func (U *UserUseCase) UpdateUser(user_id uuid.UUID, newPassword, oldPassword, nick, name, surname, email, phone,
-								areaSearch string, socialNetwork []string) (*models.User, error) {
-	user, err := U.GetUserByID(user_id.String())
-	if err != nil {
-		err = fmt.Errorf("error get user with id %s : %w", user_id.String(), err)
+		err = fmt.Errorf("error get user with id %s : %w", user_id, err)
 		return nil, err
 	}
 
@@ -82,13 +69,13 @@ func (U *UserUseCase) UpdateUser(user_id uuid.UUID, newPassword, oldPassword, ni
 		user.Email = email
 	}
 	if phone != "" {
-		user.Phone = phone
+		user.Phone = &phone
 	}
 	if areaSearch != "" {
-		user.AreaSearch = areaSearch
+		user.AreaSearch = &areaSearch
 	}
-	if socialNetwork != nil {
-		user.SocialNetwork = socialNetwork
+	if socialNetwork != "" {
+		user.SocialNetwork = &socialNetwork
 	}
 	if oldPassword != "" {
 		isEqual := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(oldPassword))

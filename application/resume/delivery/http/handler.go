@@ -1,9 +1,11 @@
 package http
 
 import (
+	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
@@ -44,9 +46,10 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", r.handlerGetAllCurrentUserResume)
-		router.POST("/add", r.handlerCreateResume)
+		router.POST("/", r.handlerCreateResume)
+		router.PUT("/", r.handlerUpdateResume)
 	}
-	//router.PUT("/resume/update", r.handlerUpdateResume)
+
 }
 
 func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
@@ -101,19 +104,19 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		return
 	}
 
-	var additionParam models.ReqResume
+	var additionParam models.AdditionInResume
 	if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pEducations, err := r.handlerCreateEducation(additionParam.Educations.Education, userID, pResume.ID)
+	pEducations, err := r.handlerCreateEducation(additionParam.Education, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pCustomExperience, err := r.handlerCreateCustomExperience(additionParam.CustomExperience.ListReqCustomExperience, userID, pResume.ID)
+	pCustomExperience, err := r.handlerCreateCustomExperience(additionParam.CustomExperience, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -121,8 +124,8 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 
 	type RespResume struct {
 		Resume           models.Resume                 `json:"resume"`
-		Educations       []models.Education            `json:"educations"`
-		CustomExperience []models.ExperienceCustomComp `json:"experience_custom_company"`
+		Educations       []models.Education            `json:"education"`
+		CustomExperience []models.ExperienceCustomComp `json:"custom_experience"`
 	}
 
 	ctx.JSON(http.StatusOK,
@@ -143,43 +146,14 @@ func (r *ResumeHandler) handlerCreateEducation(educations []models.Education, us
 	return pEducations, nil
 }
 
-func (r *ResumeHandler) handlerCreateCustomExperience(experiences []models.CustomExperienceWithCompanies, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	var customCompany []models.CustomCompany
-	var customExperiense []models.ExperienceCustomComp
-
-	for _, item := range experiences {
-		insertInComp := models.CustomCompany{
-			Name:     item.CompanyName,
-			Location: item.Location,
-			Sphere:   item.Sphere,
-		}
-		customCompany = append(customCompany, insertInComp)
-
-		insertInExp := models.ExperienceCustomComp{
-			CandID:      userID,
-			ResumeID:    resumeID,
-			Position:    item.Position,
-			Begin:       time.Now(),
-			Finish:      item.Finish,
-			Description: item.Description,
-		}
-		customExperiense = append(customExperiense, insertInExp)
+func (r *ResumeHandler) handlerCreateCustomExperience(experiences []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+	for i := range experiences {
+		experiences[i].CandID = userID
+		experiences[i].ResumeID = resumeID
+		experiences[i].Begin = time.Now()
 	}
 
-	var pCustomCompany []models.CustomCompany
-	for i := range customCompany {
-		pCompany, err := r.UsecaseCustomCompany.CreateCustomCompany(customCompany[i])
-		if err != nil {
-			return nil, err
-		}
-		pCustomCompany = append(pCustomCompany, *pCompany)
-	}
-
-	for i := range customExperiense {
-		customExperiense[i].CompanyID = pCustomCompany[i].ID
-	}
-
-	pCustomExperience, err := r.UsecaseCustomExperience.CreateCustomExperience(customExperiense)
+	pCustomExperience, err := r.UsecaseCustomExperience.CreateCustomExperience(experiences)
 	if err != nil {
 		return nil, err
 	}
@@ -211,16 +185,16 @@ func (r *ResumeHandler) handlerGetResumeByID(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	pCustomExperience, err := r.UsecaseCustomExperience.GetAllResumeCustomExperienceWithCompanies(resumeID)
+	pCustomExperience, err := r.UsecaseCustomExperience.GetAllResumeCustomExperience(resumeID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	type RespResume struct {
-		Resume           models.Resume                          `json:"resume"`
-		Educations       []models.Education                     `json:"educations"`
-		CustomExperience []models.CustomExperienceWithCompanies `json:"experience_with_custom_company"`
+		Resume           models.Resume                 `json:"resume"`
+		Educations       []models.Education            `json:"educations"`
+		CustomExperience []models.ExperienceCustomComp `json:"experience_custom_company"`
 	}
 
 	ctx.JSON(http.StatusOK,
@@ -250,50 +224,92 @@ func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Resume: rList})
 }
 
-//func (r *ResumeHandler) handlerUpdateResume(c *gin.Context) {
-//	var reqResume struct {
-//		ResumeID 	string `json:"resume_id" binding:"required,uuid"`
-//		SalaryMin       int       `json:"salary_min"`
-//		SalaryMax       int       `json:"salary_max"`
-//		Description     string    `json:"description"`
-//		Gender          string    `json:"gender"`
-//		Level           string    `json:"level"`
-//		ExperienceMonth int       `json:"experience_month"`
-//		Education       string    `json:"education"`
-//	}
-//
-//	if err := c.ShouldBindJSON(&reqResume); err != nil {
-//		c.AbortWithError(http.StatusBadRequest, err)
-//		return
-//	}
-//
-//	resumeID, err := uuid.Parse(reqResume.ResumeID)
-//	if err != nil {
-//		c.AbortWithError(http.StatusBadRequest, err)
-//		return
-//	}
-//
-//	resume := models.Resume{
-//		ID: resumeID,
-//		SalaryMin: reqResume.SalaryMin,
-//		SalaryMax: reqResume.SalaryMax,
-//		Description: reqResume.Description,
-//		Gender: reqResume.Gender,
-//		Level: reqResume.Level,
-//		ExperienceMonth: reqResume.ExperienceMonth,
-//		Education: reqResume.Education,
-//	}
-//
-//	pResume, err := r.Usecase.UpdateResume(resume)
-//	if err != nil {
-//		c.AbortWithError(http.StatusInternalServerError, err)
-//		return
-//	}
-//
-//	type RespResume struct {
-//		Resume models.Resume `json:"resume"`
-//	}
-//
-//	c.JSON(http.StatusOK, RespResume{Resume: *pResume})
-//
-//}
+func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+	userIDStr := session.Get("user_id")
+	userID, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	var reqResume models.Resume
+	if err := ctx.ShouldBindBodyWith(&reqResume, binding.JSON); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	if userID != reqResume.UserID {
+		errMsg := "this user has not update this resume"
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
+	}
+
+	reqResume.DateCreate = time.Now()
+
+	pResume, err := r.UsecaseResume.UpdateResume(reqResume)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	var additionParam models.AdditionInResume
+	if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	pEducations, err := r.handlerUpdateEducation(additionParam.Education, userID, pResume.ID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	pCustomExperience, err := r.handlerUpdateCustomExperience(additionParam.CustomExperience, userID, pResume.ID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	type RespResume struct {
+		Resume           models.Resume                 `json:"resume"`
+		Educations       []models.Education            `json:"education"`
+		CustomExperience []models.ExperienceCustomComp `json:"custom_experience"`
+	}
+
+	ctx.JSON(http.StatusOK,
+		RespResume{Resume: *pResume, Educations: pEducations, CustomExperience: pCustomExperience})
+
+}
+
+func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, userID, resumeID uuid.UUID) ([]models.Education, error) {
+	for i := range educations {
+		if educations[i].CandId == uuid.Nil &&  educations[i].ResumeId == uuid.Nil{
+			educations[i].CandId = userID
+			educations[i].ResumeId = resumeID
+		} else if educations[i].CandId != userID && educations[i].ResumeId != resumeID {
+			return nil, errors.New("this user has not update this resume")
+		}
+	}
+
+	pEducations, err := r.UsecaseEducation.UpdateEducation(educations, resumeID)
+	if err != nil {
+		return nil, err
+	}
+	return pEducations, nil
+}
+
+func (r *ResumeHandler) handlerUpdateCustomExperience(experience []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+	for i := range experience {
+		if experience[i].CandID == uuid.Nil &&  experience[i].ResumeID == uuid.Nil{
+			experience[i].CandID = userID
+			experience[i].ResumeID = resumeID
+		} else if experience[i].CandID != userID && experience[i].ResumeID != resumeID {
+			return nil, errors.New("this user has not update this resume")
+		}
+	}
+
+	pEducations, err := r.UsecaseCustomExperience.UpdateCustomExperience(experience, resumeID)
+	if err != nil {
+		return nil, err
+	}
+	return pEducations, nil
+}

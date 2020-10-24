@@ -47,3 +47,12 @@ func (p *pgReopository) GetAllResumeEducation(resumeID uuid.UUID) ([]models.Educ
 	}
 	return educations, nil
 }
+
+func (p *pgReopository) DeleteAllResumeEducation(resumeID uuid.UUID) error {
+	var educations models.Education
+	_, err := p.db.Model(&educations).Where("resume_id = ?", resumeID).Delete()
+	if err != nil {
+		return err
+	}
+	return nil
+}
