@@ -112,7 +112,7 @@ func (U *UserHandler) handlerLogout(ctx *gin.Context) {
 	session.Options(sessions.Options{MaxAge: -1})
 	err := session.Save()
 	if err != nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.Status(http.StatusOK)

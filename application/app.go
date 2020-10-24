@@ -72,12 +72,21 @@ func NewApp(config Config) *App {
 	r.Use(common.ErrorMiddleware())
 	r.Use(common.Recovery(log.ErrorLogger))
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"*"}
-	corsConfig.AllowCredentials = true
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-	r.Use(cors.New(corsConfig))
+	// Only for requests WITHOUT credentials, the literal value "*" can be specified
+	corsMiddleware := cors.New(cors.Config{
+		AllowOrigins:     []string{"http://95.163.212.36"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return strings.HasPrefix(origin, "http://localhost") ||
+				strings.HasPrefix(origin, "https://localhost")
+		},
+		MaxAge: time.Hour,
+	})
+
+	r.Use(corsMiddleware)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
@@ -196,12 +205,20 @@ func NewApp(config Config) *App {
 	//	CookieSameSite: http.SameSiteNoneMode,
 	//})
 
-	//cookie.NewStore()
-
 	gin.Default()
 	//store := cookie.NewStore([]byte("secret"))
 	store, _ := redis.NewStore(10, "tcp", "localhost:7001", "", []byte("secret"))
-	r.Use(sessions.Sessions("mysession", store))
+	store.Options(sessions.Options{
+		//Domain:   "95.163.212.36",
+		Domain:   "localhost",
+		MaxAge:   int((12 * time.Hour).Seconds()),
+		Secure:   true,
+		HttpOnly: false,
+		SameSite: http.SameSiteNoneMode,
+	})
+	sessionsMiddleware := sessions.Sessions("mysession", store)
+
+	r.Use(sessionsMiddleware)
 
 	//if err != nil {
 	//	log.ErrorLogger.Fatal("JWT Error:" + err.Error())
@@ -215,18 +232,18 @@ func NewApp(config Config) *App {
 
 	api := r.Group("/api/v1")
 
-	api.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://95.163.212.36"},
-		AllowMethods:     []string{"GET", "POST", "PUT"},
-		AllowHeaders:     []string{"Origin"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			return strings.HasPrefix(origin, "http://localhost") ||
-				strings.HasPrefix(origin, "https://localhost")
-		},
-		MaxAge: 12 * time.Hour,
-	}))
+	//api.Use(cors.New(cors.Config{
+	//	AllowOrigins:     []string{"http://95.163.212.36"},
+	//	AllowMethods:     []string{"GET", "POST", "PUT"},
+	//	AllowHeaders:     []string{"Origin"},
+	//	ExposeHeaders:    []string{"Content-Length"},
+	//	AllowCredentials: true,
+	//	AllowOriginFunc: func(origin string) bool {
+	//		return strings.HasPrefix(origin, "http://localhost") ||
+	//			strings.HasPrefix(origin, "https://localhost")
+	//	},
+	//	MaxAge: 12 * time.Hour,
+	//}))
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
