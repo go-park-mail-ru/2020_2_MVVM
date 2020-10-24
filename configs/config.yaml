@@ -9,3 +9,5 @@ db:
   user: postgres
   password: docker
   name: mvvm
+
+redis_address: localhost:7001
