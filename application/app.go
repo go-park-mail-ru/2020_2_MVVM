@@ -113,13 +113,14 @@ func NewApp(config Config) *App {
 	if err != nil {
 		log.ErrorLogger.Fatal("connection to redis db failed...")
 	}
-	r.Use(sessions.Sessions("mysession", store))
+
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost",
+		//Domain:   "studhunt.ru",
+		Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
+		Path: "/",
 		SameSite: http.SameSiteNoneMode,
 	})
 	sessionsMiddleware := sessions.Sessions("mysession", store)
