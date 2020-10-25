@@ -87,7 +87,8 @@ func (P *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, e
 		return nil, fmt.Errorf("selection with useless positions")
 	}
 	var vacList []models.Vacancy
-	err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx >= %v", start)).Limit(int(end)).Select()
+	//err := P.db.Model(&vacList).Where(fmt.Sprintf("vacancy_idx >= %v", start)).Limit(int(end)).Select()
+	err := P.db.Model(&vacList).Select()
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
 		return nil, err

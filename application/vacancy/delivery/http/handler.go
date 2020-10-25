@@ -60,8 +60,8 @@ type Image struct {
 
 func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
-		VacancyName string `form:"vacancy_name" binding:"required"`
-		CompanyName string `form:"company_name" binding:"required"`
+		//VacancyName string `form:"vacancy_name" binding:"required"`
+		//CompanyName string `form:"company_name" binding:"required"`
 		//VacancyDescription string `json:"vacancy_description" binding:"required"`
 		//WorkExperience     string `json:"work_experience" binding:"required"`
 		//CompanyAddress     string `json:"company_address" binding:"required"`
@@ -69,25 +69,25 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		//Salary             int    `json:"salary" binding:"required"`
 	}
 
-	file, header, err := ctx.Request.FormFile("Avatar")
+	if err := ctx.Request.ParseMultipartForm(32 << 15); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	file, header, err := ctx.Request.FormFile("sum__avatar")
 	if err == nil {
-		if err := common.FileValidation(header, []string{".jpeg", ".png"}, common.MaxImgSize); err.Code() == common.FileValid {
+		if err := common.FileValidation(header, file, []string{"image/jpeg", "image/png"}, common.MaxImgSize); err.Code() == common.FileValid {
 			if err := common.AddOrUpdateUserImage(file, fmt.Sprintf("temp%s", filepath.Ext(header.Filename))); err != nil {
 				ctx.AbortWithError(http.StatusBadRequest, err)
 				return
 			}
 		} else {
-			ctx.JSON(http.StatusOK, err)
+			ctx.JSON(http.StatusOK, err.String())
 			return
 		}
 	} else if err.Error() != "http: no such file" {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
-	//identityKey := "myid"
-	//jwtUser, _ := ctx.Get(identityKey)
-	//userID := jwtUser.(*models.JWTUserData).ID
 	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -137,14 +137,14 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 		Skills             string `json:"skills" binding:"required"`
 		Salary             int    `json:"salary" binding:"required"`
 	}
-	identityKey := "myid"
+	/*identityKey := "myid"
 	jwtUser, _ := ctx.Get(identityKey)
-	userID := jwtUser.(*models.JWTUserData).ID
+	userID := jwtUser.(*models.JWTUserData).ID*/
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vac, err := v.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
+	vac, err := v.VacUseCase.UpdateVacancy(models.Vacancy{VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
 		Skills: req.Skills, Salary: req.Salary})
 	if err != nil {
