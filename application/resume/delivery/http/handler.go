@@ -136,7 +136,7 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 			return
 		}
 		var dateFinish time.Time
-		if item.ContinueToToday {
+		if !item.ContinueToToday {
 			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
 				ctx.AbortWithError(http.StatusBadRequest, err)
 				return
