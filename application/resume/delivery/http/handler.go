@@ -102,19 +102,60 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		return
 	}
 
-	var additionParam models.AdditionInResume
-	if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
+	type ReqExperienceCustomComp struct {
+		NameJob         string  `json:"name_job"`
+		Position        *string `json:"position"`
+		Begin           string  `json:"begin"`
+		Finish          *string `json:"finish"`
+		Duties          *string `json:"duties"`
+		ContinueToToday bool   `json:"continue_to_today"`
+	}
+
+	var AdditionInResume struct {
+		Education        []models.Education        `json:"education"`
+		CustomExperience []ReqExperienceCustomComp `json:"custom_experience"`
+	}
+
+	//var additionParam models.AdditionInResume
+	if err := ctx.ShouldBindBodyWith(&AdditionInResume, binding.JSON); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pEducations, err := r.handlerCreateEducation(additionParam.Education, userID, pResume.ID)
+	pEducations, err := r.handlerCreateEducation(AdditionInResume.Education, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pCustomExperience, err := r.handlerCreateCustomExperience(additionParam.CustomExperience, userID, pResume.ID)
+	var customExperience []models.ExperienceCustomComp
+	for i := range AdditionInResume.CustomExperience {
+		item := AdditionInResume.CustomExperience[i]
+		dateBedin, err := time.Parse(time.RFC3339, item.Begin + "T00:00:00Z"); if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		var dateFinish time.Time
+		if item.ContinueToToday {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			dateFinish = time.Now()
+		}
+		insertExp := models.ExperienceCustomComp{
+			NameJob:         item.NameJob,
+			Position:        item.Position,
+			Begin:           dateBedin,
+			Finish:          &dateFinish,
+			Duties:          item.Duties,
+			ContinueToToday: &item.ContinueToToday,
+		}
+		customExperience = append(customExperience, insertExp)
+	}
+
+	pCustomExperience, err := r.handlerCreateCustomExperience(customExperience, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -155,6 +196,12 @@ func (r *ResumeHandler) handlerCreateCustomExperience(experiences []models.Exper
 	if err != nil {
 		return nil, err
 	}
+
+	for i := range pCustomExperience {
+		pCustomExperience[i].Begin.Format("2020-10-28")
+		//pCustomExperience[i].Finish.Format("2020-10-28")
+	}
+
 	return pCustomExperience, nil
 }
 
@@ -280,7 +327,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, userID, resumeID uuid.UUID) ([]models.Education, error) {
 	for i := range educations {
-		if educations[i].CandId == uuid.Nil &&  educations[i].ResumeId == uuid.Nil{
+		if educations[i].CandId == uuid.Nil && educations[i].ResumeId == uuid.Nil {
 			educations[i].CandId = userID
 			educations[i].ResumeId = resumeID
 		} else if educations[i].CandId != userID && educations[i].ResumeId != resumeID {
@@ -297,7 +344,7 @@ func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, us
 
 func (r *ResumeHandler) handlerUpdateCustomExperience(experience []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
 	for i := range experience {
-		if experience[i].CandID == uuid.Nil &&  experience[i].ResumeID == uuid.Nil{
+		if experience[i].CandID == uuid.Nil && experience[i].ResumeID == uuid.Nil {
 			experience[i].CandID = userID
 			experience[i].ResumeID = resumeID
 		} else if experience[i].CandID != userID && experience[i].ResumeID != resumeID {
