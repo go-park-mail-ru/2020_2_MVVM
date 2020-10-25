@@ -163,7 +163,6 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		NewPassword   string `json:"new_password"`
 		OldPassword   string `json:"old_password"`
 		Phone         string `json:"phone"`
-		AreaSearch    string `json:"area_search"`
 		SocialNetwork string `json:"social_network"`
 		Avatar        string `json:"avatar"`
 		//Avatar   multipart.FileHeader `form:"img" json:"img"`
@@ -180,7 +179,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	//jwtuser, _ := ctx.Get(identityKey)
 	//userID := jwtuser.(*models.JWTUserData).ID
 	userUpdate, err := U.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.NickName, req.Name,
-		req.Surname, req.Email, req.Phone, req.AreaSearch, req.SocialNetwork)
+		req.Surname, req.Email, req.Phone, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
 			ctx.AbortWithError(http.StatusForbidden, err)

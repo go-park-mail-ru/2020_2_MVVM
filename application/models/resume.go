@@ -20,10 +20,11 @@ type Resume struct {
 	CareerLevel     *string   `pg:"career_level" json:"career_level"`
 	Place           *string   `pg:"place" json:"place"`
 	ExperienceMonth *int      `pg:"experience_month" json:"experience_month"`
+	AreaSearch      *string   `pg:"area_search" json:"area_search"`
 	DateCreate      time.Time `pg:"date_create" json:"date_create"`
 }
 
 type AdditionInResume struct {
-	Education        []Education            `json:"education"`
-	CustomExperience []ExperienceCustomComp `json:"custom_experience"`
+	Education        []Education               `json:"education"`
+	CustomExperience []ReqExperienceCustomComp `json:"custom_experience"`
 }

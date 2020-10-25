@@ -32,3 +32,12 @@ type ExperienceOfficialComp struct {
 	Duties          *string    `pg:"duties" json:"duties"`
 	ContinueToToday *string    `pg:"continue_to_today" json:"continue_to_today"`
 }
+
+type ReqExperienceCustomComp struct {
+	NameJob         string  `json:"name_job"`
+	Position        *string `json:"position"`
+	Begin           string  `json:"begin"`
+	Finish          *string `json:"finish"`
+	Duties          *string `json:"duties"`
+	ContinueToToday bool   `json:"continue_to_today"`
+}
