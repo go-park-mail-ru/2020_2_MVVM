@@ -60,17 +60,21 @@ type Image struct {
 
 func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
-		//VacancyName string `form:"vacancy_name" binding:"required"`
-		//CompanyName string `form:"company_name" binding:"required"`
-		//VacancyDescription string `json:"vacancy_description" binding:"required"`
+		VacancyName string `form:"sum__company-vacancy_name" binding:"required"`
+		CompanyName string `form:"sum__company-name" binding:"required"`
+		VacancyDescription string `form:"sum__company-vacancy_description" binding:"required"`
 		//WorkExperience     string `json:"work_experience" binding:"required"`
-		//CompanyAddress     string `json:"company_address" binding:"required"`
+		CompanyAddress     string `form:"sum__company-address" binding:"required"`
 		//Skills             string `json:"skills" binding:"required"`
 		//Salary             int    `json:"salary" binding:"required"`
 	}
-
-	if err := ctx.Request.ParseMultipartForm(32 << 15); err != nil {
+	err := ctx.ShouldBind(&req)
+	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || err != nil {
+		if errParseForm != nil {
+			err = errParseForm
+		}
 		ctx.AbortWithError(http.StatusBadRequest, err)
+		fmt.Println(ctx.Errors)
 		return
 	}
 	file, header, err := ctx.Request.FormFile("sum__avatar")
@@ -85,10 +89,6 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 			return
 		}
 	} else if err.Error() != "http: no such file" {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	if err := ctx.ShouldBind(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
