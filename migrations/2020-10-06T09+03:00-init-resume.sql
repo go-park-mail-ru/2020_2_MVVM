@@ -25,7 +25,6 @@ create table resume
     skills text null,
     place text null,
     date_create date not null
-
 );
 
 -- +migrate Down

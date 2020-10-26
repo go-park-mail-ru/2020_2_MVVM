@@ -42,20 +42,15 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)
 	router.GET("/page", r.handlerGetResumeList)
-
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", r.handlerGetAllCurrentUserResume)
 		router.POST("/", r.handlerCreateResume)
 		router.PUT("/", r.handlerUpdateResume)
 	}
-
 }
 
 func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
-	//identityKey := "myid"
-	//jwtuser, _ := ctx.Get(identityKey)
-	//userID := jwtuser.(*models.JWTUserData).ID
 	session := sessions.Default(ctx)
 	userIDStr := session.Get("user_id")
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -64,24 +59,44 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 		return
 	}
 
+	type RespResume struct {
+		Resume           models.Resume                 `json:"resume"`
+		Educations       []models.Education            `json:"education"`
+		CustomExperience []models.ExperienceCustomComp `json:"custom_experience"`
+	}
+
+	type Resp struct {
+		Resume []RespResume `json:"resume"`
+	}
+
+	var allResume []RespResume
+
 	pResume, err := r.UsecaseResume.GetAllUserResume(userID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		Resume []models.Resume `json:"resume"`
-	}
+	for i := range pResume {
+		exp, err := r.UsecaseCustomExperience.GetAllResumeCustomExperience(pResume[i].ID); if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		educ, err := r.UsecaseEducation.GetAllResumeEducation(pResume[i].ID); if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		wholeResume := RespResume{
+			Resume:           pResume[i],
+			Educations:       educ,
+			CustomExperience: exp,
+		}
 
-	ctx.JSON(http.StatusOK, Resp{Resume: pResume})
+		allResume = append(allResume, wholeResume)
+	}
+	ctx.JSON(http.StatusOK, Resp{Resume: allResume})
 }
 
 func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
-	// move to constants
-	//identityKey := "myid"
-	//jwtuser, _ := ctx.Get(identityKey)
-	//userID := jwtuser.(*models.JWTUserData).ID
-
 	session := sessions.Default(ctx)
 	userIDStr := session.Get("user_id")
 	userID, err := uuid.Parse(userIDStr.(string))
@@ -116,7 +131,34 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		return
 	}
 
-	pCustomExperience, err := r.handlerCreateCustomExperience(additionParam.CustomExperience, userID, pResume.ID)
+	var customExperience []models.ExperienceCustomComp
+	for i := range additionParam.CustomExperience {
+		item := additionParam.CustomExperience[i]
+		dateBedin, err := time.Parse(time.RFC3339, item.Begin + "T00:00:00Z"); if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		var dateFinish time.Time
+		if !item.ContinueToToday {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			dateFinish = time.Now()
+		}
+		insertExp := models.ExperienceCustomComp{
+			NameJob:         item.NameJob,
+			Position:        item.Position,
+			Begin:           dateBedin,
+			Finish:          &dateFinish,
+			Duties:          item.Duties,
+			ContinueToToday: &item.ContinueToToday,
+		}
+		customExperience = append(customExperience, insertExp)
+	}
+
+	pCustomExperience, err := r.handlerCreateCustomExperience(customExperience, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -150,13 +192,13 @@ func (r *ResumeHandler) handlerCreateCustomExperience(experiences []models.Exper
 	for i := range experiences {
 		experiences[i].CandID = userID
 		experiences[i].ResumeID = resumeID
-		experiences[i].Begin = time.Now()
 	}
 
 	pCustomExperience, err := r.UsecaseCustomExperience.CreateCustomExperience(experiences)
 	if err != nil {
 		return nil, err
 	}
+
 	return pCustomExperience, nil
 }
 
@@ -263,7 +305,34 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		return
 	}
 
-	pCustomExperience, err := r.handlerUpdateCustomExperience(additionParam.CustomExperience, userID, pResume.ID)
+	var customExperience []models.ExperienceCustomComp
+	for i := range additionParam.CustomExperience {
+		item := additionParam.CustomExperience[i]
+		dateBedin, err := time.Parse(time.RFC3339, item.Begin + "T00:00:00Z"); if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		var dateFinish time.Time
+		if !item.ContinueToToday {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			dateFinish = time.Now()
+		}
+		insertExp := models.ExperienceCustomComp{
+			NameJob:         item.NameJob,
+			Position:        item.Position,
+			Begin:           dateBedin,
+			Finish:          &dateFinish,
+			Duties:          item.Duties,
+			ContinueToToday: &item.ContinueToToday,
+		}
+		customExperience = append(customExperience, insertExp)
+	}
+
+	pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, userID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -282,7 +351,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, userID, resumeID uuid.UUID) ([]models.Education, error) {
 	for i := range educations {
-		if educations[i].CandId == uuid.Nil &&  educations[i].ResumeId == uuid.Nil{
+		if educations[i].CandId == uuid.Nil && educations[i].ResumeId == uuid.Nil {
 			educations[i].CandId = userID
 			educations[i].ResumeId = resumeID
 		} else if educations[i].CandId != userID && educations[i].ResumeId != resumeID {
@@ -299,7 +368,7 @@ func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, us
 
 func (r *ResumeHandler) handlerUpdateCustomExperience(experience []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
 	for i := range experience {
-		if experience[i].CandID == uuid.Nil &&  experience[i].ResumeID == uuid.Nil{
+		if experience[i].CandID == uuid.Nil && experience[i].ResumeID == uuid.Nil {
 			experience[i].CandID = userID
 			experience[i].ResumeID = resumeID
 		} else if experience[i].CandID != userID && experience[i].ResumeID != resumeID {

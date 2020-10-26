@@ -16,7 +16,7 @@ type ExperienceCustomComp struct {
 	Begin           time.Time  `pg:"begin,notnull" json:"begin"`
 	Finish          *time.Time `pg:"finish" json:"finish"`
 	Duties          *string    `pg:"duties" json:"duties"`
-	ContinueToToday *string    `pg:"continue_to_today" json:"continue_to_today"`
+	ContinueToToday *bool      `pg:"continue_to_today" json:"continue_to_today"`
 }
 
 type ExperienceOfficialComp struct {
@@ -31,4 +31,13 @@ type ExperienceOfficialComp struct {
 	Finish          *time.Time `pg:"finish" json:"finish"`
 	Duties          *string    `pg:"duties" json:"duties"`
 	ContinueToToday *string    `pg:"continue_to_today" json:"continue_to_today"`
+}
+
+type ReqExperienceCustomComp struct {
+	NameJob         string  `json:"name_job"`
+	Position        *string `json:"position"`
+	Begin           string  `json:"begin"`
+	Finish          *string `json:"finish"`
+	Duties          *string `json:"duties"`
+	ContinueToToday bool   `json:"continue_to_today"`
 }

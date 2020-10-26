@@ -49,7 +49,7 @@ func (U *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 }
 
 func (U *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick, name, surname, email, phone,
-								areaSearch, socialNetwork string) (*models.User, error) {
+								socialNetwork string) (*models.User, error) {
 	user, err := U.GetUserByID(user_id)
 	if err != nil {
 		err = fmt.Errorf("error get user with id %s : %w", user_id, err)
@@ -70,9 +70,6 @@ func (U *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick,
 	}
 	if phone != "" {
 		user.Phone = &phone
-	}
-	if areaSearch != "" {
-		user.AreaSearch = &areaSearch
 	}
 	if socialNetwork != "" {
 		user.SocialNetwork = &socialNetwork

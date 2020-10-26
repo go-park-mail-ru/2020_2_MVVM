@@ -14,7 +14,6 @@ type User struct {
 	Email         string    `pg:"email,notnull" json:"email"`
 	PasswordHash  []byte    `pg:"password_hash,notnull" json:"-"`
 	Phone         *string    `pg:"phone" json:"phone"`
-	AreaSearch    *string    `pg:"area_search" json:"area_search"`
 	SocialNetwork *string    `pg:"social_network" json:"social_network"`
 	Avatar        *string    `pg:"avatar" json:"avatar"`
 }
