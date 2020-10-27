@@ -8,6 +8,7 @@ import (
 type IUseCaseResume interface {
 	CreateResume(resume models.Resume) (*models.Resume, error)
 	UpdateResume(resume models.Resume) (*models.Resume, error)
+	SearchResume(searchParams models.SearchResume) ([]models.Resume, error)
 	GetResume(id string) (*models.Resume, error)
 	GetResumePage(start, limit uint) ([]models.Resume, error)
 	GetAllUserResume(userid uuid.UUID) ([]models.Resume, error)

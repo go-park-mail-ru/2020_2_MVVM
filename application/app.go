@@ -123,7 +123,7 @@ func NewApp(config Config) *App {
 		Path: "/",
 		SameSite: http.SameSiteNoneMode,
 	})
-	sessionsMiddleware := sessions.Sessions("mysession", store)
+	sessionsMiddleware := sessions.Sessions("studhunt", store)
 
 	r.Use(sessionsMiddleware)
 

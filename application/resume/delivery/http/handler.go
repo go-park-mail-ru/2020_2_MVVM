@@ -42,6 +42,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)
 	router.GET("/page", r.handlerGetResumeList)
+	router.GET("/search", r.handlerSearchResume)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", r.handlerGetAllCurrentUserResume)
@@ -77,11 +78,13 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 		return
 	}
 	for i := range pResume {
-		exp, err := r.UsecaseCustomExperience.GetAllResumeCustomExperience(pResume[i].ID); if err != nil {
+		exp, err := r.UsecaseCustomExperience.GetAllResumeCustomExperience(pResume[i].ID)
+		if err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
-		educ, err := r.UsecaseEducation.GetAllResumeEducation(pResume[i].ID); if err != nil {
+		educ, err := r.UsecaseEducation.GetAllResumeEducation(pResume[i].ID)
+		if err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -134,13 +137,15 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		dateBedin, err := time.Parse(time.RFC3339, item.Begin + "T00:00:00Z"); if err != nil {
+		dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		if err != nil {
 			ctx.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 		var dateFinish time.Time
 		if !item.ContinueToToday {
-			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+			if err != nil {
 				ctx.AbortWithError(http.StatusBadRequest, err)
 				return
 			}
@@ -308,13 +313,15 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		dateBedin, err := time.Parse(time.RFC3339, item.Begin + "T00:00:00Z"); if err != nil {
+		dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		if err != nil {
 			ctx.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 		var dateFinish time.Time
 		if !item.ContinueToToday {
-			dateFinish, err = time.Parse(time.RFC3339, *item.Finish + "T00:00:00Z"); if err != nil {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+			if err != nil {
 				ctx.AbortWithError(http.StatusBadRequest, err)
 				return
 			}
@@ -381,4 +388,24 @@ func (r *ResumeHandler) handlerUpdateCustomExperience(experience []models.Experi
 		return nil, err
 	}
 	return pEducations, nil
+}
+
+func (r *ResumeHandler) handlerSearchResume(ctx *gin.Context) {
+	var searchParams models.SearchResume
+	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	resume, err := r.UsecaseResume.SearchResume(searchParams)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	type RespResume struct {
+		Resume []models.Resume `json:"resume"`
+	}
+
+	ctx.JSON(http.StatusOK, RespResume{Resume: resume})
+
 }

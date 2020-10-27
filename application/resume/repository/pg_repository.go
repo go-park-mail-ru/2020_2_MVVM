@@ -5,7 +5,9 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	"github.com/google/uuid"
+	"math"
 
 	//"github.com/google/uuid"
 )
@@ -59,7 +61,6 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error)
 
 func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, error) {
 	var r[]models.Resume
-
 	err := p.db.Model(&r).Where("cand_id = ?", userID).Select()
 	if err != nil {
 		return nil, err
@@ -74,4 +75,28 @@ func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, 
 		return nil, err
 	}
 	return newResume, nil
+}
+
+
+func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.Resume, error) {
+	var r[]models.Resume
+	if searchParams.SalaryMax == 0 {
+		searchParams.SalaryMax = math.MaxInt64
+	}
+	err := p.db.Model(&r).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+		q = q.Where("title LIKE ?", searchParams.Title + "%").
+			Where("place LIKE ?", searchParams.Place + "%").
+			Where("area_search LIKE ?", searchParams.AreaSearch + "%").
+			Where("gender = ?", searchParams.Gender).
+			Where("education_level = ?", searchParams.EducationLevel).
+			Where("career_level = ?", searchParams.CareerLevel).
+			Where("salary_min >= ?", searchParams.SalaryMin).
+			Where("salary_max <= ?", searchParams.SalaryMax).
+			Where("experience_month >= ?", searchParams.ExperienceMonth)
+		return q, nil
+	}).Select()
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
