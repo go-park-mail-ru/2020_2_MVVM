@@ -80,7 +80,7 @@ func NewApp(config Config) *App {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return strings.HasPrefix(origin, "http://localhost") ||
+			return strings.HasPrefix(origin, "http://127.0.0.1") ||
 				strings.HasPrefix(origin, "https://localhost") ||
 				strings.HasPrefix(origin, "http://studhunt") ||
 				strings.HasPrefix(origin, "https://studhunt")
@@ -108,6 +108,7 @@ func NewApp(config Config) *App {
 		Database: config.Db.Name,
 	})
 
+
 	gin.Default()
 	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
 	if err != nil {
@@ -115,20 +116,18 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost",
+		//Domain:   "studhunt.ru",
+		Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
 		Path: "/",
 		SameSite: http.SameSiteNoneMode,
 	})
+	api := r.Group("/api/v1")
 	sessionsMiddleware := sessions.Sessions("mysession", store)
 
 	r.Use(sessionsMiddleware)
-
-	api := r.Group("/api/v1")
-
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
