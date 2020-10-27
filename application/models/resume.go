@@ -28,3 +28,15 @@ type AdditionInResume struct {
 	Education        []Education               `json:"education"`
 	CustomExperience []ReqExperienceCustomComp `json:"custom_experience"`
 }
+
+type SearchResume struct {
+	Title           string    `json:"title"`
+	SalaryMin       int      `json:"salary_min"`
+	SalaryMax       int      `json:"salary_max"`
+	Gender          string    `json:"gender"`
+	EducationLevel  string   `json:"education_level"`
+	CareerLevel     string   `json:"career_level"`
+	Place           string   `json:"place"`
+	ExperienceMonth int      `json:"experience_month"`
+	AreaSearch      string   `json:"area_search"`
+}

@@ -47,6 +47,10 @@ func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, erro
 	return r, nil
 }
 
+func (u *UseCaseResume)SearchResume(searchParams models.SearchResume) ([]models.Resume, error)  {
+	return u.strg.SearchResume(&searchParams)
+}
+
 func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 	r, err := u.strg.GetResumeById(id)
 	if err != nil {

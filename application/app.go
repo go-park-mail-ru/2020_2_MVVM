@@ -125,7 +125,8 @@ func NewApp(config Config) *App {
 		SameSite: http.SameSiteNoneMode,
 	})
 	api := r.Group("/api/v1")
-	sessionsMiddleware := sessions.Sessions("mysession", store)
+
+	sessionsMiddleware := sessions.Sessions("studhunt", store)
 
 	r.Use(sessionsMiddleware)
 	UserRep := UserRepository.NewPgRepository(db)
