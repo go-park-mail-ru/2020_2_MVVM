@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"fmt"
+	logger "github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
-	logger "github.com/rowdyroad/go-simple-logger"
 	"golang.org/x/crypto/bcrypt"
 )
 

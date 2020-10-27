@@ -3,9 +3,9 @@ package common
 import (
 	"bytes"
 	"fmt"
+	logger "github.com/apsdehal/go-logger"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	logger "github.com/rowdyroad/go-simple-logger"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -89,44 +89,38 @@ func RequestLogger(log *logger.Logger) gin.HandlerFunc {
 
 		c.Next()
 
-		log.Infof("\tExecution time: %s\tURL: %s\tMethod: %s\tHeaders: %s\tRequest body: %s\tResponse status: %d\tX-Request-Id: %s\tResponse body: %s",
+		message := fmt.Sprintf("\tExecution time: %s\tURL: %s\tMethod: %s\tHeaders: %s\tResponse status: %d\tX-Request-Id: %s",
 			time.Now().Sub(startTime),
 			c.Request.RequestURI,
 			c.Request.Method,
 			c.Request.Header,
-			ellipsis(string(body), ellipsisLength),
+			//ellipsis(string(body), ellipsisLength),
 			c.Writer.Status(),
-			c.Request.Header.Get("X-Request-Id"),
-			ellipsis(blw.body.String(), ellipsisLength),
-		)
+			c.Request.Header.Get("X-Request-Id"))
+			//ellipsis(blw.body.String(), ellipsisLength))
+
+		if c.Writer.Status() >= 400 &&  c.Writer.Status() < 500 {
+			log.Warning(message)
+		} else if c.Writer.Status() < 400 {
+			log.Infof(message)
+		} else {
+			log.Error(message)
+		}
+
+		log.Debugf("\tRequest body: %s\tResponse body: %s", ellipsis(string(body), ellipsisLength), ellipsis(blw.body.String(), ellipsisLength))
+
 	}
 }
 
 func ErrorLogger(log *logger.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		startTime := time.Now()
-		var buf bytes.Buffer
-		tee := io.TeeReader(c.Request.Body, &buf)
-		body, _ := ioutil.ReadAll(tee)
-		c.Request.Body = ioutil.NopCloser(&buf)
-
 		// for response body log
 		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		c.Writer = blw
 
 		c.Next()
 		for _, err := range c.Errors {
-			e := fmt.Errorf("\tExecution time: %s\tURL: %s\tMethod: %s\tHeaders: %s\tRequest body: %s\tERROR:\t%s\tResponse status: %d\tX-Request-Id: %s\tResponse body: %s",
-				time.Now().Sub(startTime),
-				c.Request.RequestURI,
-				c.Request.Method,
-				c.Request.Header,
-				ellipsis(string(body), ellipsisLength),
-				err.Error(),
-				c.Writer.Status(),
-				c.Request.Header.Get("X-Request-Id"),
-				ellipsis(blw.body.String(), ellipsisLength),
-			)
+			e := fmt.Sprintf("ERROR:\t%s", err.Error())
 			log.Error(e)
 		}
 	}

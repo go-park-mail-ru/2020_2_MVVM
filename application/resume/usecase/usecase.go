@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
-	logger "github.com/rowdyroad/go-simple-logger"
 )
 
 type UseCaseResume struct {

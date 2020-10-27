@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
@@ -24,7 +25,6 @@ import (
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/go-pg/pg/v9"
-	logger "github.com/rowdyroad/go-simple-logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -62,10 +62,18 @@ type App struct {
 }
 
 func NewApp(config Config) *App {
+
+	infoLogger, err := logger.New("test", 1, os.Stdout)
+	errorLogger, err := logger.New("test", 2, os.Stderr)
+
 	log := &Logger{
-		InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
-		ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
+		//InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
+		//ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
+		InfoLogger: infoLogger,
+		ErrorLogger: errorLogger,
 	}
+
+	infoLogger.SetLogLevel(logger.DebugLevel)
 
 	r := gin.New()
 	r.Use(common.RequestLogger(log.InfoLogger))
@@ -98,7 +106,7 @@ func NewApp(config Config) *App {
 	if config.DocPath != "" {
 		r.Static("/doc/api", config.DocPath)
 	} else {
-		log.ErrorLogger.Warn("Document path is undefined")
+		log.ErrorLogger.Warning("Document path is undefined")
 	}
 
 	db := pg.Connect(&pg.Options{
@@ -187,7 +195,8 @@ func (a *App) Run() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		a.log.ErrorLogger.Fatal("Server Shutdown:", err)
+		mes := fmt.Sprint("Server Shutdown:", err)
+		a.log.ErrorLogger.Fatal(mes)
 	}
 
 	<-ctx.Done()
