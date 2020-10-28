@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	logger "github.com/rowdyroad/go-simple-logger"
+
 )
 
 type VacancyUseCase struct {

@@ -3,22 +3,30 @@ package api
 import (
 	"context"
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	CustomCompanyRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/repository"
+	CustomCompanyUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/usecase"
+	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
+	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
+	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
+	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
+	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
+	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
+	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
+	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
+	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
-	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
-	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
-	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
 	"github.com/go-pg/pg/v9"
-	logger "github.com/rowdyroad/go-simple-logger"
 	"net/http"
 	"os"
 	"os/signal"
@@ -56,10 +64,18 @@ type App struct {
 }
 
 func NewApp(config Config) *App {
+
+	infoLogger, err := logger.New("test", 1, os.Stdout)
+	errorLogger, err := logger.New("test", 2, os.Stderr)
+
 	log := &Logger{
-		InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
-		ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
+		//InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
+		//ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
+		InfoLogger:  infoLogger,
+		ErrorLogger: errorLogger,
 	}
+
+	infoLogger.SetLogLevel(logger.DebugLevel)
 
 	r := gin.New()
 	r.Use(common.RequestLogger(log.InfoLogger))
@@ -92,7 +108,7 @@ func NewApp(config Config) *App {
 	if config.DocPath != "" {
 		r.Static("/doc/api", config.DocPath)
 	} else {
-		log.ErrorLogger.Warn("Document path is undefined")
+		log.ErrorLogger.Warning("Document path is undefined")
 	}
 
 	db := pg.Connect(&pg.Options{
@@ -101,7 +117,6 @@ func NewApp(config Config) *App {
 		Password: config.Db.Password,
 		Database: config.Db.Name,
 	})
-
 
 	gin.Default()
 	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
@@ -115,19 +130,18 @@ func NewApp(config Config) *App {
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
-		Path: "/",
+		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
+	sessionsMiddleware := sessions.Sessions("studhunt", store)
+	r.Use(sessionsMiddleware)
 	api := r.Group("/api/v1")
 
-	sessionsMiddleware := sessions.Sessions("127.0.0.1", store)
-
-	r.Use(sessionsMiddleware)
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
 
-	/*resumeRep := ResumeRepository.NewPgRepository(db)
+	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
 	customCompanyRep := CustomCompanyRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
@@ -137,7 +151,7 @@ func NewApp(config Config) *App {
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())*/
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
@@ -185,7 +199,8 @@ func (a *App) Run() {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		a.log.ErrorLogger.Fatal("Server Shutdown:", err)
+		mes := fmt.Sprint("Server Shutdown:", err)
+		a.log.ErrorLogger.Fatal(mes)
 	}
 
 	<-ctx.Done()

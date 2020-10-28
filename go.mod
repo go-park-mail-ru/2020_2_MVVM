@@ -3,6 +3,7 @@ module github.com/go-park-mail-ru/2020_2_MVVM.git
 go 1.15
 
 require (
+	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3

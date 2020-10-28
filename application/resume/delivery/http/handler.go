@@ -41,7 +41,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)
 	router.GET("/page", r.handlerGetResumeList)
-	router.GET("/search", r.handlerSearchResume)
+	router.POST("/search", r.handlerSearchResume)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", r.handlerGetAllCurrentUserResume)
