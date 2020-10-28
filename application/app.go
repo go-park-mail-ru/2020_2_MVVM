@@ -20,6 +20,7 @@ import (
 	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
+	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
@@ -125,8 +126,8 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		//Domain:   "studhunt.ru",
-		Domain:   "127.0.0.1",
+		Domain:   "studhunt.ru",
+		//Domain:   "127.0.0.1",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,

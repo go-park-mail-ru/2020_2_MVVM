@@ -2,9 +2,9 @@ package usecase
 
 import (
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
-	logger "github.com/rowdyroad/go-simple-logger"
 )
 
 type CompanyUseCase struct {

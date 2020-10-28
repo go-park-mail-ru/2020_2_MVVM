@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -18,10 +19,10 @@ import (
 type ResumeHandler struct {
 	UsecaseResume           resume.IUseCaseResume
 	UsecaseEducation        education.IUseCaseEducation
-	//UsecaseCustomCompany    custom_company.IUseCaseCustomCompany
+	UsecaseCustomCompany    custom_company.IUseCaseCustomCompany
 	UsecaseCustomExperience custom_experience.IUseCaseCustomExperience
 }
-/*
+
 func NewRest(router *gin.RouterGroup,
 	usecaseResume resume.IUseCaseResume,
 	usecaseEducation education.IUseCaseEducation,
@@ -36,7 +37,7 @@ func NewRest(router *gin.RouterGroup,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
-}*/
+}
 
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.handlerGetResumeByID)

@@ -181,11 +181,5 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	/*img, err := req.Avatar.Open()
-	if err := addOrUpdateUserImage(userNew.ID.String(), img); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	ctx.JSON(http.StatusOK, RespResume{User: userNew})*/
 	ctx.JSON(http.StatusOK, userUpdate)
 }

@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"fmt"
+	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
-	logger "github.com/rowdyroad/go-simple-logger"
-
 )
 
 type VacancyUseCase struct {
@@ -25,7 +24,7 @@ func NewVacUseCase(iLog *logger.Logger, errLog *logger.Logger,
 }
 
 func (v VacancyUseCase) CreateVacancy(vacancy models.Vacancy, userId uuid.UUID) (*models.Vacancy, error) {
-	vac, err := v. repos.CreateVacancy(vacancy, userId)
+	vac, err := v.repos.CreateVacancy(vacancy, userId)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy creation: %w", err)
 		return nil, err
@@ -34,7 +33,7 @@ func (v VacancyUseCase) CreateVacancy(vacancy models.Vacancy, userId uuid.UUID) 
 }
 
 func (v VacancyUseCase) GetVacancy(id string) (*models.Vacancy, error) {
-	vac, err := v. repos.GetVacancyById(id)
+	vac, err := v.repos.GetVacancyById(id)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy selection get: %w", err)
 		return nil, err
@@ -43,7 +42,7 @@ func (v VacancyUseCase) GetVacancy(id string) (*models.Vacancy, error) {
 }
 
 func (v VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
-	vac, err := v. repos.UpdateVacancy(newVac)
+	vac, err := v.repos.UpdateVacancy(newVac)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy update: %w", err)
 		return nil, err
@@ -52,7 +51,7 @@ func (v VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, e
 }
 
 func (v VacancyUseCase) GetVacancyList(start, end uint) ([]models.Vacancy, error) {
-	vacList, err := v. repos.GetVacancyList(start, end)
+	vacList, err := v.repos.GetVacancyList(start, end)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy list creation: %w", err)
 		return nil, err
