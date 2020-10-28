@@ -50,11 +50,6 @@ func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, erro
 }
 
 func (u *UseCaseResume)SearchResume(searchParams models.SearchResume) ([]models.Resume, error)  {
-	if searchParams.AreaSearch != nil {
-		areaSearch := searchParams.AreaSearch[0]
-		arrayArea := strings.Split(areaSearch, ",")
-		searchParams.AreaSearch = arrayArea
-	}
 	if searchParams.SalaryMax == 0 {
 		searchParams.SalaryMax = math.MaxInt64
 	}
