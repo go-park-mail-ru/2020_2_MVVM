@@ -79,19 +79,19 @@ func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, 
 func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.Resume, error) {
 	var r[]models.Resume
 	err := p.db.Model(&r).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
-		if searchParams.AreaSearch != nil {
+		if len(searchParams.AreaSearch) != 0 {
 			q = q.Where("area_search IN (?)", pg.In(searchParams.AreaSearch))
 		}
-		if searchParams.Gender != nil {
+		if len(searchParams.Gender) != 0 {
 			q = q.Where("gender IN (?)", pg.In(searchParams.Gender))
 		}
-		if searchParams.EducationLevel != nil {
+		if len(searchParams.EducationLevel) != 0 {
 			q = q.Where("education_level IN (?)", pg.In(searchParams.EducationLevel))
 		}
-		if searchParams.CareerLevel != nil {
+		if len(searchParams.CareerLevel) != 0 {
 			q = q.Where("career_level IN (?)", pg.In(searchParams.CareerLevel))
 		}
-		if searchParams.ExperienceMonth != nil {
+		if len(searchParams.ExperienceMonth) != 0 {
 			q = q.Where("experience_month IN (?)", pg.In(searchParams.ExperienceMonth))
 		}
 		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
