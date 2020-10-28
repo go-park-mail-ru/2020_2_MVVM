@@ -7,8 +7,6 @@ import (
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/google/uuid"
-	"math"
-
 	//"github.com/google/uuid"
 )
 
@@ -80,19 +78,27 @@ func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, 
 
 func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.Resume, error) {
 	var r[]models.Resume
-	if searchParams.SalaryMax == 0 {
-		searchParams.SalaryMax = math.MaxInt64
-	}
 	err := p.db.Model(&r).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
-		q = q.Where("title LIKE ?", searchParams.Title + "%").
-			Where("place LIKE ?", searchParams.Place + "%").
-			Where("area_search LIKE ?", searchParams.AreaSearch + "%").
-			Where("gender = ?", searchParams.Gender).
-			Where("education_level = ?", searchParams.EducationLevel).
-			Where("career_level = ?", searchParams.CareerLevel).
-			Where("salary_min >= ?", searchParams.SalaryMin).
-			Where("salary_max <= ?", searchParams.SalaryMax).
-			Where("experience_month >= ?", searchParams.ExperienceMonth)
+		if searchParams.AreaSearch != nil {
+			q = q.Where("area_search IN (?)", pg.In(searchParams.AreaSearch))
+		}
+		if searchParams.Gender != nil {
+			q = q.Where("gender IN (?)", pg.In(searchParams.Gender))
+		}
+		if searchParams.EducationLevel != nil {
+			q = q.Where("education_level IN (?)", pg.In(searchParams.EducationLevel))
+		}
+		if searchParams.CareerLevel != nil {
+			q = q.Where("career_level IN (?)", pg.In(searchParams.CareerLevel))
+		}
+		if searchParams.ExperienceMonth != nil {
+			q = q.Where("experience_month IN (?)", pg.In(searchParams.ExperienceMonth))
+		}
+		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
+			WhereOr("LOWER(place) LIKE ?", "%" + searchParams.KeyWords + "%")
+
+		q = q.Where("salary_min >= ?", searchParams.SalaryMin).
+			Where("salary_max <= ?", searchParams.SalaryMax)
 		return q, nil
 	}).Select()
 	if err != nil {
