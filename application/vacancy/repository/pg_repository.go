@@ -23,8 +23,8 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy, userId uuid.UUID) (*mod
 		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", userId, err)
 		return nil, err
 	}
-	vac.FK1 = employer.ID
-	vac.FK2 = employer.CompanyID
+	vac.EmpID = employer.ID
+	vac.CompID = employer.CompanyID
 	_, err = p.db.Model(&vac).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting vacancy with title: %s : error: %w", vac.Title, err)

@@ -7,8 +7,8 @@ import (
 type Vacancy struct {
 	tableName       struct{}  `pg:"main.vacancy,discard_unknown_columns"`
 	ID              uuid.UUID `pg:"vac_id,pk,type:uuid"`
-	FK1             uuid.UUID `pg:"empl_id, fk, type:uuid"`
-	FK2             uuid.UUID `pg:"comp_id, fk, type:uuid"`
+	EmpID           uuid.UUID `pg:"empl_id, fk, type:uuid"`
+	CompID          uuid.UUID `pg:"comp_id, fk, type:uuid"`
 	Title           string    `pg:"title,notnull" json:"title"`
 	SalaryMin       int       `pg:"salary_min" json:"salary_min"`
 	SalaryMax       int       `pg:"salary_max" json:"salary_max"`
