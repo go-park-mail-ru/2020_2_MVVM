@@ -8,21 +8,15 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	CustomCompanyRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/repository"
-	CustomCompanyUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/usecase"
-	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
-	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
-	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
-	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
-	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
-	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
+	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
+	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
 	"github.com/go-pg/pg/v9"
 	logger "github.com/rowdyroad/go-simple-logger"
 	"net/http"
@@ -117,7 +111,7 @@ func NewApp(config Config) *App {
 
 	store.Options(sessions.Options{
 		//Domain:   "studhunt.ru",
-		Domain:   "localhost",
+		Domain:   "127.0.0.1",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
@@ -126,14 +120,14 @@ func NewApp(config Config) *App {
 	})
 	api := r.Group("/api/v1")
 
-	sessionsMiddleware := sessions.Sessions("studhunt", store)
+	sessionsMiddleware := sessions.Sessions("127.0.0.1", store)
 
 	r.Use(sessionsMiddleware)
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
 
-	resumeRep := ResumeRepository.NewPgRepository(db)
+	/*resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
 	customCompanyRep := CustomCompanyRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
@@ -143,11 +137,15 @@ func NewApp(config Config) *App {
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())*/
+
+	companyRep := RepositoryCompany.NewPgRepository(db)
+	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
+	CompanyHandler.NewRest(api.Group("/company"), company)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api, vacancy)
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy)
 
 	app := App{
 		config:   config,

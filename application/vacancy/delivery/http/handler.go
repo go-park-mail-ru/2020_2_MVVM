@@ -1,18 +1,20 @@
 package http
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"net/http"
-	"path/filepath"
 )
 
 type VacancyHandler struct {
 	VacUseCase vacancy.IUseCaseVacancy
+}
+
+type Resp struct {
+	Vacancy models.Vacancy `json:"vacancyUser"`
 }
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy) *VacancyHandler {
@@ -22,10 +24,10 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy) *VacancyH
 }
 
 func (v *VacancyHandler) routes(router *gin.RouterGroup) {
-	router.GET("/vacancy/id/:vacancy_id", v.handlerGetVacancyById)
-	router.GET("/vacancy/page", v.handlerGetVacancyList)
-	router.PUT("/vacancy/update/:vacancy_id", v.handlerUpdateVacancy)
-	router.POST("/vacancy/add", v.handlerCreateVacancy)
+	router.GET("/by/id/:vacancy_id", v.handlerGetVacancyById)
+	router.GET("/page", v.handlerGetVacancyList)
+	//router.PUT("/", v.handlerUpdateVacancy)
+	router.POST("/", v.handlerCreateVacancy)
 }
 
 func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
@@ -37,29 +39,40 @@ func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	vac, err := v.VacUseCase.GetVacancy(req.VacID.String())
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		Vacancy models.Vacancy `json:"vacancy"`
-	}
 
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
+	ctx.JSON(http.StatusOK, Resp{Vacancy: *vac})
 }
 
 func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	var req struct {
-		//VacancyName string `form:"sum__company-vacancy_name" binding:"required"`
-		//CompanyName string `form:"sum__company-name" binding:"required"`
-		//VacancyDescription string `form:"sum__company-vacancy_description" binding:"required"`
-		//WorkExperience     string `json:"work_experience" binding:"required"`
-		//CompanyAddress     string `form:"sum__company-address" binding:"required"`
-		//Skills             string `json:"skills" binding:"required"`
-		//Salary             int    `json:"salary" binding:"required"`
+		Title           string `form:"sum__vacancy-name" binding:"required"`
+		SalaryMin       int    `form:"salary_min"`
+		SalaryMax       int    `form:"salary_max"`
+		Description     string `form:"sum__vacancy-description" binding:"required"`
+		Requirements    string `form:"requirements"`
+		Duties          string `form:"duties"`
+		Skills          string `form:"skills"`
+		Spheres         string `form:"spheres"`
+		Employment      string `form:"employment"`
+		WeekWorkHours   int    `form:"week_work_hours"`
+		ExperienceMonth string `form:"experience_work"`
+		Location        string `form:"location"`
+		CareerLevel     string `form:"career_level"`
+		EducationLevel  string `form:"education_level"`
 	}
+	/*session := sessions.Default(ctx)
+	userIDStr := session.Get("user_id")
+	userId, err := uuid.Parse(userIDStr.(string))
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}*/
+	userId,_ := uuid.Parse("25284af1-480f-4a71-a8af-990e67536e22")
 	err := ctx.ShouldBind(&req)
 	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || err != nil {
 		if errParseForm != nil {
@@ -68,33 +81,26 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	file, header, err := ctx.Request.FormFile("sum__avatar")
-	if err == nil {
-		if err := common.FileValidation(header, file, []string{"image/jpeg", "image/png"}, common.MaxImgSize); err.Code() == common.FileValid {
-			if err := common.AddOrUpdateUserImage(file, fmt.Sprintf("temp%s", filepath.Ext(header.Filename))); err != nil {
-				ctx.AbortWithError(http.StatusBadRequest, err)
-				return
-			}
-		} else {
-			ctx.JSON(http.StatusOK, err.String())
-			return
-		}
-	} else if err.Error() != "http: no such file" {
+	file, errImg := common.GetImage(ctx, "sum__avatar")
+	if errImg != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	/*vac, err := v.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
-	VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
-	Skills: req.Skills, Salary: req.Salary})*/
-	/*if err != nil {
+	vac, err := v.VacUseCase.CreateVacancy(models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax,
+		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Spheres: req.Spheres,
+		Employment: req.Employment, WeekWorkHours: req.WeekWorkHours, ExperienceMonth: req.ExperienceMonth, Location: req.Location,
+		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel}, userId)
+	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
-	}*/
-	type Resp struct {
-		Vacancy models.Vacancy `json:"vacancyUser"`
+	}
+	// TODO: fix error code then vacancy successfully loaded and img valid but couldn't be saved on server storage
+	if err := common.AddOrUpdateUserImage(*file, vac.ID.String()); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		//return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{})
+	ctx.JSON(http.StatusOK, Resp{Vacancy: *vac})
 }
 
 func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
@@ -118,6 +124,7 @@ func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vacList})
 }
 
+/*
 func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 	var req struct {
 		VacancyName        string `json:"vacancy_name" binding:"required"`
@@ -127,13 +134,6 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 		CompanyAddress     string `json:"company_address" binding:"required"`
 		Skills             string `json:"skills" binding:"required"`
 		Salary             int    `json:"salary" binding:"required"`
-	}
-	identityKey := "myid"
-	jwtUser, _ := ctx.Get(identityKey)
-	userID := jwtUser.(*models.JWTUserData).ID
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
 	}
 	vac, err := v.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
 		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
@@ -147,4 +147,4 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
-}
+}*/

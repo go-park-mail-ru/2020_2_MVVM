@@ -1,6 +1,9 @@
 -- +migrate Up
-
+create schema if not exists main;
 set search_path to main;
+
+CREATE EXTENSION IF NOT EXISTS "citext";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 create table official_companies
 (

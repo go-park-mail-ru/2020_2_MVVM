@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/google/uuid"
@@ -13,9 +12,9 @@ type UseCase struct {
 	infoLogger                 *logger.Logger
 	errorLogger                *logger.Logger
 	customExperienceRepository custom_experience.CustomExperienceRepository
-	customCompanyRepository    custom_company.CustomCompanyRepository
+	//customCompanyRepository    custom_company.CustomCompanyRepository
 }
-
+/*
 func NewUsecase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
 	customExperienceRepository custom_experience.CustomExperienceRepository,
@@ -27,7 +26,7 @@ func NewUsecase(infoLogger *logger.Logger,
 		customCompanyRepository:    customCompanyRepository,
 	}
 	return &usecase
-}
+}*/
 
 func (u *UseCase) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
 	return u.customExperienceRepository.GetAllResumeCustomExperience(resumeID)

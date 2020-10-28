@@ -7,13 +7,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"golang.org/x/crypto/bcrypt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 )
-
-const IMAGE_DIR = "static"
 
 type UserHandler struct {
 	UserUseCase user.IUseCaseUser
@@ -29,27 +24,23 @@ func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gi
 	return rest
 }
 
-func (U *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.GET("/by/id/:user_id", U.handlerGetUserByID)
-	router.POST("/", U.handlerCreateUser)
-	router.POST("/login", U.handlerLogin)
+func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.GET("/by/id/:user_id", u.handlerGetUserByID)
+	router.POST("/", u.handlerCreateUser)
+	router.POST("/login", u.handlerLogin)
 	router.Use(AuthRequired)
 	{
-		router.POST("/logout", U.handlerLogout)
-		router.GET("/me", U.handlerGetCurrentUser)
-		router.PUT("/", U.handlerUpdateUser)
+		router.POST("/logout", u.handlerLogout)
+		router.GET("/me", u.handlerGetCurrentUser)
+		router.PUT("/", u.handlerUpdateUser)
 	}
 }
 
-func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
+func (u *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	userID := session.Get("user_id")
 
-	//identityKey := "myid"
-	//jwtuser, _ := ctx.Get(identityKey)
-	//userID := jwtuser.(*models.JWTUserData).ID
-
-	userById, err := U.UserUseCase.GetUserByID(userID.(string))
+	userById, err := u.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -58,7 +49,7 @@ func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{User: *userById})
 }
 
-func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
+func (u *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	var req struct {
 		UserID string `uri:"user_id" binding:"required,uuid"`
 	}
@@ -68,7 +59,7 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		return
 	}
 
-	user, err := U.UserUseCase.GetUserByID(req.UserID)
+	user, err := u.UserUseCase.GetUserByID(req.UserID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -77,7 +68,7 @@ func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{User: *user})
 }
 
-func (U *UserHandler) handlerLogin(ctx *gin.Context) {
+func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	var reqUser models.UserLogin
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
 		if errMsg := err.Error(); errMsg == "missing Nickname, Password, or Email" {
@@ -88,7 +79,7 @@ func (U *UserHandler) handlerLogin(ctx *gin.Context) {
 		return
 	}
 
-	user, err := U.UserUseCase.Login(reqUser)
+	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -106,7 +97,7 @@ func (U *UserHandler) handlerLogin(ctx *gin.Context) {
 
 }
 
-func (U *UserHandler) handlerLogout(ctx *gin.Context) {
+func (u *UserHandler) handlerLogout(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	session.Clear()
 	session.Options(sessions.Options{MaxAge: -1})
@@ -118,13 +109,16 @@ func (U *UserHandler) handlerLogout(ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
+func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
-		NickName string `json:"nickname" binding:"required"`
-		Name     string `json:"name" binding:"required"`
-		Surname  string `json:"surname" binding:"required"`
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
+		UserType      string `json:"user_type"`
+		NickName      string `json:"nickname" binding:"required"`
+		Password      string `json:"password" binding:"required"`
+		Name          string `json:"name" binding:"required"`
+		Surname       string `json:"surname" binding:"required"`
+		Email         string `json:"email" binding:"required"`
+		Phone         string `json:"phone"`
+		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -135,12 +129,15 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	userNew, err := U.UserUseCase.CreateUser(models.User{
-		Nickname:     req.NickName,
-		Name:         req.Name,
-		Surname:      req.Surname,
-		Email:        req.Email,
-		PasswordHash: passwordHash,
+	userNew, err := u.UserUseCase.CreateUser(models.User{
+		UserType:      req.UserType,
+		Nickname:      req.NickName,
+		Name:          req.Name,
+		Surname:       req.Surname,
+		Email:         req.Email,
+		PasswordHash:  passwordHash,
+		Phone:         &req.Phone,
+		SocialNetwork: &req.SocialNetwork,
 	})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == "user already exists" {
@@ -154,7 +151,7 @@ func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{User: *userNew})
 }
 
-func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
+func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
 		NickName      string `json:"nickname"`
 		Name          string `json:"name"`
@@ -164,8 +161,6 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		OldPassword   string `json:"old_password"`
 		Phone         string `json:"phone"`
 		SocialNetwork string `json:"social_network"`
-		Avatar        string `json:"avatar"`
-		//Avatar   multipart.FileHeader `form:"img" json:"img"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -174,11 +169,7 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 
 	session := sessions.Default(ctx)
 	userID := session.Get("user_id")
-
-	//identityKey := "myid"
-	//jwtuser, _ := ctx.Get(identityKey)
-	//userID := jwtuser.(*models.JWTUserData).ID
-	userUpdate, err := U.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.NickName, req.Name,
+	userUpdate, err := u.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.NickName, req.Name,
 		req.Surname, req.Email, req.Phone, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
@@ -197,19 +188,4 @@ func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, RespResume{User: userNew})*/
 	ctx.JSON(http.StatusOK, userUpdate)
-}
-
-func addOrUpdateUserImage(imgPath string, data io.Reader) error {
-	path := filepath.Join(IMAGE_DIR, imgPath)
-
-	dst, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, data); err != nil {
-		return err
-	}
-	return nil
 }

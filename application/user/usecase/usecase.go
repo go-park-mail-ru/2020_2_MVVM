@@ -24,12 +24,12 @@ func NewUserUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
-func (U *UserUseCase) Login(user models.UserLogin) (*models.User, error) {
-	return U.repos.Login(user)
+func (u *UserUseCase) Login(user models.UserLogin) (*models.User, error) {
+	return u.repos.Login(user)
 }
 
-func (U *UserUseCase) GetUserByID(id string) (*models.User, error) {
-	userById, err := U.repos.GetUserByID(id)
+func (u *UserUseCase) GetUserByID(id string) (*models.User, error) {
+	userById, err := u.repos.GetUserByID(id)
 	if err != nil {
 		err = fmt.Errorf("error in user get by id func : %w", err)
 		return nil, err
@@ -37,8 +37,36 @@ func (U *UserUseCase) GetUserByID(id string) (*models.User, error) {
 	return userById, nil
 }
 
-func (U *UserUseCase) CreateUser(user models.User) (*models.User, error) {
-	userNew, err := U.repos.CreateUser(user)
+func (u *UserUseCase) GetCandidateByID(id string) (*models.Candidate, error) {
+	candById, err := u.repos.GetCandidateByID(id)
+	if err != nil {
+		err = fmt.Errorf("error in cand get by id func : %w", err)
+		return nil, err
+	}
+	return candById, nil
+}
+
+func (u *UserUseCase) GetEmployerByID(id string) (*models.Employer, error) {
+	emplById, err := u.repos.GetEmployerByID(id)
+	if err != nil {
+		err = fmt.Errorf("error in empl get by id func : %w", err)
+		return nil, err
+	}
+	return emplById, nil
+}
+
+func (u *UserUseCase) UpdateEmployer(employerNew models.Employer) (*models.Employer, error) {
+	newEmpl, err := u.repos.UpdateEmployer(employerNew)
+	if err != nil {
+		err = fmt.Errorf("error in updating empl with id = %s : %w", newEmpl.ID.String(), err)
+		return nil, err
+	}
+
+	return newEmpl, nil
+}
+
+func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
+	userNew, err := u.repos.CreateUser(user)
 	if err != nil {
 		if err.Error() != "user already exists" {
 			err = fmt.Errorf("error in user get by id func : %w", err)
@@ -48,9 +76,9 @@ func (U *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	return userNew, nil
 }
 
-func (U *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick, name, surname, email, phone,
-								socialNetwork string) (*models.User, error) {
-	user, err := U.GetUserByID(user_id)
+func (u *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick, name, surname, email, phone,
+	socialNetwork string) (*models.User, error) {
+	user, err := u.GetUserByID(user_id)
 	if err != nil {
 		err = fmt.Errorf("error get user with id %s : %w", user_id, err)
 		return nil, err
@@ -87,7 +115,7 @@ func (U *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick,
 		user.PasswordHash = passwordHash
 	}
 
-	newUser, err := U.repos.UpdateUser(*user)
+	newUser, err := u.repos.UpdateUser(*user)
 	if err != nil {
 		err = fmt.Errorf("error in updating user with id = %s : %w", user.ID.String(), err)
 		return nil, err

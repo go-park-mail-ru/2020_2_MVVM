@@ -1,4 +1,3 @@
-
 -- +migrate Up
 
 set search_path to main;
@@ -24,6 +23,7 @@ create table resume
     experience_month int null,
     skills text null,
     place text null,
+    area_search text,
     date_create date not null
 );
 
