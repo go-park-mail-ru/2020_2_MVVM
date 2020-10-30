@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -65,20 +66,19 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		CareerLevel     string `form:"career_level"`
 		EducationLevel  string `form:"education_level"`
 	}
-	/*session := sessions.Default(ctx)
+	session := sessions.Default(ctx)
 	userIDStr := session.Get("user_id")
 	userId, err := uuid.Parse(userIDStr.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
-	}*/
-	userId,_ := uuid.Parse("25284af1-480f-4a71-a8af-990e67536e22")
-	err := ctx.ShouldBind(&req)
-	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || err != nil {
+	}
+	errBind := ctx.ShouldBind(&req)
+	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || errBind != nil {
 		if errParseForm != nil {
-			err = errParseForm
+			errBind = errParseForm
 		}
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusBadRequest, errBind)
 		return
 	}
 	file, errImg := common.GetImage(ctx, "sum__avatar")
