@@ -94,11 +94,12 @@ func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]model
 		if len(searchParams.ExperienceMonth) != 0 {
 			q = q.Where("experience_month IN (?)", pg.In(searchParams.ExperienceMonth))
 		}
-		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
-			WhereOr("LOWER(place) LIKE ?", "%" + searchParams.KeyWords + "%")
-
 		q = q.Where("salary_min >= ?", searchParams.SalaryMin).
 			Where("salary_max <= ?", searchParams.SalaryMax)
+		return q, nil
+	}).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
+			WhereOr("LOWER(place) LIKE ?", "%" + searchParams.KeyWords + "%")
 		return q, nil
 	}).Select()
 	if err != nil {

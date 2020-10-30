@@ -6,7 +6,7 @@ create table vacancy (
     vac_id  uuid default uuid_generate_v4() not null
         constraint vacancy_pkey primary key,
     empl_id uuid default uuid_generate_v4() not null
-        references employers(empl_id),
+        references users(user_id),
     comp_id uuid references official_companies(comp_id),
     title varchar(128) not null,
     salary_min int null,

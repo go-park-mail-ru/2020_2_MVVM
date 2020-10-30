@@ -80,10 +80,26 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	}
 
 	user, err := u.UserUseCase.Login(reqUser)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+	//session := sessions.Default(ctx)
+	//if user.UserType == "candidate" {
+	//	cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
+	//	if err != nil {
+	//		ctx.AbortWithError(http.StatusInternalServerError, err)
+	//		return
+	//	}
+	//	session.Set("cand_id", cand.ID.String())
+	//
+	//} else if user.UserType == "employer" {
+	//	empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
+	//	if err != nil {
+	//		ctx.AbortWithError(http.StatusInternalServerError, err)
+	//		return
+	//	}
+	//	session.Set("empl_id", empl.ID.String())
+	//} else {
+	//	errMsg := "cannot login, undefined user type"
+	//	ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
+	//}
 
 	session := sessions.Default(ctx)
 	session.Set("user_id", user.ID.String())
@@ -111,7 +127,7 @@ func (u *UserHandler) handlerLogout(ctx *gin.Context) {
 
 func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
-		UserType      string `json:"user_type"`
+		UserType      string `json:"user_type" binding:"required"`
 		NickName      string `json:"nickname" binding:"required"`
 		Password      string `json:"password" binding:"required"`
 		Name          string `json:"name" binding:"required"`

@@ -20,7 +20,7 @@ create table users
 create table candidates
 (
     cand_id uuid default uuid_generate_v4() not null
-        constraint cand_pkey primary key,
+        constraint candidates_pkey primary key,
     user_id uuid default uuid_generate_v4() not null
             references users(user_id)
 );

@@ -9,7 +9,7 @@ create table education
         constraint education_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references candidates(cand_id),
+            references users(user_id),
     resume_id uuid default uuid_generate_v4() not null
             references resume(resume_id),
     level ed_level_item_type null,
