@@ -50,8 +50,8 @@ func (v VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, e
 	return vac, nil
 }
 
-func (v VacancyUseCase) GetVacancyList(start, end uint) ([]models.Vacancy, error) {
-	vacList, err := v.repos.GetVacancyList(start, end)
+func (v VacancyUseCase) GetVacancyList(start, end uint, userId uuid.UUID) ([]models.Vacancy, error) {
+	vacList, err := v.repos.GetVacancyList(start, end, userId)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy list creation: %w", err)
 		return nil, err

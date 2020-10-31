@@ -9,5 +9,5 @@ type IUseCaseVacancy interface {
 	CreateVacancy(models.Vacancy, uuid.UUID) (*models.Vacancy, error)
 	UpdateVacancy(models.Vacancy) (*models.Vacancy, error)
 	GetVacancy(string) (*models.Vacancy, error)
-	GetVacancyList(uint, uint) ([]models.Vacancy, error)
+	GetVacancyList(uint, uint, uuid.UUID) ([]models.Vacancy, error)
 }

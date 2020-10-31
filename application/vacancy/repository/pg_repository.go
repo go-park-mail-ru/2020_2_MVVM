@@ -38,7 +38,7 @@ func (p *pgRepository) GetVacancyById(id string) (*models.Vacancy, error) {
 }
 
 func (p *pgRepository) GetVacancyByName(name string) (*models.Vacancy, error) {
-	return dbSelector(p, "vacancy_name = ?", name)
+	return dbSelector(p, "title = ?", name)
 }
 
 func dbSelector(p *pgRepository, pattern string, attribute string) (*models.Vacancy, error) {
@@ -50,9 +50,6 @@ func dbSelector(p *pgRepository, pattern string, attribute string) (*models.Vaca
 	}
 	return &vac, nil
 }
-
-// TODO:
-//у пользователя мб несколько вакансий, которые привязаны к одному user_id (FK)
 
 func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
 	/*oldVac, err := p.GetVacancyById(newVac.FK.String())
@@ -91,12 +88,24 @@ func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, er
 	return &newVac, nil
 }
 
-func (p *pgRepository) GetVacancyList(start uint, end uint) ([]models.Vacancy, error) {
+func (p *pgRepository) GetVacancyList(start uint, end uint, userId uuid.UUID) ([]models.Vacancy, error) {
+	var (
+		employer models.Employer
+		vacList []models.Vacancy
+		err error
+	)
+
 	if end <= start {
 		return nil, fmt.Errorf("selection with useless positions")
 	}
-	var vacList []models.Vacancy
-	err := p.db.Model(&vacList).Limit(int(end)).Offset(int(start)).Select()
+	if userId != uuid.Nil {
+		err = p.db.Model(&employer).Where("user_id = ?", uuid.Nil).Select()
+
+		err = p.db.Model(&vacList).Where("empl_id= ?", employer.ID).Limit(int(end)).Offset(int(start)).Select()
+		//err = p.db.Model(&vacList).Join("JOIN main.employers as e ON e.empl_id=vacancy.empl_id").Select()
+	} else {
+		err = p.db.Model(&vacList).Limit(int(end)).Offset(int(start)).Select()
+	}
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
 		return nil, err

@@ -10,5 +10,5 @@ type RepositoryVacancy interface {
 	UpdateVacancy(models.Vacancy) (*models.Vacancy, error)
 	GetVacancyById(string) (*models.Vacancy, error)
 	GetVacancyByName(string) (*models.Vacancy, error)
-	GetVacancyList(uint, uint) ([]models.Vacancy, error)
+	GetVacancyList(uint, uint, uuid.UUID) ([]models.Vacancy, error)
 }

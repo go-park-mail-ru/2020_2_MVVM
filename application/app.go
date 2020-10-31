@@ -91,7 +91,8 @@ func NewApp(config Config) *App {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return strings.HasPrefix(origin, "http://localhost") ||
+			return strings.HasPrefix(origin, "http://127.0.0.1") ||
+			strings.HasPrefix(origin, "http://localhost") ||
 				strings.HasPrefix(origin, "https://localhost") ||
 				strings.HasPrefix(origin, "http://studhunt") ||
 				strings.HasPrefix(origin, "https://studhunt")
@@ -126,8 +127,8 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost",
+		//Domain:   "studhunt.ru",
+		Domain:   "127.0.0.1",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,
@@ -160,7 +161,7 @@ func NewApp(config Config) *App {
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy)
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
 	app := App{
 		config:   config,

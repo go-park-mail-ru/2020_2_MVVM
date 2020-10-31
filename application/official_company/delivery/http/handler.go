@@ -65,7 +65,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	file, err := common.GetImage(ctx, "comp__avatar")
+	file, err := common.GetImage(ctx.Request, "comp__avatar")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 	}
@@ -75,9 +75,11 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	if err := common.AddOrUpdateUserImage(*file, comp.ID.String()); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		//return
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(*file, comp.ID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			//return
+		}
 	}
 	ctx.JSON(http.StatusOK, Resp{Company: *comp})
 }

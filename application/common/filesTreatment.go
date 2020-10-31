@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -20,7 +19,6 @@ const (
 	MaxImgWidth     = 250      //px
 	UploadFileError = -1
 	FileValid       = 0
-	EmptyField		= 1
 )
 
 func fileValidation(header *multipart.FileHeader, file multipart.File, allowedFormats []string, allowedSize int64) Err {
@@ -52,7 +50,10 @@ func fileValidation(header *multipart.FileHeader, file multipart.File, allowedFo
 	return NewErr(FileValid, "", nil)
 }
 
-func AddOrUpdateUserImage(data io.Reader, imgPath string) error {
+func AddOrUpdateUserFile(data io.Reader, imgPath string) error {
+	if data == nil {
+		return nil
+	}
 	path := filepath.Join(ImgDir, imgPath)
 
 	dst, err := os.Create(path)
@@ -67,8 +68,8 @@ func AddOrUpdateUserImage(data io.Reader, imgPath string) error {
 	return nil
 }
 
-func GetImage(ctx *gin.Context, imgName string) (*multipart.File, *Err) {
-	file, header, err := ctx.Request.FormFile(imgName)
+func GetImage(req *http.Request, imgName string) (*multipart.File, *Err) {
+	file, header, err := req.FormFile(imgName)
 	if err == nil {
 		if err := fileValidation(header, file, []string{"image/jpeg", "image/png"}, MaxImgSize); err.Code() != FileValid {
 			return nil, &Err{code:http.StatusOK, message: err.String()}
@@ -76,7 +77,7 @@ func GetImage(ctx *gin.Context, imgName string) (*multipart.File, *Err) {
 	} else if err.Error() != "http: no such file" {
 		return nil, &Err{code: http.StatusBadRequest, message: err.Error()}
 	} else {
-		return nil, &Err{code: EmptyField}
+		return nil, nil
 	}
 	return &file, nil
 }
