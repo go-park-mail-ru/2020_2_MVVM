@@ -53,8 +53,8 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 
 func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 	session := sessions.Default(ctx)
-	userIDStr := session.Get("user_id")
-	userID, err := uuid.Parse(userIDStr.(string))
+	candIDStr := session.Get("cand_id")
+	candID, err := uuid.Parse(candIDStr.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -72,7 +72,7 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 
 	var allResume []RespResume
 
-	pResume, err := r.UsecaseResume.GetAllUserResume(userID)
+	pResume, err := r.UsecaseResume.GetAllUserResume(candID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -101,19 +101,35 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	session := sessions.Default(ctx)
-	userIDStr := session.Get("user_id")
-	userID, err := uuid.Parse(userIDStr.(string))
+	candIDStr := session.Get("cand_id")
+	candID, err := uuid.Parse(candIDStr.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
+	//
 	var reqResume models.Resume
-	if err := ctx.ShouldBindBodyWith(&reqResume, binding.JSON); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+
+	//if err := ctx.Bind(&reqResume); err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+
+	//if err := ctx.ShouldBindBodyWith(&reqResume, binding.FormMultipart); err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+
+	errBind := ctx.ShouldBind(&reqResume)
+	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || errBind != nil {
+		if errParseForm != nil {
+			errBind = errParseForm
+		}
+		ctx.AbortWithError(http.StatusBadRequest, errBind)
 		return
 	}
-	reqResume.UserID = userID
+
+	reqResume.UserID = candID
 	reqResume.DateCreate = time.Now()
 
 	pResume, err := r.UsecaseResume.CreateResume(reqResume)
@@ -122,13 +138,22 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		return
 	}
 
+	//file, errImg := common.GetImage(ctx, "sum__avatar")
+	//if errImg != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+	//if err := common.AddOrUpdateUserImage(*file, pResume.ID.String()); err != nil {
+	//	ctx.AbortWithError(http.StatusInternalServerError, err)
+	//}
+
 	var additionParam models.AdditionInResume
-	if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
+	if err := ctx.ShouldBind(&additionParam); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pEducations, err := r.handlerCreateEducation(additionParam.Education, userID, pResume.ID)
+	pEducations, err := r.handlerCreateEducation(additionParam.Education, candID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -163,7 +188,7 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		customExperience = append(customExperience, insertExp)
 	}
 
-	pCustomExperience, err := r.handlerCreateCustomExperience(customExperience, userID, pResume.ID)
+	pCustomExperience, err := r.handlerCreateCustomExperience(customExperience, candID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -273,8 +298,8 @@ func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 
 func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 	session := sessions.Default(ctx)
-	userIDStr := session.Get("user_id")
-	userID, err := uuid.Parse(userIDStr.(string))
+	candIDStr := session.Get("cand_id")
+	candID, err := uuid.Parse(candIDStr.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -286,7 +311,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		return
 	}
 
-	if userID != reqResume.UserID {
+	if candID != reqResume.UserID {
 		errMsg := "this user has not update this resume"
 		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
 	}
@@ -304,7 +329,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	pEducations, err := r.handlerUpdateEducation(additionParam.Education, userID, pResume.ID)
+	pEducations, err := r.handlerUpdateEducation(additionParam.Education, candID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -339,7 +364,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		customExperience = append(customExperience, insertExp)
 	}
 
-	pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, userID, pResume.ID)
+	pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, candID, pResume.ID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return

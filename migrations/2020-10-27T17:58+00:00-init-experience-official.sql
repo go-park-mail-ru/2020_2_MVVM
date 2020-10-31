@@ -8,7 +8,7 @@ create table experience_in_official_company
         constraint experience_in_official_company_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references users(user_id),
+            references candidates(cand_id),
     resume_id uuid default uuid_generate_v4() not null
             references resume(resume_id),
     company_id uuid default uuid_generate_v4() not null

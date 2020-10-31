@@ -67,8 +67,8 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 		EducationLevel  string `form:"education_level"`
 	}
 	session := sessions.Default(ctx)
-	userIDStr := session.Get("user_id")
-	userId, err := uuid.Parse(userIDStr.(string))
+	emplIDStr := session.Get("empl_id")
+	emplId, err := uuid.Parse(emplIDStr.(string))
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -89,7 +89,7 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 	vac, err := v.VacUseCase.CreateVacancy(models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax,
 		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Spheres: req.Spheres,
 		Employment: req.Employment, WeekWorkHours: req.WeekWorkHours, ExperienceMonth: req.ExperienceMonth, Location: req.Location,
-		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel}, userId)
+		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel}, emplId)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

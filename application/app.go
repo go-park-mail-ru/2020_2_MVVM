@@ -126,11 +126,11 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost",
+		//Domain:   "studhunt.ru",
+		Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
-		HttpOnly: false,
+		Secure:   false,
+		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})

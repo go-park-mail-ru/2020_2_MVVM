@@ -80,28 +80,31 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	}
 
 	user, err := u.UserUseCase.Login(reqUser)
-	//session := sessions.Default(ctx)
-	//if user.UserType == "candidate" {
-	//	cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
-	//	if err != nil {
-	//		ctx.AbortWithError(http.StatusInternalServerError, err)
-	//		return
-	//	}
-	//	session.Set("cand_id", cand.ID.String())
-	//
-	//} else if user.UserType == "employer" {
-	//	empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
-	//	if err != nil {
-	//		ctx.AbortWithError(http.StatusInternalServerError, err)
-	//		return
-	//	}
-	//	session.Set("empl_id", empl.ID.String())
-	//} else {
-	//	errMsg := "cannot login, undefined user type"
-	//	ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
-	//}
-
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 	session := sessions.Default(ctx)
+	if user.UserType == "candidate" {
+		cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		session.Set("cand_id", cand.ID.String())
+
+	} else if user.UserType == "employer" {
+		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+		session.Set("empl_id", empl.ID.String())
+	} else {
+		errMsg := "cannot login, undefined user type"
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
+	}
+
 	session.Set("user_id", user.ID.String())
 	err = session.Save()
 	if err != nil {

@@ -16,8 +16,8 @@ import (
 const (
 	ImgDir          = "static"
 	MaxImgSize      = 32 << 13 // ~262 Kb
-	MaxImgHeight    = 250      //px
-	MaxImgWidth     = 250      //px
+	MaxImgHeight    = 1250      //px
+	MaxImgWidth     = 1250      //px
 	UploadFileError = -1
 	FileValid       = 0
 	EmptyField		= 1

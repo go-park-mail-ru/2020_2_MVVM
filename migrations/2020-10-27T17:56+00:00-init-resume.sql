@@ -12,7 +12,7 @@ create table resume
         constraint resume_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references users(user_id),
+            references candidates(cand_id),
     title varchar(128) not null,
     description text not null,
     salary_min int null,
