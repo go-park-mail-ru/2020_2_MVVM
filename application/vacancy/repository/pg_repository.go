@@ -88,21 +88,16 @@ func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, er
 	return &newVac, nil
 }
 
-func (p *pgRepository) GetVacancyList(start uint, end uint, userId uuid.UUID) ([]models.Vacancy, error) {
+func (p *pgRepository) GetVacancyList(start uint, end uint, empId uuid.UUID) ([]models.Vacancy, error) {
 	var (
-		employer models.Employer
 		vacList []models.Vacancy
 		err error
 	)
-
 	if end <= start {
 		return nil, fmt.Errorf("selection with useless positions")
 	}
-	if userId != uuid.Nil {
-		err = p.db.Model(&employer).Where("user_id = ?", uuid.Nil).Select()
-
-		err = p.db.Model(&vacList).Where("empl_id= ?", employer.ID).Limit(int(end)).Offset(int(start)).Select()
-		//err = p.db.Model(&vacList).Join("JOIN main.employers as e ON e.empl_id=vacancy.empl_id").Select()
+	if empId != uuid.Nil {
+		err = p.db.Model(&vacList).Where("empl_id= ?", empId).Limit(int(end)).Offset(int(start)).Select()
 	} else {
 		err = p.db.Model(&vacList).Limit(int(end)).Offset(int(start)).Select()
 	}

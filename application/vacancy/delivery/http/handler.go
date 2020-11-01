@@ -134,10 +134,11 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 }
 
 func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
-	/*var req struct {
+	var req struct {
 		Start uint `form:"start"`
 		End   uint `form:"end" binding:"required"`
 	}
+
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -148,20 +149,7 @@ func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})*/
-	session := sessions.Default(ctx).Get("user_id")
-	userId, errSession := uuid.Parse(session.(string))//TODO: check session for nil
-	if errSession != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errSession)
-		return
-	}
-	userVacList, err := v.VacUseCase.GetVacancyList(1, 5, userId)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, RespList{Vacancies: userVacList})
+	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
 }
 
 func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
@@ -169,12 +157,14 @@ func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
 		Start uint `form:"start"`
 		End   uint `form:"end" binding:"required"`
 	}
-	userId, errSession := uuid.Parse(sessions.Default(ctx).Get("user_id").(string))
+
+	session := sessions.Default(ctx).Get("empl_id")
+	empId, errSession := uuid.Parse(session.(string)) //TODO: check session for nil
 	if errSession != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errSession)
 		return
 	}
-	userVacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End, userId)
+	userVacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End, empId)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

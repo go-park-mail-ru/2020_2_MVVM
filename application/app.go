@@ -130,8 +130,8 @@ func NewApp(config Config) *App {
 		//Domain:   "studhunt.ru",
 		Domain:   "127.0.0.1",
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
-		HttpOnly: false,
+		Secure:   false,
+		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
