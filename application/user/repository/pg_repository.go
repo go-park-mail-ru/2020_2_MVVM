@@ -82,6 +82,26 @@ func (p *pgStorage) GetUserByID(id string) (*models.User, error) {
 	return &newUser, nil
 }
 
+func (p *pgStorage) GetCandByID(id string) (*models.User, error) {
+	var cand models.Candidate
+	err := p.db.Model(&cand).Where("cand_id = ?", id).Select()
+	if err != nil {
+		err = fmt.Errorf("error in select candidate with id: %s : error: %w", id, err)
+		return nil, err
+	}
+	return p.GetUserByID(cand.UserID.String())
+}
+
+func (p *pgStorage) GetEmplByID(id string) (*models.User, error) {
+	var empl models.Employer
+	err := p.db.Model(&empl).Where("empl_id = ?", id).Select()
+	if err != nil {
+		err = fmt.Errorf("error in select employer with id: %s : error: %w", id, err)
+		return nil, err
+	}
+	return p.GetUserByID(empl.UserID.String())
+}
+
 func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
 	_, errInsert := p.db.Model(&user).Returning("*").Insert()
 	if errInsert != nil {

@@ -34,7 +34,7 @@ type RespResume struct {
 	Resume           Resume                 `json:"resume"`
 	Educations       []Education            `json:"education"`
 	CustomExperience []ExperienceCustomComp `json:"custom_experience"`
-	IsFavorite       bool                   `json:"is_favorite"`
+	IsFavorite       *uuid.UUID             `json:"is_favorite"`
 }
 type Resp struct {
 	Resume []RespResume `json:"resume"`

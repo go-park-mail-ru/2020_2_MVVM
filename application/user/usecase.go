@@ -5,8 +5,9 @@ import (
 )
 
 type IUseCaseUser interface {
-	//Login(user models.User) (*models.User, error)
 	GetUserByID(id string) (*models.User, error)
+	GetCandByID(id string) (*models.User, error)
+	GetEmplByID(id string) (*models.User, error)
 	GetEmployerByID(id string) (*models.Employer, error)
 	UpdateEmployer(employer models.Employer) (*models.Employer, error)
 	GetCandidateByID(id string) (*models.Candidate, error)

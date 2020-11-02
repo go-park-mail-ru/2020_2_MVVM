@@ -230,7 +230,7 @@ func (r *ResumeHandler) handlerGetResumeByID(ctx *gin.Context) {
 		return
 	}
 
-	isFavorite := false
+	var isFavorite *uuid.UUID = nil
 	emplID, err := r.handlerGetCurrentUserID(ctx, "empl_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -243,7 +243,7 @@ func (r *ResumeHandler) handlerGetResumeByID(ctx *gin.Context) {
 			return
 		}
 		if favorite != nil {
-			isFavorite = true
+			isFavorite = &favorite.ID
 		}
 	}
 
