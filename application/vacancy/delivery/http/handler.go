@@ -106,13 +106,13 @@ func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
 func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
-		End   uint `form:"end"`
+		Limit uint `form:"limit"`
 	}
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End)
+	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.Limit)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
