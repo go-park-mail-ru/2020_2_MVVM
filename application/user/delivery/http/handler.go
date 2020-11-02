@@ -26,6 +26,8 @@ func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gi
 
 func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:user_id", u.handlerGetUserByID)
+	router.GET("cand/by/id/:cand_id", u.handlerGetCandByID)
+	router.GET("empl/by/id/:empl_id", u.handlerGetEmplByID)
 	router.POST("/", u.handlerCreateUser)
 	router.POST("/login", u.handlerLogin)
 	router.Use(AuthRequired)
@@ -66,6 +68,40 @@ func (u *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: user})
+}
+
+func (u *UserHandler) handlerGetCandByID(ctx *gin.Context) {
+	var req struct {
+		UserID string `uri:"cand_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	user, err := u.UserUseCase.GetCandByID(req.UserID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+
+func (u *UserHandler) handlerGetEmplByID(ctx *gin.Context) {
+	var req struct {
+		UserID string `uri:"empl_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	user, err := u.UserUseCase.GetEmplByID(req.UserID)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
 }
 
 func (u *UserHandler) handlerLogin(ctx *gin.Context) {
@@ -204,3 +240,4 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, userUpdate)
 }
+

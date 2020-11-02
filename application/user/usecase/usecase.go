@@ -37,6 +37,14 @@ func (u *UserUseCase) GetUserByID(id string) (*models.User, error) {
 	return userById, nil
 }
 
+func (u *UserUseCase) GetCandByID(id string) (*models.User, error) {
+	return u.repos.GetCandByID(id)
+}
+
+func (u *UserUseCase) GetEmplByID(id string) (*models.User, error) {
+	return u.repos.GetEmplByID(id)
+}
+
 func (u *UserUseCase) GetCandidateByID(id string) (*models.Candidate, error) {
 	candById, err := u.repos.GetCandidateByID(id)
 	if err != nil {
