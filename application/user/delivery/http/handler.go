@@ -92,6 +92,7 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 			return
 		}
 		session.Set("cand_id", cand.ID.String())
+		session.Set("empl_id", nil)
 
 	} else if user.UserType == "employer" {
 		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
@@ -100,6 +101,7 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 			return
 		}
 		session.Set("empl_id", empl.ID.String())
+		session.Set("cand_id", nil)
 	} else {
 		errMsg := "cannot login, undefined user type"
 		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})

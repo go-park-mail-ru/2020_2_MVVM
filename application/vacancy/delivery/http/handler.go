@@ -137,14 +137,15 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
-		End   uint `form:"end" binding:"required"`
+		Limit uint `form:"limit"`
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End, uuid.Nil)
+
+	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -156,7 +157,7 @@ func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
 func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
-		End   uint `form:"end" binding:"required"`
+		End   uint `form:"limit" binding:"required"`
 	}
 
 	session := sessions.Default(ctx).Get("empl_id") //TODO: session==nil check
