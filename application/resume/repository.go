@@ -13,4 +13,9 @@ type ResumeRepository interface {
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	GetResumeByName(name string) (*models.Resume, error)
 	GetResumeArr(start, limit uint) ([]models.Resume, error)
+
+	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
+	RemoveFavorite(favoriteForEmpl uuid.UUID) error
+	GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Resume, error)
+	GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
 }

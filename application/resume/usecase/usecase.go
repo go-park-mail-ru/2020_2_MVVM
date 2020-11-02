@@ -67,7 +67,7 @@ func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 }
 
 func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.Resume, error) {
-	if limit >= 20 {
+	if limit >= 200 {
 		return nil, fmt.Errorf("Limit is too high. ")
 	}
 	r, err := u.strg.GetResumeArr(start, limit)
@@ -76,4 +76,20 @@ func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.Resume, error
 		return nil, err
 	}
 	return r, nil
+}
+
+func (u *UseCaseResume) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+	return u.strg.AddFavorite(favoriteForEmpl)
+}
+
+func (u *UseCaseResume) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
+	return u.strg.RemoveFavorite(favoriteForEmpl)
+}
+
+func (u *UseCaseResume) GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.Resume, error) {
+	return u.strg.GetAllEmplFavoriteResume(userID)
+}
+
+func (u *UseCaseResume) GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
+	return u.strg.GetFavoriteForResume(userID, resumeID )
 }

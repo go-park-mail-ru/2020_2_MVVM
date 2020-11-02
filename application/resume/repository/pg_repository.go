@@ -107,3 +107,65 @@ func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]model
 	}
 	return r, nil
 }
+
+func (p *pgReopository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+	_, err := p.db.Model(&favoriteForEmpl).Returning("*").Insert()
+	if err != nil {
+		err = fmt.Errorf("error in inserting favorite resume: %w", err)
+		return nil, err
+	}
+	return &favoriteForEmpl, nil
+}
+
+func (p *pgReopository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
+	var favorite models.FavoritesForEmpl
+	_, err := p.db.Model(&favorite).Where("favorite_id = ?", favoriteForEmpl).Delete()
+	if err != nil {
+		err = fmt.Errorf("error in delete favorite resume: %w", err)
+		return err
+	}
+	return nil
+}
+
+func (p *pgReopository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Resume, error) {
+	var resume_id []uuid.UUID
+	var favorites []models.FavoritesForEmpl
+	err := p.db.Model(&favorites).
+		Column("resume_id").
+		Where("empl_id = ?", empl_id).
+		Select(&resume_id)
+	if err != nil {
+		return nil, err
+	}
+
+	var allResume[]models.Resume
+
+	for _, id := range resume_id {
+		var r models.Resume
+		err := p.db.Model(&r).
+			Where("resume_id = ?", id).
+			Select()
+		if err != nil {
+			return nil, err
+		}
+		allResume = append(allResume, r)
+	}
+	return allResume, nil
+}
+
+func (p *pgReopository) GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
+	var favorite models.FavoritesForEmpl
+	err := p.db.Model(&favorite).
+		Where("empl_id = ?", userID).
+		Where("resume_id = ?", resumeID).
+		Select()
+
+	//TODO check on no rows in result
+	if favorite.ID == uuid.Nil {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &favorite, nil
+}
