@@ -128,10 +128,10 @@ func NewApp(config Config) *App {
 
 	store.Options(sessions.Options{
 		//Domain:   "studhunt.ru",
-		Domain:   "127.0.0.1",
+		Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   false,
-		HttpOnly: true,
+		Secure:   true,
+		HttpOnly: false,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
@@ -157,7 +157,7 @@ func NewApp(config Config) *App {
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company)
+	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)

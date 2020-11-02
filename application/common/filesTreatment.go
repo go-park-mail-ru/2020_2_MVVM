@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"path/filepath"
+	"path"
 )
 
 const (
@@ -50,13 +50,14 @@ func fileValidation(header *multipart.FileHeader, file multipart.File, allowedFo
 	return NewErr(FileValid, "", nil)
 }
 
-func AddOrUpdateUserFile(data io.Reader, imgPath string) error {
+func AddOrUpdateUserFile(data io.Reader, imgName string) error {
 	if data == nil {
 		return nil
 	}
-	path := filepath.Join(ImgDir, imgPath)
+	fileDir, _ := os.Getwd()
+	imgPath := path.Join(fileDir, ImgDir, imgName)
 
-	dst, err := os.Create(path)
+	dst, err := os.Create(imgPath)
 	if err != nil {
 		return err
 	}

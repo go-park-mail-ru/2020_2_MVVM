@@ -23,5 +23,4 @@ type Vacancy struct {
 	Location        string    `pg:"location" json:"location"`
 	CareerLevel     string    `pg:"career_level" json:"career_level"`
 	EducationLevel  string    `pg:"education_level" json:"education_level"`
-	//DateCreate      time.Time `pg:"date_create" json:"date_create"`
 }

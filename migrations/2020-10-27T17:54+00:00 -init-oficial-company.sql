@@ -12,6 +12,7 @@ create table official_companies
             primary key,
     name text not null,
     sphere text[] null,
+    description text null,
     location text not null,
     link text null,
     avatar text null,

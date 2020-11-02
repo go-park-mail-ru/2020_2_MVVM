@@ -101,12 +101,13 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		Employment: req.Employment, WeekWorkHours: req.WeekWorkHours, ExperienceMonth: req.ExperienceMonth, Location: req.Location,
 		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel}
 	if treatmentType == vacCreate {
-		userId, errSession := uuid.Parse(sessions.Default(ctx).Get("user_id").(string))
+		session := sessions.Default(ctx).Get("empl_id")//TODO: session==nil check
+		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
 			ctx.AbortWithError(http.StatusBadRequest, errSession)
 			return
 		}
-		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew, userId)
+		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew, empId)
 	} else {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
@@ -121,7 +122,6 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			//return
 		}
 	}
-
 	ctx.JSON(http.StatusOK, Resp{Vacancy: *vacNew})
 }
 
@@ -158,10 +158,13 @@ func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
 		End   uint `form:"end" binding:"required"`
 	}
 
-	session := sessions.Default(ctx).Get("empl_id")
-	empId, errSession := uuid.Parse(session.(string)) //TODO: check session for nil
-	if errSession != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errSession)
+	session := sessions.Default(ctx).Get("empl_id") //TODO: session==nil check
+	empId, errSession := uuid.Parse(session.(string))
+	if err := ctx.ShouldBindQuery(&req); errSession != nil || err != nil {
+		if errSession != nil {
+			err = errSession
+		}
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	userVacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End, empId)
