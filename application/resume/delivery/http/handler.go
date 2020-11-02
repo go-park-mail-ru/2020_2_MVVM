@@ -58,7 +58,11 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 func (r *ResumeHandler) handlerGetCurrentUserID(ctx *gin.Context, user string) (id uuid.UUID, err error) {
 	session := sessions.Default(ctx)
 	userIDStr := session.Get(user)
+	if userIDStr == nil {
+		return uuid.Nil, nil
+	}
 	userID, err := uuid.Parse(userIDStr.(string))
+
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -89,6 +93,10 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	candID, err := r.handlerGetCurrentUserID(ctx, "cand_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if candID == uuid.Nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
 		return
 	}
 
@@ -275,6 +283,10 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if candID == uuid.Nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
 
 	var reqResume models.Resume
 	if err := ctx.ShouldBindBodyWith(&reqResume, binding.JSON); err != nil {
@@ -425,6 +437,10 @@ func (r *ResumeHandler) handlerAddFavorite(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if emplID == uuid.Nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
 
 	favoriteForEmpl := models.FavoritesForEmpl{EmplID: emplID, ResumeID: resumeID}
 
@@ -470,6 +486,11 @@ func (r *ResumeHandler) handlerGetAllCurrentEmplFavoritesResume(ctx *gin.Context
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if emplID == uuid.Nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+
 	pResume, err := r.UsecaseResume.GetAllEmplFavoriteResume(emplID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
