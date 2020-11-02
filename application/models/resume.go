@@ -30,6 +30,16 @@ type AdditionInResume struct {
 	//ddd              string                    `form:"ddd"`
 }
 
+type RespResume struct {
+	Resume           Resume                 `json:"resume"`
+	Educations       []Education            `json:"education"`
+	CustomExperience []ExperienceCustomComp `json:"custom_experience"`
+	IsFavorite       bool                   `json:"is_favorite"`
+}
+type Resp struct {
+	Resume []RespResume `json:"resume"`
+}
+
 type SearchResume struct {
 	KeyWords        string   `json:"keywords"`
 	SalaryMin       int      `json:"salary_min"`

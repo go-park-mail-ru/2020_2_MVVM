@@ -12,4 +12,9 @@ type IUseCaseResume interface {
 	GetResume(id string) (*models.Resume, error)
 	GetResumePage(start, limit uint) ([]models.Resume, error)
 	GetAllUserResume(userid uuid.UUID) ([]models.Resume, error)
+
+	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
+	GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	RemoveFavorite(favoriteForEmpl uuid.UUID) error
+	GetAllEmplFavoriteResume(userid uuid.UUID) ([]models.Resume, error)
 }

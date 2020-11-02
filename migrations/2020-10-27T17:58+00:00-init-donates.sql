@@ -1,4 +1,3 @@
-
 -- +migrate Up
 set search_path to main;
 create type donate_class_type as enum ('minimum', 'standard', 'premium', 'private');

@@ -25,9 +25,6 @@ func NewUserUseCase(iLog *logger.Logger, errLog *logger.Logger,
 }
 
 func (u *UserUseCase) Login(user models.UserLogin) (*models.User, error) {
-
-
-
 	return u.repos.Login(user)
 }
 
