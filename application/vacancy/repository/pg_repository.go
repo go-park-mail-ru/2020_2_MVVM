@@ -16,14 +16,13 @@ func NewPgRepository(db *pg.DB) vacancy.RepositoryVacancy {
 	return &pgRepository{db: db}
 }
 
-func (p *pgRepository) CreateVacancy(vac models.Vacancy, userId uuid.UUID) (*models.Vacancy, error) {
+func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error) {
 	var employer models.Employer
-	err := p.db.Model(&employer).Where("user_id = ?", userId).Select()
+	err := p.db.Model(&employer).Where("empl_id = ?", vac.EmpID).Select()
 	if err != nil {
-		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", userId, err)
+		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", vac.EmpID, err)
 		return nil, err
 	}
-	vac.EmpID = employer.ID
 	vac.CompID = employer.CompanyID
 	_, err = p.db.Model(&vac).Returning("*").Insert()
 	if err != nil {

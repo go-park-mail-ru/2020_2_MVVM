@@ -23,8 +23,8 @@ func NewVacUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
-func (v VacancyUseCase) CreateVacancy(vacancy models.Vacancy, userId uuid.UUID) (*models.Vacancy, error) {
-	vac, err := v.repos.CreateVacancy(vacancy, userId)
+func (v VacancyUseCase) CreateVacancy(vacancy models.Vacancy) (*models.Vacancy, error) {
+	vac, err := v.repos.CreateVacancy(vacancy)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy creation: %w", err)
 		return nil, err

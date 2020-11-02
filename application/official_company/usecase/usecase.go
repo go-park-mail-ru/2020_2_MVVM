@@ -41,8 +41,8 @@ func NewCompUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
-func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany) (*models.OfficialCompany, error) {
-	comp, err := c.repos.CreateOfficialCompany(company)
+func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+	comp, err := c.repos.CreateOfficialCompany(company, empId)
 	if err != nil {
 		err = fmt.Errorf("error in create official company function: %w", err)
 		return nil, err

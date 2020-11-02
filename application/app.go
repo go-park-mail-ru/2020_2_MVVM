@@ -92,7 +92,7 @@ func NewApp(config Config) *App {
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			return strings.HasPrefix(origin, "http://127.0.0.1") ||
-			strings.HasPrefix(origin, "http://localhost") ||
+				strings.HasPrefix(origin, "http://localhost") ||
 				strings.HasPrefix(origin, "https://localhost") ||
 				strings.HasPrefix(origin, "http://studhunt") ||
 				strings.HasPrefix(origin, "https://studhunt")
@@ -127,8 +127,8 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost",
+		//Domain:   "studhunt.ru",
+		Domain:   "localhost",
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
 		HttpOnly: false,

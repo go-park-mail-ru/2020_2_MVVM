@@ -15,7 +15,7 @@ type UserHandler struct {
 }
 
 type Resp struct {
-	User models.User `json:"user"`
+	User *models.User `json:"user"`
 }
 
 func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gin.HandlerFunc) *UserHandler {
@@ -46,7 +46,7 @@ func (u *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: *userById})
+	ctx.JSON(http.StatusOK, Resp{User: userById})
 }
 
 func (u *UserHandler) handlerGetUserByID(ctx *gin.Context) {
@@ -58,14 +58,14 @@ func (u *UserHandler) handlerGetUserByID(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-
 	user, err := u.UserUseCase.GetUserByID(req.UserID)
+
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: *user})
+	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
 func (u *UserHandler) handlerLogin(ctx *gin.Context) {
@@ -112,7 +112,7 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: *user})
+	ctx.JSON(http.StatusOK, Resp{User: user})
 
 }
 
@@ -167,7 +167,7 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: *userNew})
+	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
 func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {

@@ -95,8 +95,14 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	if errImg != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 	}
+	session := sessions.Default(ctx).Get("empl_id")
+	empId, errSession := uuid.Parse(session.(string))
+	if errSession != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errSession)
+		return
+	}
 	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Sphere: req.Sphere,
-		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description})
+		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description}, empId)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

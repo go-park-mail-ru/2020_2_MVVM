@@ -8,7 +8,7 @@ import (
 
 
 type IUseCaseOfficialCompany interface {
-	CreateOfficialCompany(company models.OfficialCompany) (*models.OfficialCompany, error)
+	CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error)
 	GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error)
 	GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error)
 	GetCompaniesList(uint, uint) ([]models.OfficialCompany, error)

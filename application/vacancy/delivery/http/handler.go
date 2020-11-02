@@ -15,7 +15,7 @@ type VacancyHandler struct {
 }
 
 type Resp struct {
-	Vacancy models.Vacancy
+	Vacancy *models.Vacancy
 }
 
 type RespList struct {
@@ -77,7 +77,7 @@ func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Vacancy: *vac})
+	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
@@ -107,7 +107,8 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			ctx.AbortWithError(http.StatusBadRequest, errSession)
 			return
 		}
-		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew, empId)
+		vacNew.EmpID = empId
+		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
 	} else {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
@@ -122,7 +123,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			//return
 		}
 	}
-	ctx.JSON(http.StatusOK, Resp{Vacancy: *vacNew})
+	ctx.JSON(http.StatusOK, Resp{Vacancy: vacNew})
 }
 
 func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {

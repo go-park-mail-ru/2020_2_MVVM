@@ -39,10 +39,25 @@ func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository{
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany) (*models.OfficialCompany, error) {
-	_, err := p.db.Model(&company).Returning("*").Insert()
+func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+	if empId == uuid.Nil {
+		err := fmt.Errorf("error in inserting official company:empId = nil")
+		return nil, err
+	}
+	employer := models.Employer{ID: empId}
+	err := p.db.Model(&employer).WherePK().Select()
+	if err != nil || employer.CompanyID != uuid.Nil {
+		err = fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
+	}
+	_, err = p.db.Model(&company).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting official company: error: %w", err)
+		return nil, err
+	}
+	employer.CompanyID = company.ID
+	_, err = p.db.Model(&employer).WherePK().UpdateNotZero()
+	if err != nil {
+		err = fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
 		return nil, err
 	}
 	return &company, nil

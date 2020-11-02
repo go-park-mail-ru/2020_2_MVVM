@@ -6,7 +6,7 @@ import (
 )
 
 type RepositoryVacancy interface {
-	CreateVacancy(models.Vacancy, uuid.UUID) (*models.Vacancy, error)
+	CreateVacancy(models.Vacancy) (*models.Vacancy, error)
 	UpdateVacancy(models.Vacancy) (*models.Vacancy, error)
 	GetVacancyById(string) (*models.Vacancy, error)
 	GetVacancyByName(string) (*models.Vacancy, error)
