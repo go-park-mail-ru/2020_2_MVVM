@@ -54,6 +54,7 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequi
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.handlerGetVacancyById)
 	router.GET("/page", v.handlerGetVacancyList)
+	router.POST("/search", v.handlerSearchVacancies)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", v.handlerGetUserVacancyList)
@@ -176,4 +177,19 @@ func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, RespList{Vacancies: userVacList})
+}
+
+func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
+	var searchParams models.VacancySearchParams
+
+	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
 }

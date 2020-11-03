@@ -6,8 +6,9 @@ import (
 )
 
 type OfficialCompanyRepository interface {
-	CreateOfficialCompany(resume models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error)
+	CreateOfficialCompany(models.OfficialCompany, uuid.UUID) (*models.OfficialCompany, error)
 	GetCompaniesList(uint, uint) ([]models.OfficialCompany, error)
-	GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error)
-	GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error)
+	GetMineCompany(uuid.UUID) (*models.OfficialCompany, error)
+	GetOfficialCompany(uuid.UUID) (*models.OfficialCompany, error)
+	SearchCompanies(models.CompanySearchParams) ([]models.OfficialCompany, error)
 }

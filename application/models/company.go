@@ -16,6 +16,14 @@ type OfficialCompany struct {
 	VacCount    int       `pg:"count_vacancy" json:"vac_count"`
 }
 
+type CompanySearchParams struct {
+	KeyWords  string   `json:"keywords"`
+	Spheres   []string `json:"spheres"`
+	OrderBy   string   `json:"order_by"`
+	ByAsc     bool     `json:"byAsc"`
+	VacCount  int      `json:"vac_count"`
+}
+
 //dont work
 type CustomCompany struct {
 }

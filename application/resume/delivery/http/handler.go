@@ -415,7 +415,6 @@ func (r *ResumeHandler) handlerSearchResume(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, RespResume{Resume: resume})
-
 }
 
 func (r *ResumeHandler) handlerAddFavorite(ctx *gin.Context) {

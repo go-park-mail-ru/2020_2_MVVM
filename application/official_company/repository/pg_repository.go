@@ -5,11 +5,38 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-pg/pg/v9"
+	"github.com/go-pg/pg/v9/orm"
 	"github.com/google/uuid"
 )
 
 type pgReopository struct {
 	db *pg.DB
+}
+
+func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]models.OfficialCompany, error) {
+	var compList []models.OfficialCompany
+
+	err := p.db.Model(&compList).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+		if params.VacCount > 0 {
+			q = q.Where("count_vacancy >= ?", params.VacCount)
+		}
+		if len(params.Spheres) != 0 {
+			q = q.Where("spheres IN (?)", pg.In(params.Spheres))
+		}
+		if params.KeyWords != "" {
+			q = q.Where("LOWER(name) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords)).
+				WhereOr("LOWER(location) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+		}
+		if params.OrderBy != "" {
+			return q.Order(params.OrderBy), nil
+		}
+		return q, nil
+	}).Select()
+	if err != nil {
+		err = fmt.Errorf("error in companies list selection with searchParams: %s", err)
+		return nil, err
+	}
+	return compList, nil
 }
 
 func (p *pgReopository) GetCompaniesList(start uint, end uint) ([]models.OfficialCompany, error) {
@@ -55,7 +82,7 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 		return nil, err
 	}
 	employer.CompanyID = company.ID
-	_, err = p.db.Model(&employer).WherePK().UpdateNotZero()
+	_, err = p.db.Model(&employer).WherePK().Column("comp_id").Update()
 	if err != nil {
 		err = fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
 		return nil, err

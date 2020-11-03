@@ -11,11 +11,10 @@ create table official_companies
         constraint comp_id_pkey
             primary key,
     name text not null,
-    sphere text[] null,
+    spheres text null,
     description text null,
     location text not null,
     link text null,
-    avatar text null,
     count_vacancy int default 0
 );
 

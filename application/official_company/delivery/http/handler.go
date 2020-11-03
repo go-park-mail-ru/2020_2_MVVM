@@ -31,6 +31,7 @@ func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialC
 func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:company_id", c.handlerGetCompany)
 	router.GET("/page", c.handlerGetCompanyList)
+	router.POST("/search", c.handlerSearchCompanies)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", c.handlerGetUserCompany)
@@ -132,5 +133,20 @@ func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
 		return
 	}
 
+	ctx.JSON(http.StatusOK, RespList{Companies: compList})
+}
+
+func (c *CompanyHandler) handlerSearchCompanies(ctx *gin.Context) {
+	var searchParams models.CompanySearchParams
+
+	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	compList, err := c.CompUseCase.SearchCompanies(searchParams)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})
 }

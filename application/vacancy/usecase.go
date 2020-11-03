@@ -10,4 +10,5 @@ type IUseCaseVacancy interface {
 	UpdateVacancy(models.Vacancy) (*models.Vacancy, error)
 	GetVacancy(string) (*models.Vacancy, error)
 	GetVacancyList(uint, uint, uuid.UUID) ([]models.Vacancy, error)
+	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
 }

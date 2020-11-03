@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/google/uuid"
+	"strings"
 )
 
 type CompanyUseCase struct {
@@ -57,4 +58,24 @@ func (c *CompanyUseCase) GetOfficialCompany(compId uuid.UUID) (*models.OfficialC
 		return nil, err
 	}
 	return comp, nil
+}
+
+func (c *CompanyUseCase) SearchCompanies(params models.CompanySearchParams) ([]models.OfficialCompany, error) {
+	if params.OrderBy != "" {
+		if params.OrderBy == "count_vacancy" {
+			if params.ByAsc {
+				params.OrderBy += " ASC"
+			} else {
+				params.OrderBy += " DESC"
+			}
+		} else {
+			params.OrderBy = ""
+		}
+	}
+	params.KeyWords = strings.ToLower(params.KeyWords)
+	vacList, err := c.repos.SearchCompanies(params)
+	if err != nil {
+		return nil, err
+	}
+	return vacList, nil
 }
