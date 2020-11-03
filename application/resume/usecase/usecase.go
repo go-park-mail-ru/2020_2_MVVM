@@ -41,6 +41,15 @@ func (u *UseCaseResume) CreateResume(resume models.Resume) (*models.Resume, erro
 }
 
 func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, error) {
+	oldResume, err := u.strg.GetResumeById(resume.ID.String())
+	if err != nil {
+		err = fmt.Errorf("error in get resume by id: %w", err)
+		return nil, err
+	}
+	if resume.UserID != oldResume.UserID {
+		err = fmt.Errorf("this user cannot update this resume")
+		return nil, err
+	}
 	r, err := u.strg.UpdateResume(&resume)
 	if err != nil {
 		err = fmt.Errorf("error in update resume: %w", err)
