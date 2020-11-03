@@ -54,26 +54,28 @@ func (p *pgReopository) GetCompaniesList(start uint, end uint) ([]models.Officia
 	return compList, nil
 }
 
-func (p *pgReopository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {
+func (p *pgReopository) GetMineCompany(empId string) (*models.OfficialCompany, error) {
 	var employer models.Employer
 	err := p.db.Model(&employer).Where("empl_id = ?", empId).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select employer with id: %s : error: %w", empId, err)
 		return nil, err
 	}
-	return p.GetOfficialCompany(employer.CompanyID)
+	return p.GetOfficialCompany(employer.CompanyID.String())
 }
 
 func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository{
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
-	if empId == uuid.Nil {
+func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId string) (*models.OfficialCompany, error) {
+	if empId == uuid.Nil.String() {
 		err := fmt.Errorf("error in inserting official company:empId = nil")
 		return nil, err
 	}
-	employer := models.Employer{ID: empId}
+	//TODO: fix uuid
+	s, _ := uuid.Parse(empId)
+	employer := models.Employer{ID: s}
 	err := p.db.Model(&employer).WherePK().Select()
 	if err != nil || employer.CompanyID != uuid.Nil {
 		err = fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
@@ -92,9 +94,9 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	return &company, nil
 }
 
-func (p *pgReopository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error) {
+func (p *pgReopository) GetOfficialCompany(compId string) (*models.OfficialCompany, error) {
 	var company models.OfficialCompany
-	if compId == uuid.Nil {
+	if compId == uuid.Nil.String() {
 		return nil, nil
 	}
 	err := p.db.Model(&company).Where("comp_id = ?", compId).Select()

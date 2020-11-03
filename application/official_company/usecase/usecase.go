@@ -5,7 +5,6 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
-	"github.com/google/uuid"
 	"strings"
 )
 
@@ -24,7 +23,7 @@ func (c *CompanyUseCase) GetCompaniesList(start uint, end uint) ([]models.Offici
 	return vacList, nil
 }
 
-func (c *CompanyUseCase) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {
+func (c *CompanyUseCase) GetMineCompany(empId string) (*models.OfficialCompany, error) {
 	comp, err := c.repos.GetMineCompany(empId)
 	if err != nil {
 		err = fmt.Errorf("error in get by id official company func : %w", err)
@@ -42,7 +41,7 @@ func NewCompUseCase(iLog *logger.Logger, errLog *logger.Logger,
 	}
 }
 
-func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany, empId string) (*models.OfficialCompany, error) {
 	comp, err := c.repos.CreateOfficialCompany(company, empId)
 	if err != nil {
 		err = fmt.Errorf("error in create official company function: %w", err)
@@ -51,7 +50,7 @@ func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany, e
 	return comp, nil
 }
 
-func (c *CompanyUseCase) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error) {
+func (c *CompanyUseCase) GetOfficialCompany(compId string) (*models.OfficialCompany, error) {
 	comp, err := c.repos.GetOfficialCompany(compId)
 	if err != nil {
 		err = fmt.Errorf("error in get by id official company func : %w", err)

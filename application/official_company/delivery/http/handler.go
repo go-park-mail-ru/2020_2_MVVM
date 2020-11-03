@@ -42,7 +42,7 @@ func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 
 func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
 	var req struct {
-		CompanyID uuid.UUID `uri:"company_id" binding:"required"`
+		CompanyID string `uri:"company_id" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -65,7 +65,7 @@ func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, errSession)
 		return
 	}
-	comp, err := c.CompUseCase.GetMineCompany(empId)
+	comp, err := c.CompUseCase.GetMineCompany(empId.String())
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -103,7 +103,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		return
 	}
 	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
-		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description}, empId)
+		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description}, empId.String())
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
