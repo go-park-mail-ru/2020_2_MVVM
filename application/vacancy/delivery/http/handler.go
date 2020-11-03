@@ -65,14 +65,14 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 
 func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 	var req struct {
-		VacID uuid.UUID `json:"vacancy_id" binding:"required"`
+		VacID string `uri:"vacancy_id" binding:"required,uuid"`
 	}
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	vac, err := v.VacUseCase.GetVacancy(req.VacID.String())
+	vac, err := v.VacUseCase.GetVacancy(req.VacID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
