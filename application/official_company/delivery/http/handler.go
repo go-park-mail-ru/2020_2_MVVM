@@ -77,7 +77,7 @@ func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
 func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	var req struct {
 		Name        string   `form:"name" binding:"required"`
-		Sphere      []string `form:"comp__company-sphere"`
+		Spheres      []string `form:"comp__company-sphere"`
 		Description string   `form:"description" binding:"required"`
 		Location    string   `form:"location" binding:"required"`
 		Link        string   `form:"link"`
@@ -102,7 +102,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, errSession)
 		return
 	}
-	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Sphere: req.Sphere,
+	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
 		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description}, empId)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)

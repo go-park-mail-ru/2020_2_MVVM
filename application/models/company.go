@@ -9,7 +9,7 @@ type OfficialCompany struct {
 
 	ID          uuid.UUID `pg:"comp_id,pk,type:uuid" json:"id"`
 	Name        string    `pg:"name,notnull" json:"name"`
-	Sphere      []string  `pg:"sphere,notnull" json:"sphere"`
+	Spheres      []string  `pg:"spheres,notnull" json:"spheres"`
 	Description string    `pg:"description,notnull" json:"description"`
 	Location    string    `pg:"location" json:"location"`
 	Link        string    `pg:"link" json:"link"`
@@ -17,11 +17,12 @@ type OfficialCompany struct {
 }
 
 type CompanySearchParams struct {
-	KeyWords  string   `json:"keywords"`
-	Spheres   []string `json:"spheres"`
-	OrderBy   string   `json:"order_by"`
-	ByAsc     bool     `json:"byAsc"`
-	VacCount  int      `json:"vac_count"`
+	KeyWords string   `json:"keywords"`
+	Location []string   `json:"location"`
+	Spheres  []string `json:"spheres"`
+	OrderBy  string   `json:"order_by"`
+	ByAsc    bool     `json:"byAsc"`
+	VacCount int      `json:"vac_count"`
 }
 
 //dont work

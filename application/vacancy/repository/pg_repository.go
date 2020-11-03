@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
@@ -20,15 +21,19 @@ func NewPgRepository(db *pg.DB) vacancy.RepositoryVacancy {
 func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error) {
 	var (
 		employer models.Employer
-		company models.OfficialCompany
+		//company  models.OfficialCompany
 	)
 	err := p.db.Model(&employer).Where("empl_id = ?", vac.EmpID).Select()
 	if err != nil {
 		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", vac.EmpID, err)
 		return nil, err
 	}
-	vac.CompID = employer.CompanyID
-	company.ID = employer.CompanyID
+	if compId := employer.CompanyID; compId != uuid.Nil {
+		vac.CompID = compId
+		//company.ID = compId
+	} else {
+		return nil, errors.New("error: employer must have company for vacancy creation")
+	}
 	_, err = p.db.Model(&vac).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting vacancy with title: %s : error: %w", vac.Title, err)
@@ -139,13 +144,15 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		if len(params.Employment) != 0 {
 			q = q.Where("employment IN (?)", pg.In(params.ExperienceMonth))
 		}
+		if len(params.Location) != 0 {
+			q = q.Where("location IN (?)", pg.In(params.Location))
+		}
 		if params.SalaryMin != 0 || params.SalaryMax != 0 {
 			q = q.Where("salary_min >= ?", params.SalaryMin).
 				Where("salary_max <= ?", params.SalaryMax)
 		}
 		if params.KeyWords != "" {
-			q = q.Where("LOWER(title) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords)).
-				WhereOr("LOWER(location) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+			q = q.Where("LOWER(title) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil

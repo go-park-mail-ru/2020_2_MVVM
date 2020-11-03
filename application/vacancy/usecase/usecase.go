@@ -66,7 +66,7 @@ func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]mo
 	if params.SalaryMax == 0 {
 		params.SalaryMax = math.MaxInt64
 	}
-	if params.DaysFromNow >= 0 {
+	if params.DaysFromNow > 0 {
 		params.StartDate = time.Now().AddDate(0, 0, -params.DaysFromNow).Format("2006-01-02")
 	}
 	if params.OrderBy != "" {

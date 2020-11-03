@@ -23,9 +23,11 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 		if len(params.Spheres) != 0 {
 			q = q.Where("spheres IN (?)", pg.In(params.Spheres))
 		}
+		if len(params.Location) != 0 {
+			q = q.Where("location IN (?)", pg.In(params.Location))
+		}
 		if params.KeyWords != "" {
-			q = q.Where("LOWER(name) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords)).
-				WhereOr("LOWER(location) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+			q = q.Where("LOWER(name) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil
