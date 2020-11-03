@@ -91,7 +91,8 @@ func NewApp(config Config) *App {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			return strings.HasPrefix(origin, "http://localhost") ||
+			return strings.HasPrefix(origin, "http://127.0.0.1") ||
+				strings.HasPrefix(origin, "http://localhost") ||
 				strings.HasPrefix(origin, "https://localhost") ||
 				strings.HasPrefix(origin, "http://studhunt") ||
 				strings.HasPrefix(origin, "https://studhunt")
@@ -156,11 +157,11 @@ func NewApp(config Config) *App {
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company)
+	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy)
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
 	app := App{
 		config:   config,

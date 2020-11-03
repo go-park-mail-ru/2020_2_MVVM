@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -14,47 +15,73 @@ type CompanyHandler struct {
 }
 
 type Resp struct {
-	Company models.OfficialCompany `json:"official_company"`
+	Company *models.OfficialCompany `json:"company"`
 }
 
-func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany) *CompanyHandler {
+type RespList struct {
+	Companies []models.OfficialCompany `json:"companies_list"`
+}
+
+func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
 	rest := &CompanyHandler{CompUseCase: useCase}
-	rest.routes(router)
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (c *CompanyHandler) routes(router *gin.RouterGroup) {
-	router.GET("/by/id/:company_id", c.handlerGetCompanyById)
+func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.GET("/by/id/:company_id", c.handlerGetCompany)
 	router.GET("/page", c.handlerGetCompanyList)
-	//router.PUT("/", v.handlerUpdateVacancy)
-	router.POST("/", c.handlerCreateCompany)
+	router.POST("/search", c.handlerSearchCompanies)
+	router.Use(AuthRequired)
+	{
+		router.GET("/mine", c.handlerGetUserCompany)
+		router.POST("/", c.handlerCreateCompany)
+		//router.PUT("/", v.handlerUpdateVacancy)
+	}
 }
 
-func (c *CompanyHandler) handlerGetCompanyById(ctx *gin.Context) {
+func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
 	var req struct {
-		CompanyID uuid.UUID `json:"company_id" binding:"required"`
+		CompanyID uuid.UUID `uri:"company_id" binding:"required"`
 	}
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	comp, err := c.CompUseCase.GetOfficialCompany(req.CompanyID.String())
+	comp, err := c.CompUseCase.GetOfficialCompany(req.CompanyID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Company: *comp})
+	ctx.JSON(http.StatusOK, Resp{Company: comp})
+}
+
+func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
+	session := sessions.Default(ctx).Get("empl_id")
+	empId, errSession := uuid.Parse(session.(string))
+	if errSession != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errSession)
+		return
+	}
+	comp, err := c.CompUseCase.GetMineCompany(empId)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, Resp{Company: comp})
 }
 
 func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	var req struct {
-		Name     string   `form:"comp__company-name" binding:"required"`
-		Sphere   []string `form:"comp__company-sphere"`
-		Location string   `form:"comp__company-location"`
-		Link     string   `form:"comp__company-link"`
-		VacCount int      `form:"comp__company-vac_count"`
+		Name        string   `form:"name" binding:"required"`
+		Spheres      []string `form:"comp__company-sphere"`
+		Description string   `form:"description" binding:"required"`
+		Location    string   `form:"location" binding:"required"`
+		Link        string   `form:"link"`
+		VacCount    int      `form:"comp__company-vac_count"`
 	}
 
 	err := ctx.ShouldBind(&req)
@@ -65,23 +92,61 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	file, err := common.GetImage(ctx, "comp__avatar")
-	if err != nil {
+	file, errImg := common.GetImage(ctx.Request, "comp__avatar")
+	if errImg != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 	}
-	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Sphere: req.Sphere,
-		Location: req.Location, Link: req.Link, VacCount: req.VacCount})
+	session := sessions.Default(ctx).Get("empl_id")
+	empId, errSession := uuid.Parse(session.(string))
+	if errSession != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errSession)
+		return
+	}
+	comp, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
+		Location: req.Location, Link: req.Link, VacCount: req.VacCount, Description: req.Description}, empId)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	if err := common.AddOrUpdateUserImage(*file, comp.ID.String()); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		//return
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(*file, comp.ID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			//return
+		}
 	}
-	ctx.JSON(http.StatusOK, Resp{Company: *comp})
+	ctx.JSON(http.StatusOK, Resp{Company: comp})
 }
 
-func (c *CompanyHandler) handlerGetCompanyList(context *gin.Context) {
+func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
+	var req struct {
+		Start uint `form:"start"`
+		End   uint `form:"end" binding:"required"`
+	}
 
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.End)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, RespList{Companies: compList})
+}
+
+func (c *CompanyHandler) handlerSearchCompanies(ctx *gin.Context) {
+	var searchParams models.CompanySearchParams
+
+	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	compList, err := c.CompUseCase.SearchCompanies(searchParams)
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, RespList{Companies: compList})
 }
