@@ -126,7 +126,7 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
+		Domain:   "studhunt.ru", // for front
 		//Domain:   "localhost", // for postman
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
