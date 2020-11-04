@@ -45,7 +45,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 }
 
 func (p *pgRepository) GetVacancyById(id string) (*models.Vacancy, error) {
-	return dbSelector(p, "vacancy_id = ?", id)
+	return dbSelector(p, "vac_id = ?", id)
 }
 
 func (p *pgRepository) GetVacancyByName(name string) (*models.Vacancy, error) {

@@ -70,24 +70,21 @@ func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository{
 
 func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
 	if empId == uuid.Nil {
-		err := fmt.Errorf("error in inserting official company:empId = nil")
-		return nil, err
+		return nil, fmt.Errorf("error in inserting official company:empId = nil")
 	}
 	employer := models.Employer{ID: empId}
 	err := p.db.Model(&employer).WherePK().Select()
 	if err != nil || employer.CompanyID != uuid.Nil {
-		err = fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
+		return nil, fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
 	}
 	_, err = p.db.Model(&company).Returning("*").Insert()
 	if err != nil {
-		err = fmt.Errorf("error in inserting official company: error: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("error in inserting official company: error: %w", err)
 	}
 	employer.CompanyID = company.ID
 	_, err = p.db.Model(&employer).WherePK().Column("comp_id").Update()
 	if err != nil {
-		err = fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
-		return nil, err
+		return nil, fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
 	}
 	return &company, nil
 }
@@ -102,8 +99,7 @@ func (p *pgReopository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCo
 		/*if err.Error() == "pg: no rows in result set" {
 			return nil, nil
 		}*/
-		err = fmt.Errorf("error in select official company with id: %s : error: %w", compId, err)
-		return nil, err
+		return nil, fmt.Errorf("error in select official company with id: %s : error: %w", compId, err)
 	}
 	return &company, nil
 }

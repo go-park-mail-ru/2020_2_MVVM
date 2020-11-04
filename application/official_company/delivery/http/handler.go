@@ -42,14 +42,15 @@ func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 
 func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
 	var req struct {
-		CompanyID uuid.UUID `uri:"company_id" binding:"required"`
+		CompanyID string `uri:"company_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	comp, err := c.CompUseCase.GetOfficialCompany(req.CompanyID)
+	compUuid, _ := uuid.Parse(req.CompanyID)
+	comp, err := c.CompUseCase.GetOfficialCompany(compUuid)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
