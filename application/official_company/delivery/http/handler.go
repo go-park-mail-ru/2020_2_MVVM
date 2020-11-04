@@ -120,14 +120,14 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
-		End   uint `form:"end" binding:"required"`
+		Limit uint `form:"limit" binding:"required"`
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.End)
+	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.Limit)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return

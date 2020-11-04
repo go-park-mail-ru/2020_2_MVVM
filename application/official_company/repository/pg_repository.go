@@ -41,14 +41,14 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 	return compList, nil
 }
 
-func (p *pgReopository) GetCompaniesList(start uint, end uint) ([]models.OfficialCompany, error) {
+func (p *pgReopository) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
 	var compList []models.OfficialCompany
-	if end <= start {
+	if limit <= start {
 		return nil, fmt.Errorf("selection with useless positions")
 	}
-	err := p.db.Model(&compList).Limit(int(end)).Offset(int(start)).Select()
+	err := p.db.Model(&compList).Limit(int(limit)).Offset(int(start)).Select()
 	if err != nil {
-		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
+		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)
 		return nil, err
 	}
 	return compList, nil

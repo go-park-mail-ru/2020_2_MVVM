@@ -128,23 +128,23 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		//dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
-		//if err != nil {
-		//	ctx.AbortWithError(http.StatusBadRequest, err)
-		//	return
-		//}
-		//var dateFinish time.Time
-		//if !item.ContinueToToday {
-		//	dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
-		//	if err != nil {
-		//		ctx.AbortWithError(http.StatusBadRequest, err)
-		//		return
-		//	}
-		//} else {
-		//	dateFinish = time.Now()
-		//}
-		dateBegin := time.Now()
-		dateFinish := time.Now()
+		dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		var dateFinish time.Time
+		if !item.ContinueToToday {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+			if err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			dateFinish = time.Now()
+		}
+		//dateBegin := time.Now()
+		//dateFinish := time.Now()
 
 		insertExp := models.ExperienceCustomComp{
 			NameJob:         item.NameJob,
@@ -319,23 +319,23 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		//dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
-		//if err != nil {
-		//	ctx.AbortWithError(http.StatusBadRequest, err)
-		//	return
-		//}
-		//var dateFinish time.Time
-		//if !item.ContinueToToday {
-		//	dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
-		//	if err != nil {
-		//		ctx.AbortWithError(http.StatusBadRequest, err)
-		//		return
-		//	}
-		//} else {
-		//	dateFinish = time.Now()
-		//}
-		dateBegin := time.Now()
-		dateFinish := time.Now()
+		dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		var dateFinish time.Time
+		if !item.ContinueToToday {
+			dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+			if err != nil {
+				ctx.AbortWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			dateFinish = time.Now()
+		}
+		//dateBegin := time.Now()
+		//dateFinish := time.Now()
 		insertExp := models.ExperienceCustomComp{
 			NameJob:         item.NameJob,
 			Position:        item.Position,

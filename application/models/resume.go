@@ -27,7 +27,6 @@ type Resume struct {
 type AdditionInResume struct {
 	Education        []Education               `json:"education" form:"education"`
 	CustomExperience []ReqExperienceCustomComp `json:"custom_experience" form:"custom_experience"`
-	//ddd              string                    `form:"ddd"`
 }
 
 type RespResume struct {
