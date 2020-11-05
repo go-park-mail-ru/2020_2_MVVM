@@ -21,7 +21,7 @@ func NewPgRepository(db *pg.DB) vacancy.RepositoryVacancy {
 func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error) {
 	var (
 		employer models.Employer
-		//company  models.OfficialCompany
+		company  models.OfficialCompany
 	)
 	err := p.db.Model(&employer).Where("empl_id = ?", vac.EmpID).Select()
 	if err != nil {
@@ -30,7 +30,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
 		vac.CompID = compId
-		//company.ID = compId
+		company.ID = compId
 	} else {
 		return nil, errors.New("error: employer must have company for vacancy creation")
 	}
@@ -39,67 +39,41 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		err = fmt.Errorf("error in inserting vacancy with title: %s : error: %w", vac.Title, err)
 		return nil, err
 	}
-	//TODO: update vac_count in companies
-
+	_, err = p.db.Model(&company).WherePK().Set("count_vacancy = count_vacancy + 1").Update()
+	if err != nil {
+		return nil, fmt.Errorf("error in update company with id:  %s vacCount  : error: %w", company.ID.String(), err)
+	}
 	return &vac, nil
 }
 
-func (p *pgRepository) GetVacancyById(id string) (*models.Vacancy, error) {
-	return dbSelector(p, "vac_id = ?", id)
-}
-
-func (p *pgRepository) GetVacancyByName(name string) (*models.Vacancy, error) {
-	return dbSelector(p, "title = ?", name)
-}
-
-func dbSelector(p *pgRepository, pattern string, attribute string) (*models.Vacancy, error) {
+func (p *pgRepository) GetVacancyById(id uuid.UUID) (*models.Vacancy, error) {
 	var vac models.Vacancy
-	err := p.db.Model(&vac).Where(pattern, attribute).Select()
+	if id == uuid.Nil {
+		return nil, nil
+	}
+	vac.ID = id
+	err := p.db.Model(&vac).WherePK().Select()
 	if err != nil {
-		err = fmt.Errorf("error in select resume with pattern: %s : error: %w", pattern, err)
-		return nil, err
+		return nil, fmt.Errorf("error in select vacancy with id: %s : error: %w", id.String(), err)
 	}
 	return &vac, nil
 }
 
 func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
-	/*oldVac, err := p.GetVacancyById(newVac.FK.String())
+	oldVac, err := p.GetVacancyById(newVac.ID)
 	if err != nil {
-		return models.Vacancy{}, err
+		return nil, fmt.Errorf("error in select vacancy with id: %s : error: %w", newVac.ID.String(), err)
 	}
-	switch {
-	case newVac.VacancyName != "":
-		oldVac.VacancyName = newVac.VacancyName
-		fallthrough
-	case newVac.CompanyName != "":
-		oldVac.CompanyName = newVac.CompanyName
-		fallthrough
-	case newVac.VacancyDescription != "":
-		oldVac.VacancyDescription = newVac.VacancyDescription
-		fallthrough
-	case newVac.CompanyAddress != "":
-		oldVac.CompanyAddress = newVac.CompanyAddress
-		fallthrough
-	case newVac.WorkExperience != "":
-		oldVac.WorkExperience = newVac.WorkExperience
-		fallthrough
-	case newVac.Skills != "":
-		oldVac.Skills = newVac.Skills
-		fallthrough
-	case newVac.Salary != 0:
-		oldVac.Salary = newVac.Salary
+	if oldVac.EmpID != newVac.EmpID {
+		return nil, fmt.Errorf("this user can't update this vacancy")
 	}
-	_, err = p.db.Model(&oldVac).WherePK().Update()
-	if err != nil {
-		err = fmt.Errorf("error in update resume with id: %s : error: %w", newVac.ID, err)
-		return models.Vacancy{}, err
+	if _, err := p.db.Model(&newVac).WherePK().Returning("*").Update(); err != nil {
+		return nil, fmt.Errorf("can't update vacancy with id:%s", newVac.ID)
 	}
-	return oldVac, nil
-	*/
 	return &newVac, nil
 }
 
-func (p *pgRepository) GetVacancyList(start uint, limit uint, empId uuid.UUID) ([]models.Vacancy, error) {
+func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, entityType int) ([]models.Vacancy, error) {
 	var (
 		vacList []models.Vacancy
 		err     error
@@ -107,10 +81,12 @@ func (p *pgRepository) GetVacancyList(start uint, limit uint, empId uuid.UUID) (
 	if limit <= start {
 		return nil, fmt.Errorf("selection with useless positions")
 	}
-	if empId != uuid.Nil {
-		err = p.db.Model(&vacList).Where("empl_id= ?", empId).Limit(int(limit)).Offset(int(start)).Select()
+	if entityType == vacancy.ByEmpId {
+		err = p.db.Model(&vacList).Where("empl_id= ?", id).Limit(int(limit)).Offset(int(start)).Select()
+	} else if entityType == vacancy.ByCompId {
+		err = p.db.Model(&vacList).Where("comp_id= ?", id).Order("sphere").Limit(int(limit)).Offset(int(start)).Select()
 	} else {
-		err = p.db.Model(&vacList).Limit(int(limit)).Offset(int(start)).Select()
+		err = p.db.Model(&vacList).Limit(int(limit)).Offset(int(start)).Order("sphere").Order("sphere").Select()
 	}
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)
@@ -124,13 +100,10 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 
 	err := p.db.Model(&vacList).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if params.StartDate != "" {
-			q = q.Where("date_create >= ?", params.StartDate)
+			q = q.Where("date_create >= (?)", params.StartDate)
 		}
 		if len(params.Spheres) != 0 {
-			q = q.Where("spheres IN (?)", pg.In(params.Spheres))
-		}
-		if len(params.WeekWorkHours) != 0 {
-			q = q.Where("week_work_hours IN (?)", pg.In(params.WeekWorkHours))
+			q = q.Where("sphere IN (?)", pg.In(params.Spheres))
 		}
 		if len(params.EducationLevel) != 0 {
 			q = q.Where("education_level IN (?)", pg.In(params.EducationLevel))
@@ -152,7 +125,7 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 				Where("salary_max <= ?", params.SalaryMax)
 		}
 		if params.KeyWords != "" {
-			q = q.Where("LOWER(title) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+			q = q.Where("LOWER(title) LIKE ?", "%"+params.KeyWords+"%")
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil

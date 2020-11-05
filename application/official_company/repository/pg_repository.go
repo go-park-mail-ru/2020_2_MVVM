@@ -2,8 +2,8 @@ package repository
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/google/uuid"
@@ -18,16 +18,16 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 
 	err := p.db.Model(&compList).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if params.VacCount > 0 {
-			q = q.Where("count_vacancy >= ?", params.VacCount)
-		}
-		if len(params.Spheres) != 0 {
-			q = q.Where("spheres IN (?)", pg.In(params.Spheres))
+			q = q.Where("count_vacancy >= (?)", params.VacCount)
 		}
 		if len(params.Location) != 0 {
 			q = q.Where("location IN (?)", pg.In(params.Location))
 		}
 		if params.KeyWords != "" {
-			q = q.Where("LOWER(name) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+			q = q.Where("LOWER(name) LIKE (?)", "%"+params.KeyWords+"%")
+		}
+		if len(params.Spheres) != 0 {
+			q = q.Where("spheres <@ (?)", pg.Array(params.Spheres))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil
@@ -35,8 +35,7 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 		return q, nil
 	}).Select()
 	if err != nil {
-		err = fmt.Errorf("error in companies list selection with searchParams: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("error in companies list selection with searchParams: %s", err)
 	}
 	return compList, nil
 }
@@ -54,49 +53,45 @@ func (p *pgReopository) GetCompaniesList(start uint, limit uint) ([]models.Offic
 	return compList, nil
 }
 
-func (p *pgReopository) GetMineCompany(empId string) (*models.OfficialCompany, error) {
+func (p *pgReopository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {
 	var employer models.Employer
 	err := p.db.Model(&employer).Where("empl_id = ?", empId).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select employer with id: %s : error: %w", empId, err)
 		return nil, err
 	}
-	return p.GetOfficialCompany(employer.CompanyID.String())
+	return p.GetOfficialCompany(employer.CompanyID)
 }
 
-func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository{
+func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository {
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId string) (*models.OfficialCompany, error) {
-	if empId == uuid.Nil.String() {
-		err := fmt.Errorf("error in inserting official company:empId = nil")
-		return nil, err
+func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+	if empId == uuid.Nil {
+		return nil, fmt.Errorf("error in inserting official company:empId = nil")
 	}
-	//TODO: fix uuid
-	s, _ := uuid.Parse(empId)
-	employer := models.Employer{ID: s}
+	employer := models.Employer{ID: empId}
 	err := p.db.Model(&employer).WherePK().Select()
 	if err != nil || employer.CompanyID != uuid.Nil {
-		err = fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
+		return nil, fmt.Errorf("error employer with id = %s doesn't exist or already have company", empId.String())
 	}
+	//_, err = p.db.Model(&company).WherePK().Update()
 	_, err = p.db.Model(&company).Returning("*").Insert()
 	if err != nil {
-		err = fmt.Errorf("error in inserting official company: error: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("error in inserting official company: error: %w", err)
 	}
 	employer.CompanyID = company.ID
 	_, err = p.db.Model(&employer).WherePK().Column("comp_id").Update()
 	if err != nil {
-		err = fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
-		return nil, err
+		return nil, fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId.String(), err)
 	}
 	return &company, nil
 }
 
-func (p *pgReopository) GetOfficialCompany(compId string) (*models.OfficialCompany, error) {
+func (p *pgReopository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error) {
 	var company models.OfficialCompany
-	if compId == uuid.Nil.String() {
+	if compId == uuid.Nil {
 		return nil, nil
 	}
 	err := p.db.Model(&company).Where("comp_id = ?", compId).Select()
@@ -104,8 +99,7 @@ func (p *pgReopository) GetOfficialCompany(compId string) (*models.OfficialCompa
 		/*if err.Error() == "pg: no rows in result set" {
 			return nil, nil
 		}*/
-		err = fmt.Errorf("error in select official company with id: %s : error: %w", compId, err)
-		return nil, err
+		return nil, fmt.Errorf("error in select official company with id: %s : error: %w", compId, err)
 	}
 	return &company, nil
 }

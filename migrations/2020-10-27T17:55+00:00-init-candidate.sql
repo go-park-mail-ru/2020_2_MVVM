@@ -13,7 +13,7 @@ create table users
     password_hash bytea not null,
     name varchar(128) not null,
     surname varchar(128),
-    phone varchar(32),
+    phone varchar(18),
     social_network text
 );
 

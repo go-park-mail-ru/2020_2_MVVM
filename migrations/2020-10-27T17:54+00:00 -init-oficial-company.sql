@@ -11,7 +11,7 @@ create table official_companies
         constraint comp_id_pkey
             primary key,
     name text not null,
-    spheres text null,
+    spheres int[] null,
     description text null,
     location text not null,
     link text null,

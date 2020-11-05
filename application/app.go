@@ -163,6 +163,8 @@ func NewApp(config Config) *App {
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
 	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
+	//common.GetImageBase64("")
+
 	app := App{
 		config:   config,
 		log:      log,
