@@ -5,8 +5,9 @@ import (
 )
 
 type OfficialCompanyRepository interface {
-	CreateOfficialCompany(resume models.OfficialCompany) (*models.OfficialCompany, error)
-	//UpdateEducation(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
-	//GetOfficialCompanyByEmployerId(id string) (*models.OfficialCompany, error)
-	GetOfficialCompanyById(id string) (*models.OfficialCompany, error)
+	CreateOfficialCompany(models.OfficialCompany, string) (*models.OfficialCompany, error)
+	GetCompaniesList(uint, uint) ([]models.OfficialCompany, error)
+	GetMineCompany(string) (*models.OfficialCompany, error)
+	GetOfficialCompany(string) (*models.OfficialCompany, error)
+	SearchCompanies(models.CompanySearchParams) ([]models.OfficialCompany, error)
 }

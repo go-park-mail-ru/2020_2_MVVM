@@ -9,7 +9,7 @@ type Resume struct {
 	tableName struct{} `pg:"main.resume,discard_unknown_columns"`
 
 	ID              uuid.UUID `pg:"resume_id,pk,type:uuid" json:"id" form:"id"`
-	UserID          uuid.UUID `pg:"cand_id, fk, type:uuid" json:"user_id" form:"user_id"`
+	UserID          uuid.UUID `pg:"cand_id, fk, type:uuid" json:"cand_id" form:"user_id"`
 	Title           string    `pg:"title, notnull" json:"title" form:"title"`
 	SalaryMin       *int      `pg:"salary_min" json:"salary_min" form:"salary_min"`
 	SalaryMax       *int      `pg:"salary_max" json:"salary_max" form:"salary_max"`
@@ -27,7 +27,6 @@ type Resume struct {
 type AdditionInResume struct {
 	Education        []Education               `json:"education" form:"education"`
 	CustomExperience []ReqExperienceCustomComp `json:"custom_experience" form:"custom_experience"`
-	//ddd              string                    `form:"ddd"`
 }
 
 type RespResume struct {

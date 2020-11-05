@@ -19,9 +19,26 @@ type Vacancy struct {
 	Spheres         string    `pg:"spheres" json:"spheres"`
 	Employment      string    `pg:"employment" json:"employment"`
 	WeekWorkHours   int       `pg:"week_work_hours" json:"week_work_hours"`
-	ExperienceMonth string    `pg:"experience_month" json:"experience_work"`
+	ExperienceMonth string    `pg:"experience_month" json:"experience_month"`
 	Location        string    `pg:"location" json:"location"`
 	CareerLevel     string    `pg:"career_level" json:"career_level"`
 	EducationLevel  string    `pg:"education_level" json:"education_level"`
-	//DateCreate      time.Time `pg:"date_create" json:"date_create"`
+	DateCreate      string    `pg:"date_create" json:"date_create"`
+}
+
+type VacancySearchParams struct {
+	KeyWords        string   `json:"keywords"`
+	SalaryMin       int      `json:"salary_min"`
+	SalaryMax       int      `json:"salary_max"`
+	WeekWorkHours   []int    `json:"week_work_hours"`
+	ExperienceMonth []int    `json:"experience_month"`
+	Employment      []string `json:"employment"`
+	EducationLevel  []string `json:"education_level"`
+	CareerLevel     []string `json:"career_level"`
+	Spheres         []string `json:"spheres"`
+	Location        []string `json:"location"`
+	OrderBy         string   `json:"order_by"`
+	ByAsc           bool     `json:"byAsc"`
+	DaysFromNow     int      `json:"days_from_now"`
+	StartDate       string   `json:"start_date"`
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
@@ -129,7 +128,7 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
 		if err != nil {
 			ctx.AbortWithError(http.StatusBadRequest, err)
 			return
@@ -144,10 +143,13 @@ func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
 		} else {
 			dateFinish = time.Now()
 		}
+		//dateBegin := time.Now()
+		//dateFinish := time.Now()
+
 		insertExp := models.ExperienceCustomComp{
 			NameJob:         item.NameJob,
 			Position:        item.Position,
-			Begin:           dateBedin,
+			Begin:           dateBegin,
 			Finish:          &dateFinish,
 			Duties:          item.Duties,
 			ContinueToToday: &item.ContinueToToday,
@@ -294,11 +296,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		return
 	}
 
-	if candID != reqResume.UserID {
-		errMsg := "this user has not update this resume"
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: errMsg})
-	}
-
+	reqResume.UserID = candID
 	reqResume.DateCreate = time.Now()
 
 	pResume, err := r.UsecaseResume.UpdateResume(reqResume)
@@ -321,7 +319,7 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 	var customExperience []models.ExperienceCustomComp
 	for i := range additionParam.CustomExperience {
 		item := additionParam.CustomExperience[i]
-		dateBedin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+		dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
 		if err != nil {
 			ctx.AbortWithError(http.StatusBadRequest, err)
 			return
@@ -336,10 +334,12 @@ func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
 		} else {
 			dateFinish = time.Now()
 		}
+		//dateBegin := time.Now()
+		//dateFinish := time.Now()
 		insertExp := models.ExperienceCustomComp{
 			NameJob:         item.NameJob,
 			Position:        item.Position,
-			Begin:           dateBedin,
+			Begin:           dateBegin,
 			Finish:          &dateFinish,
 			Duties:          item.Duties,
 			ContinueToToday: &item.ContinueToToday,
@@ -415,7 +415,6 @@ func (r *ResumeHandler) handlerSearchResume(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, RespResume{Resume: resume})
-
 }
 
 func (r *ResumeHandler) handlerAddFavorite(ctx *gin.Context) {
