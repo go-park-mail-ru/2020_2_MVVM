@@ -35,7 +35,7 @@ func (v VacancyUseCase) CreateVacancy(vacancy models.Vacancy) (*models.Vacancy, 
 	return vac, nil
 }
 
-func (v VacancyUseCase) GetVacancy(id string) (*models.Vacancy, error) {
+func (v VacancyUseCase) GetVacancy(id uuid.UUID) (*models.Vacancy, error) {
 	vac, err := v.repos.GetVacancyById(id)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy selection get: %w", err)
@@ -45,6 +45,7 @@ func (v VacancyUseCase) GetVacancy(id string) (*models.Vacancy, error) {
 }
 
 func (v VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
+
 	vac, err := v.repos.UpdateVacancy(newVac)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy update: %w", err)
@@ -53,8 +54,8 @@ func (v VacancyUseCase) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, e
 	return vac, nil
 }
 
-func (v VacancyUseCase) GetVacancyList(start uint, limit uint, empId uuid.UUID) ([]models.Vacancy, error) {
-	vacList, err := v.repos.GetVacancyList(start, limit, empId)
+func (v VacancyUseCase) GetVacancyList(start uint, limit uint, id uuid.UUID, typeDb int) ([]models.Vacancy, error) {
+	vacList, err := v.repos.GetVacancyList(start, limit, id, typeDb)
 	if err != nil {
 		err = fmt.Errorf("error in vacancy list creation: %w", err)
 		return nil, err

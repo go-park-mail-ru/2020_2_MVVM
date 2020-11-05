@@ -15,8 +15,8 @@ type CompanyUseCase struct {
 	repos  official_company.OfficialCompanyRepository
 }
 
-func (c *CompanyUseCase) GetCompaniesList(start uint, end uint) ([]models.OfficialCompany, error) {
-	vacList, err := c.repos.GetCompaniesList(start, end)
+func (c *CompanyUseCase) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
+	vacList, err := c.repos.GetCompaniesList(start, limit)
 	if err != nil {
 		err = fmt.Errorf("error in company list creation: %w", err)
 		return nil, err

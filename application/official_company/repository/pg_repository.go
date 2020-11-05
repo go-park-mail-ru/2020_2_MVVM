@@ -2,8 +2,8 @@ package repository
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-pg/pg/v9"
 	"github.com/go-pg/pg/v9/orm"
 	"github.com/google/uuid"
@@ -18,16 +18,16 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 
 	err := p.db.Model(&compList).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if params.VacCount > 0 {
-			q = q.Where("count_vacancy >= ?", params.VacCount)
-		}
-		if len(params.Spheres) != 0 {
-			q = q.Where("spheres IN (?)", pg.In(params.Spheres))
+			q = q.Where("count_vacancy >= (?)", params.VacCount)
 		}
 		if len(params.Location) != 0 {
 			q = q.Where("location IN (?)", pg.In(params.Location))
 		}
 		if params.KeyWords != "" {
-			q = q.Where("LOWER(name) LIKE ?", fmt.Sprintf("%%%s%", params.KeyWords))
+			q = q.Where("LOWER(name) LIKE (?)", "%"+params.KeyWords+"%")
+		}
+		if len(params.Spheres) != 0 {
+			q = q.Where("spheres <@ (?)", pg.Array(params.Spheres))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil
@@ -35,20 +35,19 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 		return q, nil
 	}).Select()
 	if err != nil {
-		err = fmt.Errorf("error in companies list selection with searchParams: %s", err)
-		return nil, err
+		return nil, fmt.Errorf("error in companies list selection with searchParams: %s", err)
 	}
 	return compList, nil
 }
 
-func (p *pgReopository) GetCompaniesList(start uint, end uint) ([]models.OfficialCompany, error) {
+func (p *pgReopository) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
 	var compList []models.OfficialCompany
-	if end <= start {
+	if limit <= start {
 		return nil, fmt.Errorf("selection with useless positions")
 	}
-	err := p.db.Model(&compList).Limit(int(end)).Offset(int(start)).Select()
+	err := p.db.Model(&compList).Limit(int(limit)).Offset(int(start)).Select()
 	if err != nil {
-		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, end, err)
+		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)
 		return nil, err
 	}
 	return compList, nil
@@ -64,7 +63,7 @@ func (p *pgReopository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany
 	return p.GetOfficialCompany(employer.CompanyID)
 }
 
-func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository{
+func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository {
 	return &pgReopository{db: db}
 }
 
@@ -75,8 +74,9 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	employer := models.Employer{ID: empId}
 	err := p.db.Model(&employer).WherePK().Select()
 	if err != nil || employer.CompanyID != uuid.Nil {
-		return nil, fmt.Errorf("error employer with id = %d doesn't exist or already have company", empId)
+		return nil, fmt.Errorf("error employer with id = %s doesn't exist or already have company", empId.String())
 	}
+	//_, err = p.db.Model(&company).WherePK().Update()
 	_, err = p.db.Model(&company).Returning("*").Insert()
 	if err != nil {
 		return nil, fmt.Errorf("error in inserting official company: error: %w", err)
@@ -84,7 +84,7 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	employer.CompanyID = company.ID
 	_, err = p.db.Model(&employer).WherePK().Column("comp_id").Update()
 	if err != nil {
-		return nil, fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId, err)
+		return nil, fmt.Errorf("error in update employer(add company) with id:  %s : error: %w", empId.String(), err)
 	}
 	return &company, nil
 }
