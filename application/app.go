@@ -27,6 +27,9 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
+	RepositoryResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/repository"
+	ResponseUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/usecase"
 	"github.com/go-pg/pg/v9"
 	"net/http"
 	"os"
@@ -162,6 +165,10 @@ func NewApp(config Config) *App {
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
 	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
+
+	responseRep := RepositoryResponse.NewPgRepository(db)
+	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, responseRep)
+	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
 
 	app := App{
 		config:   config,

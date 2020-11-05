@@ -2,9 +2,9 @@ package http
 
 import (
 	"errors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
@@ -54,24 +54,10 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 	}
 }
 
-func (r *ResumeHandler) handlerGetCurrentUserID(ctx *gin.Context, user string) (id uuid.UUID, err error) {
-	session := sessions.Default(ctx)
-	userIDStr := session.Get(user)
-	if userIDStr == nil {
-		return uuid.Nil, nil
-	}
-	userID, err := uuid.Parse(userIDStr.(string))
-
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return userID, nil
-}
-
 func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
-	candID, err := r.handlerGetCurrentUserID(ctx, "cand_id")
+	candID, err := common.HandlerGetCurrentUserID(ctx, "cand_id")
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 
@@ -89,9 +75,9 @@ func (r *ResumeHandler) handlerGetAllCurrentUserResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) handlerCreateResume(ctx *gin.Context) {
-	candID, err := r.handlerGetCurrentUserID(ctx, "cand_id")
+	candID, err := common.HandlerGetCurrentUserID(ctx, "cand_id")
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 	if candID == uuid.Nil {
@@ -233,9 +219,9 @@ func (r *ResumeHandler) handlerGetResumeByID(ctx *gin.Context) {
 	}
 
 	var isFavorite *uuid.UUID = nil
-	emplID, err := r.handlerGetCurrentUserID(ctx, "empl_id")
+	emplID, err := common.HandlerGetCurrentUserID(ctx, "empl_id")
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 	if emplID != uuid.Nil {
@@ -280,9 +266,9 @@ func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
-	candID, err := r.handlerGetCurrentUserID(ctx, "cand_id")
+	candID, err := common.HandlerGetCurrentUserID(ctx, "cand_id")
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 	if candID == uuid.Nil {
@@ -431,9 +417,9 @@ func (r *ResumeHandler) handlerAddFavorite(ctx *gin.Context) {
 		return
 	}
 
-	emplID, err := r.handlerGetCurrentUserID(ctx, "empl_id")
+	emplID, err := common.HandlerGetCurrentUserID(ctx, "empl_id")
 	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 	if emplID == uuid.Nil {
@@ -480,13 +466,9 @@ func (r *ResumeHandler) handlerRemoveFavorite(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) handlerGetAllCurrentEmplFavoritesResume(ctx *gin.Context) {
-	emplID, err := r.handlerGetCurrentUserID(ctx, "empl_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	if emplID == uuid.Nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
+	emplID, err := common.HandlerGetCurrentUserID(ctx, "empl_id")
+	if err != nil || emplID == uuid.Nil{
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 
