@@ -303,19 +303,6 @@ func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, respResumes)
-
-	//type Resp struct {
-	//	Resume []models.Resume `json:"resume"`
-	//}
-	//
-	//ctx.JSON(http.StatusOK, Resp{Resume: respResumes})
-
-	//allResume, err := r.handlerGetAllForListResume(respResumes)
-	//if err != nil {
-	//	ctx.AbortWithError(http.StatusInternalServerError, err)
-	//	return
-	//}
-	//ctx.JSON(http.StatusOK, models.Resp{Resume: allResume})
 }
 
 func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {
@@ -449,11 +436,7 @@ func (r *ResumeHandler) handlerSearchResume(ctx *gin.Context) {
 		return
 	}
 
-	type RespResume struct {
-		Resume []models.Resume `json:"resume"`
-	}
-
-	ctx.JSON(http.StatusOK, RespResume{Resume: resume})
+	ctx.JSON(http.StatusOK, resume)
 }
 
 func (r *ResumeHandler) handlerAddFavorite(ctx *gin.Context) {
@@ -524,22 +507,13 @@ func (r *ResumeHandler) handlerGetAllCurrentEmplFavoritesResume(ctx *gin.Context
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	if emplID == uuid.Nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
-		return
-	}
 
-	pResume, err := r.UsecaseResume.GetAllEmplFavoriteResume(emplID)
+	emplFavoriteResume, err := r.UsecaseResume.GetAllEmplFavoriteResume(emplID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	allResume, err := r.handlerGetAllForListResume(pResume)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	ctx.JSON(http.StatusOK, models.Resp{Resume: allResume})
+	ctx.JSON(http.StatusOK, emplFavoriteResume)
 }
 
 func (r *ResumeHandler) handlerGetAllForListResume(resume []models.Resume) ([]models.RespResume, error) {

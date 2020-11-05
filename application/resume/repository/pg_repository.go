@@ -48,15 +48,6 @@ func (p *pgReopository) GetResumeByName(name string) (*models.Resume, error) {
 }
 
 func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.ResumeWithCandidate, error) {
-	//var resumes []models.Resume
-	//err := p.db.Model(&resumes).Column("resume_id", "cand_id", "title", "description", "place").
-	//	Offset(int(start)).Limit(int(limit)).Select()
-	//if err != nil {
-	//	err = fmt.Errorf("error in select resume array from %v to %v: error: %w", start, limit, err)
-	//	return nil, err
-	//}
-
-
 	var brief []models.ResumeWithCandidate
 	err := p.db.Model(&brief).
 		Relation("CandidateWithUser").
@@ -88,9 +79,9 @@ func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, 
 }
 
 
-func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.Resume, error) {
-	var r[]models.Resume
-	err := p.db.Model(&r).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.ResumeWithCandidate, error) {
+	var brief []models.ResumeWithCandidate
+	err := p.db.Model(&brief).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if len(searchParams.AreaSearch) != 0 {
 			q = q.Where("area_search IN (?)", pg.In(searchParams.AreaSearch))
 		}
@@ -113,11 +104,13 @@ func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]model
 		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
 			WhereOr("LOWER(place) LIKE ?", "%" + searchParams.KeyWords + "%")
 		return q, nil
-	}).Select()
+	}).Relation("CandidateWithUser").
+		Relation("CandidateWithUser.User").
+		Select()
 	if err != nil {
 		return nil, err
 	}
-	return r, nil
+	return brief, nil
 }
 
 func (p *pgReopository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
@@ -139,30 +132,18 @@ func (p *pgReopository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	return nil
 }
 
-func (p *pgReopository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Resume, error) {
-	var resume_id []uuid.UUID
-	var favorites []models.FavoritesForEmpl
-	err := p.db.Model(&favorites).
-		Column("resume_id").
-		Where("empl_id = ?", empl_id).
-		Select(&resume_id)
+func (p *pgReopository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.FavoritesForEmplWithResume, error) {
+	var brief []models.FavoritesForEmplWithResume
+	err := p.db.Model(&brief).
+		Relation("ResumeWithCandidate").
+		Relation("ResumeWithCandidate.CandidateWithUser").
+		Relation("ResumeWithCandidate.CandidateWithUser.User").
+		Where("empl_id = ?", empl_id).Select()
 	if err != nil {
+		err = fmt.Errorf("error in get my favorite resume: %w", err)
 		return nil, err
 	}
-
-	var allResume[]models.Resume
-
-	for _, id := range resume_id {
-		var r models.Resume
-		err := p.db.Model(&r).
-			Where("resume_id = ?", id).
-			Select()
-		if err != nil {
-			return nil, err
-		}
-		allResume = append(allResume, r)
-	}
-	return allResume, nil
+	return brief, nil
 }
 
 func (p *pgReopository) GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {

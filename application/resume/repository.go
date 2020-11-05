@@ -8,7 +8,7 @@ import (
 type ResumeRepository interface {
 	CreateResume(resume models.Resume) (*models.Resume, error)
 	UpdateResume(newResume *models.Resume) (*models.Resume, error)
-	SearchResume(searchParams *models.SearchResume) ([]models.Resume, error)
+	SearchResume(searchParams *models.SearchResume) ([]models.ResumeWithCandidate, error)
 	GetResumeById(id string) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	GetResumeByName(name string) (*models.Resume, error)
@@ -16,6 +16,6 @@ type ResumeRepository interface {
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error
-	GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Resume, error)
+	GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.FavoritesForEmplWithResume, error)
 	GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
 }
