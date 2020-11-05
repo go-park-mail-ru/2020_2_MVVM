@@ -256,6 +256,35 @@ func (r *ResumeHandler) handlerGetResumeByID(ctx *gin.Context) {
 						IsFavorite: isFavorite})
 }
 
+//func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
+//	var reqResume struct {
+//		Start uint `form:"start"`
+//		Limit uint `form:"limit" binding:"required"`
+//	}
+//
+//	if err := ctx.ShouldBindQuery(&reqResume); err != nil {
+//		ctx.AbortWithError(http.StatusBadRequest, err)
+//		return
+//	}
+//
+//	rList, err := r.UsecaseResume.GetResumePage(reqResume.Start, reqResume.Limit)
+//	if err != nil {
+//		ctx.AbortWithError(http.StatusInternalServerError, err)
+//		return
+//	}
+//	//type Resp struct {
+//	//	Resume []models.Resume `json:"resume"`
+//	//}
+//	//
+//	//ctx.JSON(http.StatusOK, Resp{Resume: rList})
+//
+//	allResume, err := r.handlerGetAllForListResume(rList)
+//	if err != nil {
+//		ctx.AbortWithError(http.StatusInternalServerError, err)
+//		return
+//	}
+//	ctx.JSON(http.StatusOK, models.Resp{Resume: allResume})
+//}
 func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 	var reqResume struct {
 		Start uint `form:"start"`
@@ -267,16 +296,26 @@ func (r *ResumeHandler) handlerGetResumeList(ctx *gin.Context) {
 		return
 	}
 
-	rList, err := r.UsecaseResume.GetResumePage(reqResume.Start, reqResume.Limit)
+	respResumes, err := r.UsecaseResume.GetResumePage(reqResume.Start, reqResume.Limit)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	type Resp struct {
-		Resume []models.Resume `json:"resume"`
-	}
 
-	ctx.JSON(http.StatusOK, Resp{Resume: rList})
+	ctx.JSON(http.StatusOK, respResumes)
+
+	//type Resp struct {
+	//	Resume []models.Resume `json:"resume"`
+	//}
+	//
+	//ctx.JSON(http.StatusOK, Resp{Resume: respResumes})
+
+	//allResume, err := r.handlerGetAllForListResume(respResumes)
+	//if err != nil {
+	//	ctx.AbortWithError(http.StatusInternalServerError, err)
+	//	return
+	//}
+	//ctx.JSON(http.StatusOK, models.Resp{Resume: allResume})
 }
 
 func (r *ResumeHandler) handlerUpdateResume(ctx *gin.Context) {

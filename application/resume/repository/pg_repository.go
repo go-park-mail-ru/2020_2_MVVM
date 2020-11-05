@@ -47,14 +47,26 @@ func (p *pgReopository) GetResumeByName(name string) (*models.Resume, error) {
 	return &r, nil
 }
 
-func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
-	var r []models.Resume
-	err := p.db.Model(&r).Offset(int(start)).Limit(int(limit)).Select()
+func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.ResumeWithCandidate, error) {
+	//var resumes []models.Resume
+	//err := p.db.Model(&resumes).Column("resume_id", "cand_id", "title", "description", "place").
+	//	Offset(int(start)).Limit(int(limit)).Select()
+	//if err != nil {
+	//	err = fmt.Errorf("error in select resume array from %v to %v: error: %w", start, limit, err)
+	//	return nil, err
+	//}
+
+
+	var brief []models.ResumeWithCandidate
+	err := p.db.Model(&brief).
+		Relation("CandidateWithUser").
+		Relation("CandidateWithUser.User").
+		Offset(int(start)).Limit(int(limit)).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select resume array from %v to %v: error: %w", start, limit, err)
 		return nil, err
 	}
-	return r, nil
+	return brief, nil
 }
 
 func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, error) {
