@@ -39,6 +39,31 @@ type Resp struct {
 	Resume []RespResume `json:"resume"`
 }
 
+type ResumeWithCandidate struct {
+	tableName struct{} `pg:"main.resume,discard_unknown_columns"`
+
+	ResumeID          uuid.UUID          `pg:"resume_id,pk,type:uuid" json:"resume_id"`
+	CandID            uuid.UUID          `pg:"cand_id, fk, type:uuid" json:"cand_id"`
+	Title             string             `pg:"title" json:"title"`
+	Description       string             `pg:"description" json:"description"`
+	Place             string             `pg:"place" json:"place"`
+	AreaSearch        string             `pg:"area_search" json:"location"`
+	CandidateWithUser *CandidateWithUser `pg:"rel:has-one"`
+}
+
+type BriefRespResume struct {
+	ResumeID    uuid.UUID `json:"resume_id"`
+	CandID      uuid.UUID `json:"cand_id"`
+	UserID      uuid.UUID `json:"user_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Place       string    `json:"place"`
+	AreaSearch  string    `json:"location"`
+	Name        string    `json:"name"`
+	Surname     string    `json:"surname"`
+	Email       string    `json:"email"`
+}
+
 type SearchResume struct {
 	KeyWords        string   `json:"keywords"`
 	SalaryMin       int      `json:"salary_min"`

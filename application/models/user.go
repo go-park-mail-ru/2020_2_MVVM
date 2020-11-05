@@ -29,12 +29,20 @@ type Employer struct {
 type Candidate struct {
 	tableName struct{} `pg:"main.candidates,discard_unknown_columns"`
 
-	ID        uuid.UUID `pg:"cand_id,pk,type:uuid" json:"cand_id"`
-	UserID    uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
+	ID     uuid.UUID `pg:"cand_id,pk,type:uuid" json:"cand_id"`
+	UserID uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
 }
 
 type UserLogin struct {
 	Nickname string `json:"nickname" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
+}
+
+type CandidateWithUser struct {
+	tableName struct{} `pg:"main.candidates,discard_unknown_columns"`
+
+	CandID uuid.UUID `pg:"cand_id,pk,type:uuid" json:"cand_id"`
+	UserID uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
+	User   *User     `pg:"rel:has-one"`
 }

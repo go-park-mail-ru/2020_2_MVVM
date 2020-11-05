@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"math"
 	"strings"
 )
@@ -75,16 +76,33 @@ func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 	return r, nil
 }
 
-func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.Resume, error) {
+func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.BriefRespResume, error) {
 	if limit >= 200 {
 		return nil, fmt.Errorf("Limit is too high. ")
 	}
 	r, err := u.strg.GetResumeArr(start, limit)
 	if err != nil {
-		err = fmt.Errorf("USE error in resume get list from %v to %v: error: %w", start, limit, err)
+		err = fmt.Errorf("error in resume get list from %v to %v: error: %w", start, limit, err)
 		return nil, err
 	}
-	return r, nil
+
+	var briefRespResumes []models.BriefRespResume
+	for i := range r {
+		var insert models.BriefRespResume
+		err = copier.Copy(&insert, &r[i])
+		if err != nil {
+			err = fmt.Errorf("error in resume get list from %v to %v: error: %w", start, limit, err)
+			return nil, err
+		}
+		insert.UserID = r[i].CandidateWithUser.UserID
+		insert.Name = r[i].CandidateWithUser.User.Name
+		insert.Surname = r[i].CandidateWithUser.User.Surname
+		insert.Email = r[i].CandidateWithUser.User.Email
+		briefRespResumes = append(briefRespResumes, insert)
+	}
+
+
+	return briefRespResumes, nil
 }
 
 func (u *UseCaseResume) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
