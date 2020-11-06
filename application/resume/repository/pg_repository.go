@@ -19,17 +19,33 @@ func NewPgRepository(db *pg.DB) resume.ResumeRepository {
 }
 
 func (p *pgReopository) CreateResume(resume models.Resume) (*models.Resume, error) {
-	_, err := p.db.Model(&resume).Returning("*").Insert()
+	_, err := p.db.Model(&resume).
+		Relation("CandidateWithUser").
+		Relation("CandidateWithUser.User").
+		Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
+	var user models.CandidateWithUser
+	err = p.db.Model(&user).
+		Relation("User").
+		Where("cand_id = ?", resume.CandID).
+		Select()
+	if err != nil {
+		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
+		return nil, err
+	}
+	resume.CandidateWithUser = &user
 	return &resume, nil
 }
 
 func (p *pgReopository) GetResumeById(id string) (*models.Resume, error) {
 	var r models.Resume
-	err := p.db.Model(&r).Where("resume_id = ?", id).Select()
+	err := p.db.Model(&r).
+		Relation("CandidateWithUser").
+		Relation("CandidateWithUser.User").
+		Where("resume_id = ?", id).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select resume with id: %s : error: %w", id, err)
 		return nil, err
@@ -37,18 +53,8 @@ func (p *pgReopository) GetResumeById(id string) (*models.Resume, error) {
 	return &r, nil
 }
 
-func (p *pgReopository) GetResumeByName(name string) (*models.Resume, error) {
-	var r models.Resume
-	err := p.db.Model(&r).Where("title = ?", name).Select()
-	if err != nil {
-		err = fmt.Errorf("error in select resume with title: %s : error: %w", name, err)
-		return nil, err
-	}
-	return &r, nil
-}
-
-func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.ResumeWithCandidate, error) {
-	var brief []models.ResumeWithCandidate
+func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
+	var brief []models.Resume
 	err := p.db.Model(&brief).
 		Relation("CandidateWithUser").
 		Relation("CandidateWithUser.User").
@@ -60,22 +66,36 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.ResumeWithCand
 	return brief, nil
 }
 
-func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, error) {
-	var r[]models.Resume
-	err := p.db.Model(&r).Where("cand_id = ?", userID).Select()
+func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error) {
+	var brief []models.ResumeWithCandidate
+	err := p.db.Model(&brief).Column("main.resume.*").Where(`cand_id = ?`, userID).
+		Relation("CandidateWithUser").
+		Relation("CandidateWithUser.User").
+		Select()
 	if err != nil {
+		err = fmt.Errorf("error in get my resume: %w", err)
 		return nil, err
 	}
-	return r, nil
+	return brief, nil
 }
 
-func (p *pgReopository) UpdateResume(newResume *models.Resume) (*models.Resume, error) {
-	_, err := p.db.Model(newResume).WherePK().Returning("*").Update()
+func (p *pgReopository) UpdateResume(resume *models.Resume) (*models.Resume, error) {
+	_, err := p.db.Model(resume).WherePK().Returning("*").Update()
 	if err != nil {
-		err = fmt.Errorf("error in updating resume with id %s, : %w", newResume.ID.String(), err)
+		err = fmt.Errorf("error in updating resume with id %s, : %w", resume.ResumeID.String(), err)
 		return nil, err
 	}
-	return newResume, nil
+	var user models.CandidateWithUser
+	err = p.db.Model(&user).
+		Relation("User").
+		Where("cand_id = ?", resume.CandID).
+		Select()
+	if err != nil {
+		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
+		return nil, err
+	}
+	resume.CandidateWithUser = &user
+	return resume, nil
 }
 
 

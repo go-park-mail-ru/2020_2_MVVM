@@ -10,9 +10,8 @@ type ResumeRepository interface {
 	UpdateResume(newResume *models.Resume) (*models.Resume, error)
 	SearchResume(searchParams *models.SearchResume) ([]models.ResumeWithCandidate, error)
 	GetResumeById(id string) (*models.Resume, error)
-	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
-	GetResumeByName(name string) (*models.Resume, error)
-	GetResumeArr(start, limit uint) ([]models.ResumeWithCandidate, error)
+	GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error)
+	GetResumeArr(start, limit uint) ([]models.Resume, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error

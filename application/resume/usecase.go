@@ -11,7 +11,7 @@ type IUseCaseResume interface {
 	SearchResume(searchParams models.SearchResume) ([]models.BriefRespResume, error)
 	GetResume(id string) (*models.Resume, error)
 	GetResumePage(start, limit uint) ([]models.BriefRespResume, error)
-	GetAllUserResume(userid uuid.UUID) ([]models.Resume, error)
+	GetAllUserResume(userid uuid.UUID) ([]models.BriefRespResume, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
