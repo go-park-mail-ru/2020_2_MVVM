@@ -18,6 +18,10 @@ type Resp struct {
 	Vacancy *models.Vacancy `json:"vacancy"`
 }
 
+type RespErr struct {
+	Error string `json:"error"`
+}
+
 type RespList struct {
 	Vacancies []models.Vacancy `json:"vacancyList"`
 }
@@ -52,6 +56,8 @@ const (
 	vacCreate = 0
 	vacUpdate = 1
 	vacPath   = "vacancy/"
+	emptyFieldErr = "empty required fields"
+	sessionErr = "session error"
 )
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
@@ -79,13 +85,13 @@ func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, RespErr{err.Error()})
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
 	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
 		return
 	}
 
@@ -116,12 +122,12 @@ func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, RespErr{emptyFieldErr})
 		return
 	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
@@ -134,12 +140,12 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, "empty required fields")
+		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, errImg)
+		ctx.JSON(http.StatusBadRequest, RespErr{errImg.Error()})
 		return
 	}
 	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax,
@@ -149,12 +155,12 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	if treatmentType == vacCreate {
 		session := sessions.Default(ctx).Get("empl_id")
 		if session == nil {
-			ctx.JSON(http.StatusInternalServerError, "session error")
+			ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
 			return
 		}
 		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
-			ctx.JSON(http.StatusInternalServerError, "session error")
+			ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
 			return
 		}
 		vacNew.EmpID = empId
@@ -164,7 +170,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, err.Error())
+		ctx.JSON(http.StatusBadRequest, RespErr{err.Error()})
 		return
 	}
 	if file != nil {
@@ -183,14 +189,14 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	)
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
 		return
 	}
 	if entityType == vacancy.ByEmpId {
 		session := sessions.Default(ctx).Get("empl_id")
 		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
-			ctx.AbortWithError(http.StatusBadRequest, errSession)
+			ctx.JSON(http.StatusBadRequest, RespErr{errSession.Error()})
 			return
 		}
 		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, empId, vacancy.ByEmpId)
@@ -203,7 +209,7 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil, vacancy.ByVacId)
 	}
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
