@@ -68,7 +68,7 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error)
 
 func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error) {
 	var brief []models.ResumeWithCandidate
-	err := p.db.Model(&brief).Column("main.resume.*").Where(`cand_id = ?`, userID).
+	err := p.db.Model(&brief).Where(`Candidate_With_User.cand_id = ?`, userID).
 		Relation("CandidateWithUser").
 		Relation("CandidateWithUser.User").
 		Select()
