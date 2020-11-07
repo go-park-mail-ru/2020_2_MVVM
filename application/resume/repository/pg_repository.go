@@ -10,24 +10,24 @@ import (
 	//"github.com/google/uuid"
 )
 
-type pgReopository struct {
+type PGRepository struct {
 	db *pg.DB
 }
 
-func NewPgRepository(db *pg.DB) resume.ResumeRepository {
-	return &pgReopository{db: db}
+func NewPgRepository(db *pg.DB) resume.Repository {
+	return &PGRepository{db: db}
 }
 
-func (p *pgReopository) CreateResume(resume models.Resume) (*models.Resume, error) {
+func (p *PGRepository) CreateResume(resume models.Resume) (*models.Resume, error) {
 	_, err := p.db.Model(&resume).
-		Relation("CandidateWithUser").
-		Relation("CandidateWithUser.User").
+		Relation("Candidate").
+		Relation("Candidate.User").
 		Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
-	var user models.CandidateWithUser
+	var user models.Candidate
 	err = p.db.Model(&user).
 		Relation("User").
 		Where("cand_id = ?", resume.CandID).
@@ -36,15 +36,15 @@ func (p *pgReopository) CreateResume(resume models.Resume) (*models.Resume, erro
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
-	resume.CandidateWithUser = &user
+	resume.Candidate = &user
 	return &resume, nil
 }
 
-func (p *pgReopository) GetResumeById(id string) (*models.Resume, error) {
+func (p *PGRepository) GetResumeById(id string) (*models.Resume, error) {
 	var r models.Resume
 	err := p.db.Model(&r).
-		Relation("CandidateWithUser").
-		Relation("CandidateWithUser.User").
+		Relation("Candidate").
+		Relation("Candidate.User").
 		Where("resume_id = ?", id).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select resume with id: %s : error: %w", id, err)
@@ -53,11 +53,11 @@ func (p *pgReopository) GetResumeById(id string) (*models.Resume, error) {
 	return &r, nil
 }
 
-func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
+func (p *PGRepository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
 	var brief []models.Resume
 	err := p.db.Model(&brief).
-		Relation("CandidateWithUser").
-		Relation("CandidateWithUser.User").
+		Relation("Candidate").
+		Relation("Candidate.User").
 		Offset(int(start)).Limit(int(limit)).Select()
 	if err != nil {
 		err = fmt.Errorf("error in select resume array from %v to %v: error: %w", start, limit, err)
@@ -66,26 +66,26 @@ func (p *pgReopository) GetResumeArr(start, limit uint) ([]models.Resume, error)
 	return brief, nil
 }
 
-func (p *pgReopository) GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error) {
+func (p *PGRepository) GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error) {
 	var brief []models.ResumeWithCandidate
-	err := p.db.Model(&brief).Column("main.resume.*").Where(`cand_id = ?`, userID).
-		Relation("CandidateWithUser").
-		Relation("CandidateWithUser.User").
+	err := p.db.Model(&brief).Column("*").Where(`Resume_With_Candidate.cand_id = ?`, userID).
+		Relation("Candidate").
+		Relation("Candidate.User").
 		Select()
 	if err != nil {
-		err = fmt.Errorf("error in get my resume: %w", err)
+		err = fmt.Errorf("GetAllUserResume: %w", err)
 		return nil, err
 	}
 	return brief, nil
 }
 
-func (p *pgReopository) UpdateResume(resume *models.Resume) (*models.Resume, error) {
+func (p *PGRepository) UpdateResume(resume *models.Resume) (*models.Resume, error) {
 	_, err := p.db.Model(resume).WherePK().Returning("*").Update()
 	if err != nil {
 		err = fmt.Errorf("error in updating resume with id %s, : %w", resume.ResumeID.String(), err)
 		return nil, err
 	}
-	var user models.CandidateWithUser
+	var user models.Candidate
 	err = p.db.Model(&user).
 		Relation("User").
 		Where("cand_id = ?", resume.CandID).
@@ -94,12 +94,12 @@ func (p *pgReopository) UpdateResume(resume *models.Resume) (*models.Resume, err
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
-	resume.CandidateWithUser = &user
+	resume.Candidate = &user
 	return resume, nil
 }
 
 
-func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]models.ResumeWithCandidate, error) {
+func (p *PGRepository) SearchResume(searchParams *resume.SearchParams) ([]models.ResumeWithCandidate, error) {
 	var brief []models.ResumeWithCandidate
 	err := p.db.Model(&brief).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if len(searchParams.AreaSearch) != 0 {
@@ -117,15 +117,21 @@ func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]model
 		if len(searchParams.ExperienceMonth) != 0 {
 			q = q.Where("experience_month IN (?)", pg.In(searchParams.ExperienceMonth))
 		}
-		q = q.Where("salary_min >= ?", searchParams.SalaryMin).
-			Where("salary_max <= ?", searchParams.SalaryMax)
+		if searchParams.SalaryMin != nil {
+			q = q.Where("salary_min >= ?", searchParams.SalaryMin)
+		}
+		if searchParams.SalaryMax != nil {
+			q = q.Where("salary_max <= ?", searchParams.SalaryMax)
+		}
 		return q, nil
 	}).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
-		q = q.Where("LOWER(title) LIKE ?", "%" + searchParams.KeyWords+ "%").
-			WhereOr("LOWER(place) LIKE ?", "%" + searchParams.KeyWords + "%")
+		if searchParams.KeyWords != nil {
+			q = q.Where("LOWER(title) LIKE ?", "%" + *searchParams.KeyWords + "%").
+				WhereOr("LOWER(place) LIKE ?", "%" + *searchParams.KeyWords + "%")
+		}
 		return q, nil
-	}).Relation("CandidateWithUser").
-		Relation("CandidateWithUser.User").
+	}).Relation("Candidate").
+		Relation("Candidate.User").
 		Select()
 	if err != nil {
 		return nil, err
@@ -133,7 +139,7 @@ func (p *pgReopository) SearchResume(searchParams *models.SearchResume) ([]model
 	return brief, nil
 }
 
-func (p *pgReopository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+func (p *PGRepository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
 	_, err := p.db.Model(&favoriteForEmpl).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting favorite resume: %w", err)
@@ -142,7 +148,7 @@ func (p *pgReopository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*m
 	return &favoriteForEmpl, nil
 }
 
-func (p *pgReopository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
+func (p *PGRepository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	var favorite models.FavoritesForEmpl
 	_, err := p.db.Model(&favorite).Where("favorite_id = ?", favoriteForEmpl).Delete()
 	if err != nil {
@@ -152,7 +158,7 @@ func (p *pgReopository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	return nil
 }
 
-func (p *pgReopository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.FavoritesForEmplWithResume, error) {
+func (p *PGRepository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.FavoritesForEmplWithResume, error) {
 	var brief []models.FavoritesForEmplWithResume
 	err := p.db.Model(&brief).
 		Relation("ResumeWithCandidate").
@@ -166,7 +172,7 @@ func (p *pgReopository) GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Fa
 	return brief, nil
 }
 
-func (p *pgReopository) GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
+func (p *PGRepository) GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
 	var favorite models.FavoritesForEmpl
 	err := p.db.Model(&favorite).
 		Where("empl_id = ?", userID).

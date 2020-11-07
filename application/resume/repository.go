@@ -5,10 +5,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type ResumeRepository interface {
+type Repository interface {
 	CreateResume(resume models.Resume) (*models.Resume, error)
 	UpdateResume(newResume *models.Resume) (*models.Resume, error)
-	SearchResume(searchParams *models.SearchResume) ([]models.ResumeWithCandidate, error)
+	SearchResume(searchParams *SearchParams) ([]models.ResumeWithCandidate, error)
 	GetResumeById(id string) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error)
 	GetResumeArr(start, limit uint) ([]models.Resume, error)

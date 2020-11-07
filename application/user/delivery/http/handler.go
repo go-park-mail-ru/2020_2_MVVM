@@ -240,4 +240,3 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, userUpdate)
 }
-

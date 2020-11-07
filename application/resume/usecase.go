@@ -5,16 +5,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type IUseCaseResume interface {
+type UseCase interface {
 	CreateResume(resume models.Resume) (*models.Resume, error)
 	UpdateResume(resume models.Resume) (*models.Resume, error)
-	SearchResume(searchParams models.SearchResume) ([]models.BriefRespResume, error)
+	SearchResume(searchParams SearchParams) ([]models.BriefResumeInfo, error)
+
 	GetResume(id string) (*models.Resume, error)
-	GetResumePage(start, limit uint) ([]models.BriefRespResume, error)
-	GetAllUserResume(userid uuid.UUID) ([]models.BriefRespResume, error)
+	GetResumePage(start, limit uint) ([]models.BriefResumeInfo, error)
+	GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
-	GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	GetFavorite(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error
-	GetAllEmplFavoriteResume(userid uuid.UUID) ([]models.BriefRespResume, error)
+	GetAllEmplFavoriteResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 }

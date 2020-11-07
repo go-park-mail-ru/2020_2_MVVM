@@ -7,28 +7,27 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
-	"math"
 	"strings"
 )
 
-type UseCaseResume struct {
+type ResumeUseCase struct {
 	infoLogger  *logger.Logger
 	errorLogger *logger.Logger
-	strg        resume.ResumeRepository
+	strg        resume.Repository
 }
 
 func NewUsecase(infoLogger *logger.Logger,
-				errorLogger *logger.Logger,
-				strg resume.ResumeRepository) *UseCaseResume {
-					usecase := UseCaseResume {
-					infoLogger:  infoLogger,
-					errorLogger: errorLogger,
-					strg:        strg,
+	errorLogger *logger.Logger,
+	strg resume.Repository) resume.UseCase {
+	usecase := ResumeUseCase{
+		infoLogger:  infoLogger,
+		errorLogger: errorLogger,
+		strg:        strg,
 	}
 	return &usecase
 }
 
-func (u *UseCaseResume) CreateResume(resume models.Resume) (*models.Resume, error) {
+func (u *ResumeUseCase) CreateResume(resume models.Resume) (*models.Resume, error) {
 	r, err := u.strg.CreateResume(resume)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
@@ -37,7 +36,7 @@ func (u *UseCaseResume) CreateResume(resume models.Resume) (*models.Resume, erro
 	return r, nil
 }
 
-func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, error) {
+func (u *ResumeUseCase) UpdateResume(resume models.Resume) (*models.Resume, error) {
 	oldResume, err := u.strg.GetResumeById(resume.ResumeID.String())
 	if err != nil {
 		err = fmt.Errorf("error in get resume by id: %w", err)
@@ -55,32 +54,31 @@ func (u *UseCaseResume) UpdateResume(resume models.Resume) (*models.Resume, erro
 	return r, nil
 }
 
-func (u* UseCaseResume) GetAllUserResume(userid uuid.UUID) ([]models.BriefRespResume, error) {
-	r, err :=  u.strg.GetAllUserResume(userid)
+func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error) {
+	r, err := u.strg.GetAllUserResume(userid)
 	if err != nil {
 		err = fmt.Errorf("error in get my resume: %w", err)
 		return nil, err
 	}
 
-	var briefRespResumes []models.BriefRespResume
+	var briefRespResumes []models.BriefResumeInfo
 	for i := range r {
-		var insert models.BriefRespResume
+		var insert models.BriefResumeInfo
 		err = copier.Copy(&insert, &r[i])
 		if err != nil {
 			err = fmt.Errorf("error in copy resume for get my resume: %w", err)
 			return nil, err
 		}
-		insert = DoBriefRespUser(insert, *r[i].CandidateWithUser)
+		insert = DoBriefRespUser(insert, *r[i].Candidate)
 		briefRespResumes = append(briefRespResumes, insert)
 	}
 	return briefRespResumes, nil
 }
 
-func (u *UseCaseResume)SearchResume(searchParams models.SearchResume) ([]models.BriefRespResume, error)  {
-	if searchParams.SalaryMax == 0 {
-		searchParams.SalaryMax = math.MaxInt64
+func (u *ResumeUseCase) SearchResume(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error) {
+	if searchParams.KeyWords != nil {
+		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
 	}
-	searchParams.KeyWords = strings.ToLower(searchParams.KeyWords)
 
 	r, err := u.strg.SearchResume(&searchParams)
 	if err != nil {
@@ -88,21 +86,21 @@ func (u *UseCaseResume)SearchResume(searchParams models.SearchResume) ([]models.
 		return nil, err
 	}
 
-	var briefRespResumes []models.BriefRespResume
+	var briefRespResumes []models.BriefResumeInfo
 	for i := range r {
-		var insert models.BriefRespResume
+		var insert models.BriefResumeInfo
 		err = copier.Copy(&insert, &r[i])
 		if err != nil {
 			err = fmt.Errorf("error in copy resume for search: %w", err)
 			return nil, err
 		}
-		insert = DoBriefRespUser(insert, *r[i].CandidateWithUser)
+		insert = DoBriefRespUser(insert, *r[i].Candidate)
 		briefRespResumes = append(briefRespResumes, insert)
 	}
 	return briefRespResumes, nil
 }
 
-func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
+func (u *ResumeUseCase) GetResume(id string) (*models.Resume, error) {
 	r, err := u.strg.GetResumeById(id)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
@@ -111,7 +109,7 @@ func (u *UseCaseResume) GetResume(id string) (*models.Resume, error) {
 	return r, nil
 }
 
-func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.BriefRespResume, error) {
+func (u *ResumeUseCase) GetResumePage(start, limit uint) ([]models.BriefResumeInfo, error) {
 	if limit >= 200 {
 		return nil, fmt.Errorf("Limit is too high. ")
 	}
@@ -128,56 +126,55 @@ func (u *UseCaseResume) GetResumePage(start, limit uint) ([]models.BriefRespResu
 	return briefRespResumes, nil
 }
 
-func (u *UseCaseResume) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+func (u *ResumeUseCase) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
 	return u.strg.AddFavorite(favoriteForEmpl)
 }
 
-func (u *UseCaseResume) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
+func (u *ResumeUseCase) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	return u.strg.RemoveFavorite(favoriteForEmpl)
 }
 
-func (u *UseCaseResume) GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefRespResume, error) {
+func (u *ResumeUseCase) GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error) {
 	r, err := u.strg.GetAllEmplFavoriteResume(userID)
 	if err != nil {
 		err = fmt.Errorf("error in get list favorite resume: %w", err)
 		return nil, err
 	}
 
-	var briefRespResumes []models.BriefRespResume
+	var briefRespResumes []models.BriefResumeInfo
 	for i := range r {
-		var insert models.BriefRespResume
+		var insert models.BriefResumeInfo
 		err = copier.Copy(&insert, &r[i].ResumeWithCandidate)
 		if err != nil {
 			err = fmt.Errorf("error in copy resumes for list my favorite: %w", err)
 			return nil, err
 		}
-		insert = DoBriefRespUser(insert, *r[i].ResumeWithCandidate.CandidateWithUser)
+		insert = DoBriefRespUser(insert, *r[i].ResumeWithCandidate.Candidate)
 		briefRespResumes = append(briefRespResumes, insert)
 	}
 	return briefRespResumes, nil
 
 }
 
-func (u *UseCaseResume) GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
-	return u.strg.GetFavoriteForResume(userID, resumeID )
+func (u *ResumeUseCase) GetFavorite(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
+	return u.strg.GetFavoriteForResume(userID, resumeID)
 }
 
-
-func DoBriefRespResume(resumes []models.Resume) ([]models.BriefRespResume, error){
-	var briefRespResumes []models.BriefRespResume
+func DoBriefRespResume(resumes []models.Resume) ([]models.BriefResumeInfo, error) {
+	var briefRespResumes []models.BriefResumeInfo
 	for i := range resumes {
-		var insert models.BriefRespResume
+		var insert models.BriefResumeInfo
 		err := copier.Copy(&insert, &resumes[i])
 		if err != nil {
 			return nil, err
 		}
-		insert = DoBriefRespUser(insert, *resumes[i].CandidateWithUser)
+		insert = DoBriefRespUser(insert, *resumes[i].Candidate)
 		briefRespResumes = append(briefRespResumes, insert)
 	}
 	return briefRespResumes, nil
 }
 
-func DoBriefRespUser(respResume models.BriefRespResume, user models.CandidateWithUser) models.BriefRespResume {
+func DoBriefRespUser(respResume models.BriefResumeInfo, user models.Candidate) models.BriefResumeInfo {
 	respResume.UserID = user.UserID
 	respResume.Name = user.User.Name
 	respResume.Surname = user.User.Surname

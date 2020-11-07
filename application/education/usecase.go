@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type IUseCaseEducation interface {
+type UseCase interface {
 	CreateEducation(educations []models.Education) ([]models.Education, error)
 	UpdateEducation(education []models.Education, resumeID uuid.UUID) ([]models.Education, error)
 	GetEducation(id string) (*models.Education, error)
