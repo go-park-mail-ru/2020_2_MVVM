@@ -6,12 +6,12 @@ import (
 )
 
 type Repository interface {
-	CreateResume(resume models.Resume) (*models.Resume, error)
-	UpdateResume(newResume *models.Resume) (*models.Resume, error)
-	SearchResume(searchParams *SearchParams) ([]models.ResumeWithCandidate, error)
-	GetResumeById(id string) (*models.Resume, error)
+	Create(resume models.Resume) (*models.Resume, error)
+	Update(newResume *models.Resume) (*models.Resume, error)
+	Search(searchParams *SearchParams) ([]models.ResumeWithCandidate, error)
+	GetById(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCandidate, error)
-	GetResumeArr(start, limit uint) ([]models.Resume, error)
+	List(start, limit uint) ([]models.Resume, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error

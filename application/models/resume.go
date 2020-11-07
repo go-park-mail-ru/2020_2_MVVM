@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"time"
 )
@@ -11,6 +12,9 @@ type Resume struct {
 
 	CandID    uuid.UUID  `pg:"cand_id, fk, type:uuid" json:"cand_id" form:"cand_id"`
 	Candidate *Candidate `pg:"rel:has-one"`
+
+	Education            []*Education            `pg:"rel:has-many" json:"education"`
+	ExperienceCustomComp []*ExperienceCustomComp `pg:"rel:has-many" json:"custom_experience"`
 
 	Title                string                  `pg:"title, notnull" json:"title" form:"title"`
 	SalaryMin            *int                    `pg:"salary_min" json:"salary_min" form:"salary_min"`
@@ -24,8 +28,26 @@ type Resume struct {
 	ExperienceMonth      *int                    `pg:"experience_month" json:"experience_month" form:"experience_month"`
 	AreaSearch           *string                 `pg:"area_search" json:"area_search" form:"area_search"`
 	DateCreate           time.Time               `pg:"date_create" json:"date_create" form:"date_create"`
-	Education            []*Education            `pg:"rel:has-many"`
-	ExperienceCustomComp []*ExperienceCustomComp `pg:"rel:has-many"`
+}
+
+// TODO Фронт сам решит, что ему надо. Надо вернуть полное резюме
+func (r *Resume) Brief() (error, *BriefResumeInfo) {
+	if r.Candidate == nil || r.Candidate.User == nil {
+		return fmt.Errorf("failed to create brief resume description"), nil
+	}
+
+	return nil, &BriefResumeInfo{
+		ResumeID:    r.ResumeID,
+		CandID:      r.CandID,
+		UserID:      r.Candidate.UserID,
+		Title:       r.Title,
+		Description: r.Description,
+		Place:       r.Place,
+		AreaSearch:  r.AreaSearch,
+		Name:        r.Candidate.User.Name,
+		Surname:     r.Candidate.User.Surname,
+		Email:       r.Candidate.User.Email,
+	}
 }
 
 // TODO ВСЕГДА ИСПОЛЬЗОВАТЬ ТОЛЬКО ОДИН ID

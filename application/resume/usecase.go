@@ -6,12 +6,12 @@ import (
 )
 
 type UseCase interface {
-	CreateResume(resume models.Resume) (*models.Resume, error)
-	UpdateResume(resume models.Resume) (*models.Resume, error)
-	SearchResume(searchParams SearchParams) ([]models.BriefResumeInfo, error)
+	Create(template models.Resume) (*models.Resume, error)
+	Update(resume models.Resume) (*models.Resume, error)
+	Search(searchParams SearchParams) ([]models.BriefResumeInfo, error)
 
-	GetResume(id string) (*models.Resume, error)
-	GetResumePage(start, limit uint) ([]models.BriefResumeInfo, error)
+	GetById(id uuid.UUID) (*models.Resume, error)
+	List(start, limit uint) ([]models.BriefResumeInfo, error)
 	GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)

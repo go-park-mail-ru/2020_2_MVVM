@@ -6,8 +6,8 @@ import (
 )
 
 type UseCase interface {
-	CreateCustomExperience(experience []models.ExperienceCustomComp) ([]models.ExperienceCustomComp, error)
-	GetCustomExperience(id string) (*models.ExperienceCustomComp, error)
-	UpdateCustomExperience(experience []models.ExperienceCustomComp, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error)
-	GetAllResumeCustomExperience(ResumeID uuid.UUID) ([]models.ExperienceCustomComp, error)
+	Create(experience models.ExperienceCustomComp) (*models.ExperienceCustomComp, error)
+	GetById(id string) (*models.ExperienceCustomComp, error)
+	Update(experience []models.ExperienceCustomComp, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error)
+	GetAllFromResume(ResumeID uuid.UUID) ([]models.ExperienceCustomComp, error)
 }

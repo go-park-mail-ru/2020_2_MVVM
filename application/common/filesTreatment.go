@@ -44,7 +44,7 @@ func fileValidation(header *multipart.FileHeader, file multipart.File, allowedFo
 	if header == nil {
 		return &Err{UploadFileError, "something went wrong", nil}
 	}
-	fileType := header.Header.Get("Content-Type")
+	fileType := header.Header.GetById("Content-Type")
 	extWasFind := false
 	for i := 0; i < len(allowedFormats); i++ {
 		if fileType == allowedFormats[i] {

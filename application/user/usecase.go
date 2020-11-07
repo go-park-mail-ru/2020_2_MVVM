@@ -4,7 +4,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 )
 
-type IUseCaseUser interface {
+type UseCase interface {
 	GetUserByID(id string) (*models.User, error)
 	GetCandByID(id string) (*models.User, error)
 	GetEmplByID(id string) (*models.User, error)

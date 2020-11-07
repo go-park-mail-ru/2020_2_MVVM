@@ -6,6 +6,6 @@ import (
 
 type UseCase interface {
 	CreateCustomCompany(company models.CustomCompany) (*models.CustomCompany, error)
-	//UpdateResume(resume models.Resume) (*models.Resume, error)
+	//Update(resume models.Resume) (*models.Resume, error)
 	GetCustomCompany(id string) (*models.CustomCompany, error)
 }

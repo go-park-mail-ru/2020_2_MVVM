@@ -3,32 +3,113 @@ package usecase
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"strings"
+	"time"
 )
 
 type ResumeUseCase struct {
-	infoLogger  *logger.Logger
-	errorLogger *logger.Logger
-	strg        resume.Repository
+	infoLogger       *logger.Logger
+	errorLogger      *logger.Logger
+	userUseCase      UserUseCase.UserUseCase
+	educationUseCase education.UseCase
+	customExpUseCase custom_experience.UseCase
+	strg             resume.Repository
 }
 
-func NewUsecase(infoLogger *logger.Logger,
+func NewUseCase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
+	userUseCase UserUseCase.UserUseCase,
+	educationUseCase education.UseCase,
+	customExpUseCase custom_experience.UseCase,
 	strg resume.Repository) resume.UseCase {
 	usecase := ResumeUseCase{
 		infoLogger:  infoLogger,
 		errorLogger: errorLogger,
+		userUseCase: userUseCase,
+		educationUseCase: educationUseCase,
+		customExpUseCase: customExpUseCase,
 		strg:        strg,
 	}
 	return &usecase
 }
 
-func (u *ResumeUseCase) CreateResume(resume models.Resume) (*models.Resume, error) {
-	r, err := u.strg.CreateResume(resume)
+func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
+	template.DateCreate = time.Now()
+	result, err := u.strg.Create(template)
+
+	for i := range template.ExperienceCustomComp {
+		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
+		template.ExperienceCustomComp[i].CandID = result.CandID
+	}
+	for i := range template.Education {
+		template.Education[i].ResumeId = result.ResumeID
+		template.Education[i].CandID = result.CandID
+	}
+
+	result.Education, _ = u.educationUseCase.Create(template.Education)
+	result.ExperienceCustomComp, _ = u.customExpUseCase.Create(template.ExperienceCustomComp)
+
+
+	//user := *resume.Candidate.User
+	//resume.Candidate = nil
+	//
+	//var additionParam models.AdditionInResume
+	//if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+	//
+	//pEducations, err := r.createEducation(additionParam.Education, candID,  resume.ResumeID)
+	//if err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+	//
+	//var customExperience []models.ExperienceCustomComp
+	//for i := range additionParam.CustomExperience {
+	//	item := additionParam.CustomExperience[i]
+	//	dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+	//	if err != nil {
+	//		ctx.AbortWithError(http.StatusBadRequest, err)
+	//		return
+	//	}
+	//	var dateFinish time.Time
+	//	if !item.ContinueToToday {
+	//		dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+	//		if err != nil {
+	//			ctx.AbortWithError(http.StatusBadRequest, err)
+	//			return
+	//		}
+	//	} else {
+	//		dateFinish = time.Now()
+	//	}
+	//	//dateBegin := time.Now()
+	//	//dateFinish := time.Now()
+	//
+	//	insertExp := models.ExperienceCustomComp{
+	//		NameJob:         item.NameJob,
+	//		Position:        item.Position,
+	//		Begin:           dateBegin,
+	//		Finish:          &dateFinish,
+	//		Duties:          item.Duties,
+	//		ContinueToToday: &item.ContinueToToday,
+	//	}
+	//	customExperience = append(customExperience, insertExp)
+	//}
+	//
+	//pCustomExperience, err := r.createCustomExperience(customExperience, candID,  resume.ResumeID)
+	//if err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
 		return nil, err
@@ -36,8 +117,8 @@ func (u *ResumeUseCase) CreateResume(resume models.Resume) (*models.Resume, erro
 	return r, nil
 }
 
-func (u *ResumeUseCase) UpdateResume(resume models.Resume) (*models.Resume, error) {
-	oldResume, err := u.strg.GetResumeById(resume.ResumeID.String())
+func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
+	oldResume, err := u.strg.GetById(resume.ResumeID)
 	if err != nil {
 		err = fmt.Errorf("error in get resume by id: %w", err)
 		return nil, err
@@ -46,7 +127,7 @@ func (u *ResumeUseCase) UpdateResume(resume models.Resume) (*models.Resume, erro
 		err = fmt.Errorf("this user cannot update this resume")
 		return nil, err
 	}
-	r, err := u.strg.UpdateResume(&resume)
+	r, err := u.strg.Update(&resume)
 	if err != nil {
 		err = fmt.Errorf("error in update resume: %w", err)
 		return nil, err
@@ -75,12 +156,12 @@ func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResume
 	return briefRespResumes, nil
 }
 
-func (u *ResumeUseCase) SearchResume(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error) {
+func (u *ResumeUseCase) Search(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error) {
 	if searchParams.KeyWords != nil {
 		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
 	}
 
-	r, err := u.strg.SearchResume(&searchParams)
+	r, err := u.strg.Search(&searchParams)
 	if err != nil {
 		err = fmt.Errorf("error in resume search: %w", err)
 		return nil, err
@@ -100,8 +181,8 @@ func (u *ResumeUseCase) SearchResume(searchParams resume.SearchParams) ([]models
 	return briefRespResumes, nil
 }
 
-func (u *ResumeUseCase) GetResume(id string) (*models.Resume, error) {
-	r, err := u.strg.GetResumeById(id)
+func (u *ResumeUseCase) GetById(id uuid.UUID) (*models.Resume, error) {
+	r, err := u.strg.GetById(id)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
 		return nil, err
@@ -109,11 +190,11 @@ func (u *ResumeUseCase) GetResume(id string) (*models.Resume, error) {
 	return r, nil
 }
 
-func (u *ResumeUseCase) GetResumePage(start, limit uint) ([]models.BriefResumeInfo, error) {
+func (u *ResumeUseCase) List(start, limit uint) ([]models.BriefResumeInfo, error) {
 	if limit >= 200 {
 		return nil, fmt.Errorf("Limit is too high. ")
 	}
-	r, err := u.strg.GetResumeArr(start, limit)
+	r, err := u.strg.List(start, limit)
 	if err != nil {
 		err = fmt.Errorf("error in resume get list from %v to %v: error: %w", start, limit, err)
 		return nil, err

@@ -18,17 +18,16 @@ func NewPgRepository(db *pg.DB) resume.Repository {
 	return &PGRepository{db: db}
 }
 
-func (p *PGRepository) CreateResume(resume models.Resume) (*models.Resume, error) {
+func (p *PGRepository) Create(resume models.Resume) (*models.Resume, error) {
 	_, err := p.db.Model(&resume).
-		Relation("Candidate").
-		Relation("Candidate.User").
 		Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
-	var user models.Candidate
-	err = p.db.Model(&user).
+
+	var user *models.Candidate
+	err = p.db.Model(user).
 		Relation("User").
 		Where("cand_id = ?", resume.CandID).
 		Select()
@@ -36,11 +35,11 @@ func (p *PGRepository) CreateResume(resume models.Resume) (*models.Resume, error
 		err = fmt.Errorf("error in inserting resume with title: error: %w", err)
 		return nil, err
 	}
-	resume.Candidate = &user
+	resume.Candidate = user
 	return &resume, nil
 }
 
-func (p *PGRepository) GetResumeById(id string) (*models.Resume, error) {
+func (p *PGRepository) GetById(id uuid.UUID) (*models.Resume, error) {
 	var r models.Resume
 	err := p.db.Model(&r).
 		Relation("Candidate").
@@ -53,7 +52,7 @@ func (p *PGRepository) GetResumeById(id string) (*models.Resume, error) {
 	return &r, nil
 }
 
-func (p *PGRepository) GetResumeArr(start, limit uint) ([]models.Resume, error) {
+func (p *PGRepository) List(start, limit uint) ([]models.Resume, error) {
 	var brief []models.Resume
 	err := p.db.Model(&brief).
 		Relation("Candidate").
@@ -79,7 +78,7 @@ func (p *PGRepository) GetAllUserResume(userID uuid.UUID) ([]models.ResumeWithCa
 	return brief, nil
 }
 
-func (p *PGRepository) UpdateResume(resume *models.Resume) (*models.Resume, error) {
+func (p *PGRepository) Update(resume *models.Resume) (*models.Resume, error) {
 	_, err := p.db.Model(resume).WherePK().Returning("*").Update()
 	if err != nil {
 		err = fmt.Errorf("error in updating resume with id %s, : %w", resume.ResumeID.String(), err)
@@ -99,7 +98,7 @@ func (p *PGRepository) UpdateResume(resume *models.Resume) (*models.Resume, erro
 }
 
 
-func (p *PGRepository) SearchResume(searchParams *resume.SearchParams) ([]models.ResumeWithCandidate, error) {
+func (p *PGRepository) Search(searchParams *resume.SearchParams) ([]models.ResumeWithCandidate, error) {
 	var brief []models.ResumeWithCandidate
 	err := p.db.Model(&brief).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if len(searchParams.AreaSearch) != 0 {

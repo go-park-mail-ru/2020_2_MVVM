@@ -11,12 +11,12 @@ import (
 type UseCaseEducation struct {
 	infoLogger  *logger.Logger
 	errorLogger *logger.Logger
-	strg        education.EducationRepository
+	strg        education.Repository
 }
 
 func NewUsecase(infoLogger *logger.Logger,
 				errorLogger *logger.Logger,
-				strg education.EducationRepository) *UseCaseEducation {
+				strg education.Repository) *UseCaseEducation {
 					usecase := UseCaseEducation {
 					infoLogger:  infoLogger,
 					errorLogger: errorLogger,
@@ -25,12 +25,12 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u* UseCaseEducation) GetAllResumeEducation(resumeID uuid.UUID) ([]models.Education, error) {
-	return u.strg.GetAllResumeEducation(resumeID)
+func (u* UseCaseEducation) GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error) {
+	return u.strg.GetAllFromResume(resumeID)
 }
 
-func (u *UseCaseEducation) CreateEducation(educations []models.Education) ([]models.Education, error) {
-	ed, err := u.strg.CreateEducation(educations)
+func (u *UseCaseEducation) Create(educations []*models.Education) ([]models.Education, error) {
+	ed, err := u.strg.Create(educations)
 	if err != nil {
 		err = fmt.Errorf("error in create educations function: %w", err)
 		return nil, err
@@ -38,8 +38,8 @@ func (u *UseCaseEducation) CreateEducation(educations []models.Education) ([]mod
 	return ed, nil
 }
 
-func (u *UseCaseEducation) GetEducation(id string) (*models.Education, error) {
-	ed, err := u.strg.GetEducationById(id)
+func (u *UseCaseEducation) GetById(id string) (*models.Education, error) {
+	ed, err := u.strg.GetById(id)
 	if err != nil {
 		err = fmt.Errorf("error in education get by id func : %w", err)
 		return nil, err
@@ -47,12 +47,12 @@ func (u *UseCaseEducation) GetEducation(id string) (*models.Education, error) {
 	return ed, nil
 }
 
-func (u *UseCaseEducation) UpdateEducation(newEducations []models.Education, resumeID uuid.UUID) ([]models.Education, error) {
+func (u *UseCaseEducation) Update(newEducations []models.Education, resumeID uuid.UUID) ([]models.Education, error) {
 	err := u.strg.DeleteAllResumeEducation(resumeID)
 	if err != nil {
 		return nil, err
 	}
-	ed, err := u.strg.CreateEducation(newEducations)
+	ed, err := u.strg.Create(newEducations)
 	if err != nil {
 		err = fmt.Errorf("error in update educations function: %w", err)
 		return nil, err
