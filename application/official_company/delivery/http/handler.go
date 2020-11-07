@@ -19,7 +19,11 @@ type Resp struct {
 }
 
 type RespList struct {
-	Companies []models.OfficialCompany `json:"companies_list"`
+	Companies []models.OfficialCompany `json:"companyList"`
+}
+
+type ReqErr struct {
+	Error string `json:"error"`
 }
 
 const (
@@ -90,28 +94,28 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, "empty required fields")
+		ctx.JSON(http.StatusBadRequest, ReqErr{"empty required fields"})
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, errImg)
+		ctx.JSON(http.StatusBadRequest, ReqErr{errImg.Error()})
 		return
 	}
 	session := sessions.Default(ctx).Get("empl_id")
 	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, "session error")
+		ctx.JSON(http.StatusInternalServerError, ReqErr{"session error"})
 		return
 	}
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, "session error")
+		ctx.JSON(http.StatusInternalServerError, ReqErr{"session error"})
 		return
 	}
 	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
 		Location: req.Location, Link: req.Link, Description: req.Description}, empId)
 	if err != nil {
-		ctx.JSON(http.StatusOK, err)
+		ctx.JSON(http.StatusBadRequest, ReqErr{err.Error()})
 		return
 	}
 	if file != nil {
