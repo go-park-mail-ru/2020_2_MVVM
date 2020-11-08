@@ -216,6 +216,8 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 	template.CandID = candID
 
+
+
 	result, err := r.UseCaseResume.Update(template)
 
 	//for i := range additionParam.CustomExperience {

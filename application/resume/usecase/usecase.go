@@ -56,18 +56,74 @@ func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 }
 
 func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, result models.Resume) error {
+
+	//for i := range additionParam.CustomExperience {
+	//	item := additionParam.CustomExperience[i]
+	//	dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+	//	if err != nil {
+	//		ctx.AbortWithError(http.StatusBadRequest, err)
+	//		return
+	//	}
+	//	var dateFinish time.Time
+	//	if !item.ContinueToToday {
+	//		dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+	//		if err != nil {
+	//			ctx.AbortWithError(http.StatusBadRequest, err)
+	//			return
+	//		}
+	//	} else {
+	//		dateFinish = time.Now()
+	//	}
+	//	//dateBegin := time.Now()
+	//	//dateFinish := time.Now()
+	//	insertExp := models.ExperienceCustomComp{
+	//		NameJob:         item.NameJob,
+	//		Position:        item.Position,
+	//		Begin:           dateBegin,
+	//		Finish:          &dateFinish,
+	//		Duties:          item.Duties,
+	//		ContinueToToday: &item.ContinueToToday,
+	//	}
+	//	customExperience = append(customExperience, insertExp)
+	//}
+	//
+	//pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, candID, pResume.ResumeID)
+	//if err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
+
 	// create experience
 	var err error
 	for i := range template.ExperienceCustomComp {
-		if template.Education[i] == nil {
+		if template.ExperienceCustomComp[i] == nil {
 			continue
+		}
+		t := template.ExperienceCustomComp[i].Begin
+		dateBegin, err := time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
+		if err != nil {
+			return err
+		}
+		var dateFinish time.Time
+		if template.ExperienceCustomComp[i].ContinueToToday == nil || !*(template.ExperienceCustomComp[i].ContinueToToday){
+			t = *template.ExperienceCustomComp[i].Finish
+			dateFinish, err = time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
+			if err != nil {
+				return err
+			}
+		} else {
+			dateFinish = time.Now()
 		}
 		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
 		template.ExperienceCustomComp[i].CandID = result.CandID
+		template.ExperienceCustomComp[i].Begin = dateBegin
+		template.ExperienceCustomComp[i].Finish = &dateFinish
+
 		template.ExperienceCustomComp[i], err = u.customExpUseCase.Create(*template.ExperienceCustomComp[i])
 		if err != nil {
 			return err
 		}
+
 	}
 	// create education
 	for i := range template.Education {
