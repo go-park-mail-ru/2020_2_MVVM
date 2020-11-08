@@ -21,16 +21,18 @@ type User struct {
 type Employer struct {
 	tableName struct{} `pg:"main.employers,discard_unknown_columns"`
 
-	ID        uuid.UUID `pg:"empl_id,pk,type:uuid" json:"empl_id"`
-	UserID    uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
-	CompanyID uuid.UUID `pg:"comp_id,type:uuid" json:"comp_id"`
+	ID        uuid.UUID           `pg:"empl_id,pk,type:uuid" json:"empl_id"`
+	UserID    uuid.UUID           `pg:"user_id,type:uuid" json:"user_id"`
+	CompanyID uuid.UUID           `pg:"comp_id,type:uuid" json:"comp_id"`
+	Favorites []*FavoritesForEmpl `pg:"has-many"`
 }
 
 type Candidate struct {
 	tableName struct{} `pg:"main.candidates,discard_unknown_columns"`
 
-	ID        uuid.UUID `pg:"cand_id,pk,type:uuid" json:"cand_id"`
-	UserID    uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
+	ID     uuid.UUID `pg:"cand_id,pk,type:uuid" json:"cand_id"`
+	UserID uuid.UUID `pg:"user_id,type:uuid" json:"user_id"`
+	User   *User     `pg:"rel:has-one"`
 }
 
 type UserLogin struct {

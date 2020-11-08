@@ -11,9 +11,9 @@ create table official_companies
         constraint comp_id_pkey
             primary key,
     name text not null,
-    spheres text null,
+    spheres int[] null,
     description text null,
-    location text not null,
+    area_search varchar(128) not null,
     link text null,
     count_vacancy int default 0
 );

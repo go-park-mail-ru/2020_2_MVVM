@@ -29,12 +29,12 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u *UseCase) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	return u.customExperienceRepository.GetAllResumeCustomExperience(resumeID)
+func (u *UseCase) GetAllFromResume(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+	return u.customExperienceRepository.GetAllFromResume(resumeID)
 }
 
-func (u *UseCase) CreateCustomExperience(experience []models.ExperienceCustomComp) ([]models.ExperienceCustomComp, error) {
-	ed, err := u.customExperienceRepository.CreateCustomExperience(experience)
+func (u *UseCase) Create(experience models.ExperienceCustomComp) (*models.ExperienceCustomComp, error) {
+	ed, err := u.customExperienceRepository.Create(experience)
 	if err != nil {
 		err = fmt.Errorf("error in create custom experience function: %w", err)
 		return nil, err
@@ -42,8 +42,8 @@ func (u *UseCase) CreateCustomExperience(experience []models.ExperienceCustomCom
 	return ed, nil
 }
 
-func (u *UseCase) GetCustomExperience(id string) (*models.ExperienceCustomComp, error) {
-	experience, err := u.customExperienceRepository.GetCustomExperienceById(id)
+func (u *UseCase) GetById(id string) (*models.ExperienceCustomComp, error) {
+	experience, err := u.customExperienceRepository.GetById(id)
 	if err != nil {
 		err = fmt.Errorf("error in get by id custom experience func : %w", err)
 		return nil, err
@@ -51,15 +51,6 @@ func (u *UseCase) GetCustomExperience(id string) (*models.ExperienceCustomComp, 
 	return experience, nil
 }
 
-func (u *UseCase) UpdateCustomExperience(newExperience []models.ExperienceCustomComp, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	err := u.customExperienceRepository.DeleteAllResumeCustomExperience(resumeID)
-	if err != nil {
-		return nil, err
-	}
-	exp, err := u.customExperienceRepository.CreateCustomExperience(newExperience)
-	if err != nil {
-		err = fmt.Errorf("error in update custom experience function: %w", err)
-		return nil, err
-	}
-	return exp, nil
+func (u *UseCase) DropAllFromResume(resumeID uuid.UUID) error {
+	return u.customExperienceRepository.DropAllFromResume(resumeID)
 }

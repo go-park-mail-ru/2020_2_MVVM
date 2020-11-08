@@ -5,10 +5,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	ByEmpId = 1
+	ByCompId = 2
+	ByVacId = 3
+)
+
 type IUseCaseVacancy interface {
 	CreateVacancy(models.Vacancy) (*models.Vacancy, error)
 	UpdateVacancy(models.Vacancy) (*models.Vacancy, error)
-	GetVacancy(string) (*models.Vacancy, error)
-	GetVacancyList(uint, uint, uuid.UUID) ([]models.Vacancy, error)
+	GetVacancy(uuid.UUID) (*models.Vacancy, error)
+	GetVacancyList(uint, uint, uuid.UUID, int) ([]models.Vacancy, error)
 	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
 }

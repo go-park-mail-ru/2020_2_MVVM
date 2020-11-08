@@ -15,13 +15,16 @@ create table vacancy (
     requirements text null,
     duties text null,
     skills text null,
-    spheres text null,
+    sphere varchar(128) null,
+    gender gender_type null,
     employment employment_type default 'full-time',
-    week_work_hours int null,
+    area_search varchar(128) null,
     location varchar(512) null,
     career_level career_level_type null,
     education_level ed_level_type null,
     experience_month int null,
+    empl_email  citext not null,
+    empl_phone  varchar(18) not null,
     date_create date default current_date
 );
 

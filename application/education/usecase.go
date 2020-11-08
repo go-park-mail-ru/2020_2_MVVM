@@ -5,9 +5,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type IUseCaseEducation interface {
-	CreateEducation(educations []models.Education) ([]models.Education, error)
-	UpdateEducation(education []models.Education, resumeID uuid.UUID) ([]models.Education, error)
-	GetEducation(id string) (*models.Education, error)
-	GetAllResumeEducation(resumeID uuid.UUID) ([]models.Education, error)
+type UseCase interface {
+	Create(educations models.Education) (*models.Education, error)
+	DropAllFromResume(resumeID uuid.UUID) error
+	GetById(id string) (*models.Education, error)
+	GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error)
 }

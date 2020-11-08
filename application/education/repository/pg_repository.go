@@ -12,24 +12,20 @@ type pgReopository struct {
 	db *pg.DB
 }
 
-func NewPgRepository(db *pg.DB) education.EducationRepository{
+func NewPgRepository(db *pg.DB) education.Repository {
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) CreateEducation(education []models.Education) ([]models.Education, error) {
-	var dbEducation []models.Education
-	for _,item := range education {
-		_, err := p.db.Model(&item).Returning("*").Insert()
-		if err != nil {
-			err = fmt.Errorf("error in inserting resume with title: error: %w", err)
-			return nil, err
-		}
-		dbEducation = append(dbEducation, item)
+func (p *pgReopository) Create(edu models.Education) (*models.Education, error) {
+
+	_, err := p.db.Model(&edu).Returning("*").Insert()
+	if err != nil {
+		return nil, err
 	}
-	return dbEducation, nil
+	return &edu, nil
 }
 
-func (p *pgReopository) GetEducationById(id string) (*models.Education, error) {
+func (p *pgReopository) GetById(id string) (*models.Education, error) {
 	var educatuin models.Education
 	err := p.db.Model(&educatuin).Where("education_id = ?", id).Select()
 	if err != nil {
@@ -39,7 +35,7 @@ func (p *pgReopository) GetEducationById(id string) (*models.Education, error) {
 	return &educatuin, nil
 }
 
-func (p *pgReopository) GetAllResumeEducation(resumeID uuid.UUID) ([]models.Education, error) {
+func (p *pgReopository) GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error) {
 	var educations []models.Education
 	err := p.db.Model(&educations).Where("resume_id = ?", resumeID).Limit(5).Select()
 	if err != nil {
@@ -48,11 +44,8 @@ func (p *pgReopository) GetAllResumeEducation(resumeID uuid.UUID) ([]models.Educ
 	return educations, nil
 }
 
-func (p *pgReopository) DeleteAllResumeEducation(resumeID uuid.UUID) error {
+func (p *pgReopository) DropAllFromResume(resumeID uuid.UUID) error {
 	var educations models.Education
 	_, err := p.db.Model(&educations).Where("resume_id = ?", resumeID).Delete()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

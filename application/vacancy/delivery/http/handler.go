@@ -15,7 +15,7 @@ type VacancyHandler struct {
 }
 
 type Resp struct {
-	Vacancy *models.Vacancy
+	Vacancy *models.Vacancy `json:"vacancy"`
 }
 
 type RespList struct {
@@ -23,26 +23,39 @@ type RespList struct {
 }
 
 type vacRequest struct {
-	Id              uuid.UUID `form:"sum__vacancy-id"`
-	Title           string    `form:"sum__vacancy-name" binding:"required"`
-	SalaryMin       int       `form:"salary_min"`
-	SalaryMax       int       `form:"salary_max"`
-	Description     string    `form:"sum__vacancy-description" binding:"required"`
-	Requirements    string    `form:"requirements"`
-	Duties          string    `form:"duties"`
-	Skills          string    `form:"skills"`
-	Spheres         string    `form:"spheres"`
-	Employment      string    `form:"employment"`
-	WeekWorkHours   int       `form:"week_work_hours"`
-	ExperienceMonth string    `form:"experience_work"`
-	Location        string    `form:"location"`
-	CareerLevel     string    `form:"career_level"`
-	EducationLevel  string    `form:"education_level"`
+	Id              string `json:"vac_id,uuid"`
+	Avatar          string `json:"avatar"`
+	Title           string `json:"title" binding:"required"`
+	Gender          string `json:"gender"`
+	SalaryMin       int    `json:"salary_min"`
+	SalaryMax       int    `json:"salary_max"`
+	Description     string `json:"description" binding:"required"`
+	Requirements    string `json:"requirements"`
+	Duties          string `json:"duties"`
+	Skills          string `json:"skills"`
+	Sphere          int    `json:"sphere"`
+	Employment      string `json:"employment"`
+	ExperienceMonth int    `json:"experience_month"`
+	Location        string `json:"location"`
+	AreaSearch      string `json:"area_search"`
+	CareerLevel     string `json:"career_level"`
+	EducationLevel  string `json:"education_level"`
+	EmpEmail        string `json:"email"`
+	EmpPhone        string `json:"phone"`
+}
+
+type vacListRequest struct {
+	Start  uint   `form:"start"`
+	Limit  uint   `form:"limit" binding:"required"`
+	CompId string `form:"comp_id,uuid"`
 }
 
 const (
-	vacCreate = 0
-	vacUpdate = 1
+	vacCreate     = 0
+	vacUpdate     = 1
+	vacPath       = "vacancy/"
+	emptyFieldErr = "empty required fields"
+	sessionErr    = "session error"
 )
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
@@ -53,6 +66,7 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequi
 
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.handlerGetVacancyById)
+	router.GET("/page/comp", v.handlerGetCompVacancyList)
 	router.GET("/page", v.handlerGetVacancyList)
 	router.POST("/search", v.handlerSearchVacancies)
 	router.Use(AuthRequired)
@@ -69,62 +83,17 @@ func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
-	vac, err := v.VacUseCase.GetVacancy(req.VacID)
+	vacId, _ := uuid.Parse(req.VacID)
+	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
-}
-
-func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
-	var req vacRequest
-
-	err := ctx.ShouldBind(&req)
-	if errParseForm := ctx.Request.ParseMultipartForm(32 << 15); errParseForm != nil || err != nil {
-		if errParseForm != nil {
-			err = errParseForm
-		}
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	file, errImg := common.GetImage(ctx.Request, "sum__avatar")
-	if errImg != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errImg)
-		return
-	}
-	vacNew := &models.Vacancy{ID: req.Id, Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax,
-		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Spheres: req.Spheres,
-		Employment: req.Employment, WeekWorkHours: req.WeekWorkHours, ExperienceMonth: req.ExperienceMonth, Location: req.Location,
-		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel}
-	if treatmentType == vacCreate {
-		session := sessions.Default(ctx).Get("empl_id")//TODO: session==nil check
-		empId, errSession := uuid.Parse(session.(string))
-		if errSession != nil {
-			ctx.AbortWithError(http.StatusBadRequest, errSession)
-			return
-		}
-		vacNew.EmpID = empId
-		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
-	} else {
-		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
-	}
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	// TODO: fix error code then vacancy successfully loaded and img valid but couldn't be saved on server storage
-	if file != nil {
-		if err := common.AddOrUpdateUserFile(*file, vacNew.ID.String()); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-			//return
-		}
-	}
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vacNew})
 }
 
 func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
@@ -136,60 +105,110 @@ func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
 }
 
 func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
-	var req struct {
-		Start uint `form:"start"`
-		Limit uint `form:"limit"`
-	}
-
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	vacList, err := v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
+	vacListHandlerCommon(v, ctx, vacancy.ByVacId)
 }
 
 func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
-	var req struct {
-		Start uint `form:"start"`
-		End   uint `form:"limit" binding:"required"`
-	}
+	vacListHandlerCommon(v, ctx, vacancy.ByEmpId)
+}
 
-	session := sessions.Default(ctx).Get("empl_id") //TODO: session==nil check
-	empId, errSession := uuid.Parse(session.(string))
-	if err := ctx.ShouldBindQuery(&req); errSession != nil || err != nil {
-		if errSession != nil {
-			err = errSession
-		}
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	userVacList, err := v.VacUseCase.GetVacancyList(req.Start, req.End, empId)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
-	ctx.JSON(http.StatusOK, RespList{Vacancies: userVacList})
+func (v *VacancyHandler) handlerGetCompVacancyList(ctx *gin.Context) {
+	vacListHandlerCommon(v, ctx, vacancy.ByCompId)
 }
 
 func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
+}
+
+func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
+	var (
+		req vacRequest
+		err error
+	)
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		return
+	}
+	file, errImg := common.GetImageFromBase64(req.Avatar)
+	if errImg != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
+		return
+	}
+	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax, AreaSearch: req.AreaSearch,
+		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: req.Sphere,
+		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
+		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
+	if treatmentType == vacCreate {
+		session := sessions.Default(ctx).Get("empl_id")
+		if session == nil {
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+			return
+		}
+		empId, errSession := uuid.Parse(session.(string))
+		if errSession != nil {
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+			return
+		}
+		vacNew.EmpID = empId
+		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
+	} else {
+		vacNew.ID, _ = uuid.Parse(req.Id)
+		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
+	}
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, vacPath+vacNew.ID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+	ctx.JSON(http.StatusOK, Resp{Vacancy: vacNew})
+}
+
+func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
+	var (
+		req     vacListRequest
+		err     error
+		vacList []models.Vacancy
+	)
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		return
+	}
+	if entityType == vacancy.ByEmpId {
+		session := sessions.Default(ctx).Get("empl_id")
+		empId, errSession := uuid.Parse(session.(string))
+		if errSession != nil {
+			ctx.JSON(http.StatusBadRequest, common.RespError{Err: errSession.Error()})
+			return
+		}
+		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, empId, vacancy.ByEmpId)
+	} else if entityType == vacancy.ByCompId {
+		compId, _ := uuid.Parse(req.CompId)
+		if compId != uuid.Nil {
+			vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, compId, vacancy.ByCompId)
+		}
+	} else {
+		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil, vacancy.ByVacId)
+	}
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
 }

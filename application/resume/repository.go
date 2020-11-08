@@ -5,17 +5,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type ResumeRepository interface {
-	CreateResume(resume models.Resume) (*models.Resume, error)
-	UpdateResume(newResume *models.Resume) (*models.Resume, error)
-	SearchResume(searchParams *models.SearchResume) ([]models.Resume, error)
-	GetResumeById(id string) (*models.Resume, error)
+type Repository interface {
+	Create(resume models.Resume) (*models.Resume, error)
+	Drop(resume models.Resume) error
+	Update(resume models.Resume) (*models.Resume, error)
+	Search(searchParams *SearchParams) ([]models.Resume, error)
+	GetById(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
-	GetResumeByName(name string) (*models.Resume, error)
-	GetResumeArr(start, limit uint) ([]models.Resume, error)
+	List(start, limit uint) ([]models.Resume, error)
+	SelectCandidate (candID uuid.UUID) (*models.Candidate, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error
-	GetAllEmplFavoriteResume(empl_id uuid.UUID) ([]models.Resume, error)
+	GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resume, error)
 	GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
 }
