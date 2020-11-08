@@ -12,7 +12,7 @@ type SearchParams struct {
 	Gender          []string `json:"gender"`
 	EducationLevel  []string `json:"education_level"`
 	CareerLevel     []string `json:"career_level"`
-	ExperienceMonth []int    `json:"experience_month"`
+	ExperienceMonth []string    `json:"experience_month"`
 	AreaSearch      []string `json:"area_search"`
 }
 
