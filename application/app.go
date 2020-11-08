@@ -127,11 +127,11 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		//Domain:   "studhunt.ru",
-		Domain:   "localhost", // for postman
+		Domain:   "studhunt.ru",
+		//Domain:   "localhost", // for postman
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   false,
-		HttpOnly: true,
+		Secure:   true,
+		HttpOnly: false,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
@@ -148,10 +148,10 @@ func NewApp(config Config) *App {
 	customCompanyRep := CustomCompanyRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
-	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, resumeRep)
 	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
+	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, *userCase, education, customExperience, resumeRep)
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
 

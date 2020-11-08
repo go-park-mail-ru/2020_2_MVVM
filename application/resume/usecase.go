@@ -15,7 +15,8 @@ type UseCase interface {
 	GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
-	GetFavorite(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
-	RemoveFavorite(favoriteForEmpl uuid.UUID) error
-	GetAllEmplFavoriteResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
+	GetFavoriteByResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
+	RemoveFavorite(favorite models.FavoritesForEmpl) error
+	GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
 }

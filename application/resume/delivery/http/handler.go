@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -12,8 +11,18 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
 	"net/http"
-	"time"
 )
+
+//type Resp struct {
+//	Resume []ResumeResponse `json:"resume"`
+//}
+type ResumeResponse struct {
+	Resume           models.Resume                  `json:"resume"`
+	User             models.User                    `json:"user"`
+	Educations       []*models.Education            `json:"education"`
+	CustomExperience []*models.ExperienceCustomComp `json:"custom_experience"`
+	IsFavorite       *uuid.UUID                     `json:"is_favorite"`
+}
 
 type ResumeHandler struct {
 	UseCaseResume           resume.UseCase
@@ -61,12 +70,12 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 		return
 	}
 
-	pResume, err := r.UseCaseResume.GetAllUserResume(candID)
+	result, err := r.UseCaseResume.GetAllUserResume(candID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, pResume)
+	ctx.JSON(http.StatusOK, result)
 }
 
 func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
@@ -83,83 +92,44 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 	template.CandID = candID
 
-	for i := range template.ExperienceCustomComp {
-		template.ExperienceCustomComp[i].CandID = candID
-	}
-	for i := range template.Education {
-		template.Education[i].CandID = candID
-	}
-
-
 	resume, err := r.UseCaseResume.Create(*template)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK,
-		//models.RespResume{Resume: *resume, User: user, Educations: pEducations, CustomExperience: pCustomExperience})
-		models.RespResume{Resume: *resume})
-}
-
-func (r *ResumeHandler) createEducation(educations []models.Education, userID, resumeID uuid.UUID) ([]models.Education, error) {
-	for i := range educations {
-		educations[i].CandID = userID
-		educations[i].ResumeId = resumeID
-		educations[i].Finish = time.Now()
+	resp := ResumeResponse{
+		User:             *resume.Candidate.User,
+		Educations:       resume.Education,
+		CustomExperience: resume.ExperienceCustomComp,
+		IsFavorite:       nil,
 	}
 
-	pEducations, err := r.UseCaseEducation.Create(educations)
-	if err != nil {
-		return nil, err
-	}
-	return pEducations, nil
-}
+	resume.Candidate = nil
+	resume.Education = nil
+	resume.ExperienceCustomComp = nil
+	resp.Resume = *resume
 
-func (r *ResumeHandler) createCustomExperience(experiences []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	for i := range experiences {
-		experiences[i].CandID = userID
-		experiences[i].ResumeID = resumeID
-	}
-
-	pCustomExperience, err := r.UseCaseCustomExperience.Create(experiences)
-	if err != nil {
-		return nil, err
-	}
-
-	return pCustomExperience, nil
+	ctx.JSON(http.StatusOK, resp)
 }
 
 func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
-	var reqResume struct {
+	var request struct {
 		ResumeID string `uri:"resume_id" binding:"required,uuid"`
 	}
 
-	if err := ctx.ShouldBindUri(&reqResume); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	resumeID, err := uuid.Parse(reqResume.ResumeID)
-	if err != nil {
+	if err := ctx.ShouldBindUri(&request); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	pResume, err := r.UseCaseResume.GetById(resumeID)
+	resumeID, err := uuid.Parse(request.ResumeID)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	user := *pResume.Candidate.User
-	pResume.Candidate = nil
-
-	pEducations, err := r.UseCaseEducation.GetAllFromResume(resumeID)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	pCustomExperience, err := r.UseCaseCustomExperience.GetAllFromResume(resumeID)
+	result, err := r.UseCaseResume.GetById(resumeID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -172,42 +142,49 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		return
 	}
 	if emplID != uuid.Nil {
-		favorite, err := r.UseCaseResume.GetFavorite(emplID, pResume.ResumeID)
+		favorite, err := r.UseCaseResume.GetFavoriteByResume(emplID, result.ResumeID)
 		if err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		if favorite != nil {
-			isFavorite = &favorite.ID
+			isFavorite = &favorite.FavoriteID
 		}
 	}
 
-	ctx.JSON(http.StatusOK,
-		models.RespResume{Resume: *pResume,
-			User:             user,
-			Educations:       pEducations,
-			CustomExperience: pCustomExperience,
-			IsFavorite:       isFavorite})
+	resp := ResumeResponse{
+		User:             *result.Candidate.User,
+		Educations:       result.Education,
+		CustomExperience: result.ExperienceCustomComp,
+		IsFavorite:       isFavorite,
+	}
+
+	result.Candidate = nil
+	result.Education = nil
+	result.ExperienceCustomComp = nil
+	resp.Resume = *result
+
+	ctx.JSON(http.StatusOK, resp)
 }
 
 func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
-	var reqResume struct {
+	var request struct {
 		Start uint `form:"start"`
 		Limit uint `form:"limit" binding:"required"`
 	}
 
-	if err := ctx.ShouldBindQuery(&reqResume); err != nil {
+	if err := ctx.ShouldBindQuery(&request); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	respResumes, err := r.UseCaseResume.List(reqResume.Start, reqResume.Limit)
+	resumes, err := r.UseCaseResume.List(request.Start, request.Limit)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, respResumes)
+	ctx.JSON(http.StatusOK, resumes)
 }
 
 func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
@@ -221,108 +198,65 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 		return
 	}
 
-	var reqResume models.Resume
-	if err := ctx.ShouldBindBodyWith(&reqResume, binding.JSON); err != nil {
+	var template models.Resume
+	if err := ctx.ShouldBindBodyWith(&template, binding.JSON); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	template.CandID = candID
 
-	reqResume.CandID = candID
-	reqResume.DateCreate = time.Now()
+	result, err := r.UseCaseResume.Update(template)
 
-	pResume, err := r.UseCaseResume.Update(reqResume)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	user := *pResume.Candidate.User
-	pResume.Candidate = nil
+	//for i := range additionParam.CustomExperience {
+	//	item := additionParam.CustomExperience[i]
+	//	dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
+	//	if err != nil {
+	//		ctx.AbortWithError(http.StatusBadRequest, err)
+	//		return
+	//	}
+	//	var dateFinish time.Time
+	//	if !item.ContinueToToday {
+	//		dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
+	//		if err != nil {
+	//			ctx.AbortWithError(http.StatusBadRequest, err)
+	//			return
+	//		}
+	//	} else {
+	//		dateFinish = time.Now()
+	//	}
+	//	//dateBegin := time.Now()
+	//	//dateFinish := time.Now()
+	//	insertExp := models.ExperienceCustomComp{
+	//		NameJob:         item.NameJob,
+	//		Position:        item.Position,
+	//		Begin:           dateBegin,
+	//		Finish:          &dateFinish,
+	//		Duties:          item.Duties,
+	//		ContinueToToday: &item.ContinueToToday,
+	//	}
+	//	customExperience = append(customExperience, insertExp)
+	//}
+	//
+	//pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, candID, pResume.ResumeID)
+	//if err != nil {
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
 
-	var additionParam models.AdditionInResume
-	if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	pEducations, err := r.handlerUpdateEducation(additionParam.Education, candID, pResume.ResumeID)
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	var customExperience []models.ExperienceCustomComp
-	for i := range additionParam.CustomExperience {
-		item := additionParam.CustomExperience[i]
-		dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
-		if err != nil {
-			ctx.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
-		var dateFinish time.Time
-		if !item.ContinueToToday {
-			dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
-			if err != nil {
-				ctx.AbortWithError(http.StatusBadRequest, err)
-				return
-			}
-		} else {
-			dateFinish = time.Now()
-		}
-		//dateBegin := time.Now()
-		//dateFinish := time.Now()
-		insertExp := models.ExperienceCustomComp{
-			NameJob:         item.NameJob,
-			Position:        item.Position,
-			Begin:           dateBegin,
-			Finish:          &dateFinish,
-			Duties:          item.Duties,
-			ContinueToToday: &item.ContinueToToday,
-		}
-		customExperience = append(customExperience, insertExp)
+	resp := ResumeResponse{
+		User:             *result.Candidate.User,
+		Educations:       result.Education,
+		CustomExperience: result.ExperienceCustomComp,
+		IsFavorite:       nil,
 	}
 
-	pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, candID, pResume.ResumeID)
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	result.Candidate = nil
+	result.Education = nil
+	result.ExperienceCustomComp = nil
+	resp.Resume = *result
 
-	ctx.JSON(http.StatusOK,
-		models.RespResume{Resume: *pResume, User: user, Educations: pEducations, CustomExperience: pCustomExperience})
+	ctx.JSON(http.StatusOK, resp)
 
-}
-
-func (r *ResumeHandler) handlerUpdateEducation(educations []models.Education, userID, resumeID uuid.UUID) ([]models.Education, error) {
-	for i := range educations {
-		if educations[i].CandID == uuid.Nil && educations[i].ResumeId == uuid.Nil {
-			educations[i].CandID = userID
-			educations[i].ResumeId = resumeID
-		} else if educations[i].CandID != userID && educations[i].ResumeId != resumeID {
-			return nil, errors.New("this user has not update this resume")
-		}
-	}
-
-	pEducations, err := r.UseCaseEducation.Update(educations, resumeID)
-	if err != nil {
-		return nil, err
-	}
-	return pEducations, nil
-}
-
-func (r *ResumeHandler) handlerUpdateCustomExperience(experience []models.ExperienceCustomComp, userID, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	for i := range experience {
-		if experience[i].CandID == uuid.Nil && experience[i].ResumeID == uuid.Nil {
-			experience[i].CandID = userID
-			experience[i].ResumeID = resumeID
-		} else if experience[i].CandID != userID && experience[i].ResumeID != resumeID {
-			return nil, errors.New("this user has not update this resume")
-		}
-	}
-
-	pEducations, err := r.UseCaseCustomExperience.Update(experience, resumeID)
-	if err != nil {
-		return nil, err
-	}
-	return pEducations, nil
 }
 
 func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
@@ -341,14 +275,14 @@ func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
-	var reqFavorite struct {
+	var request struct {
 		ResumeID string `uri:"resume_id" binding:"required,uuid"`
 	}
-	if err := ctx.ShouldBindUri(&reqFavorite); err != nil {
+	if err := ctx.ShouldBindUri(&request); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	resumeID, err := uuid.Parse(reqFavorite.ResumeID)
+	resumeID, err := uuid.Parse(request.ResumeID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -372,28 +306,39 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 		return
 	}
 
-	type RespFavorite struct {
+	type Response struct {
 		Favorite models.FavoritesForEmpl `json:"favorite_for_empl"`
 	}
 
-	ctx.JSON(http.StatusOK, RespFavorite{Favorite: *favorite})
+	ctx.JSON(http.StatusOK, Response{Favorite: *favorite})
 }
 
 func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
-	var reqFavorite struct {
+	var request struct {
 		FavoriteID string `uri:"favorite_id" binding:"required,uuid"`
 	}
-	if err := ctx.ShouldBindUri(&reqFavorite); err != nil {
+	if err := ctx.ShouldBindUri(&request); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
-	favoriteID, err := uuid.Parse(reqFavorite.FavoriteID)
+	favoriteID, err := uuid.Parse(request.FavoriteID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	err = r.UseCaseResume.RemoveFavorite(favoriteID)
+	emplID, err := common.GetCurrentUserId(ctx, "empl_id")
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if emplID == uuid.Nil {
+		ctx.AbortWithError(http.StatusForbidden, err)
+		return
+	}
+
+	favoriteForEmpl := models.FavoritesForEmpl{FavoriteID: favoriteID, EmplID: emplID}
+	err = r.UseCaseResume.RemoveFavorite(favoriteForEmpl)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -415,26 +360,4 @@ func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, emplFavoriteResume)
-}
-
-func (r *ResumeHandler) handlerGetAllForListResume(resume []models.Resume) ([]models.RespResume, error) {
-	var allResume []models.RespResume
-	for i := range resume {
-		exp, err := r.UseCaseCustomExperience.GetAllFromResume(resume[i].ResumeID)
-		if err != nil {
-			return nil, err
-		}
-		educ, err := r.UseCaseEducation.GetAllFromResume(resume[i].ResumeID)
-		if err != nil {
-			return nil, err
-		}
-		wholeResume := models.RespResume{
-			Resume:           resume[i],
-			Educations:       educ,
-			CustomExperience: exp,
-		}
-
-		allResume = append(allResume, wholeResume)
-	}
-	return allResume, nil
 }

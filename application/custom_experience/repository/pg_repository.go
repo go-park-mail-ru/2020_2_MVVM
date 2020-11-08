@@ -45,11 +45,8 @@ func (p *pgRepository) GetAllFromResume(resumeID uuid.UUID) ([]models.Experience
 }
 
 
-func (p *pgRepository) DeleteAllResumeCustomExperience(resumeID uuid.UUID) error {
+func (p *pgRepository) DropAllFromResume(resumeID uuid.UUID) error {
 	var experience models.ExperienceCustomComp
 	_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

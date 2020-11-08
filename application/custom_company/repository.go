@@ -6,6 +6,6 @@ import (
 
 type CustomCompanyRepository interface {
 	CreateCustomCompany(resume models.CustomCompany) (*models.CustomCompany, error)
-	//Update(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
+	//Drop(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
 	GetCustomCompanyById(id string) (*models.CustomCompany, error)
 }

@@ -76,7 +76,7 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	if err != nil || employer.CompanyID != uuid.Nil {
 		return nil, fmt.Errorf("error employer with id = %s doesn't exist or already have company", empId.String())
 	}
-	//_, err = p.db.Model(&company).WherePK().Update()
+	//_, err = p.db.Model(&company).WherePK().Drop()
 	_, err = p.db.Model(&company).Returning("*").Insert()
 	if err != nil {
 		return nil, fmt.Errorf("error in inserting official company: error: %w", err)

@@ -29,7 +29,7 @@ func (u* UseCaseEducation) GetAllFromResume(resumeID uuid.UUID) ([]models.Educat
 	return u.strg.GetAllFromResume(resumeID)
 }
 
-func (u *UseCaseEducation) Create(educations []*models.Education) ([]models.Education, error) {
+func (u *UseCaseEducation) Create(educations models.Education) (*models.Education, error) {
 	ed, err := u.strg.Create(educations)
 	if err != nil {
 		err = fmt.Errorf("error in create educations function: %w", err)
@@ -47,15 +47,6 @@ func (u *UseCaseEducation) GetById(id string) (*models.Education, error) {
 	return ed, nil
 }
 
-func (u *UseCaseEducation) Update(newEducations []models.Education, resumeID uuid.UUID) ([]models.Education, error) {
-	err := u.strg.DeleteAllResumeEducation(resumeID)
-	if err != nil {
-		return nil, err
-	}
-	ed, err := u.strg.Create(newEducations)
-	if err != nil {
-		err = fmt.Errorf("error in update educations function: %w", err)
-		return nil, err
-	}
-	return ed, nil
+func (u *UseCaseEducation) DropAllFromResume(resumeID uuid.UUID) error {
+	return u.strg.DropAllFromResume(resumeID)
 }

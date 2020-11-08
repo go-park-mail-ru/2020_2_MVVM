@@ -41,81 +41,49 @@ func NewUseCase(infoLogger *logger.Logger,
 }
 
 func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
+	// create resume
 	template.DateCreate = time.Now()
 	result, err := u.strg.Create(template)
-
-	for i := range template.ExperienceCustomComp {
-		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
-		template.ExperienceCustomComp[i].CandID = result.CandID
-	}
-	for i := range template.Education {
-		template.Education[i].ResumeId = result.ResumeID
-		template.Education[i].CandID = result.CandID
-	}
-
-	result.Education, _ = u.educationUseCase.Create(template.Education)
-	result.ExperienceCustomComp, _ = u.customExpUseCase.Create(template.ExperienceCustomComp)
-
-
-	//user := *resume.Candidate.User
-	//resume.Candidate = nil
-	//
-	//var additionParam models.AdditionInResume
-	//if err := ctx.ShouldBindBodyWith(&additionParam, binding.JSON); err != nil {
-	//	ctx.AbortWithError(http.StatusBadRequest, err)
-	//	return
-	//}
-	//
-	//pEducations, err := r.createEducation(additionParam.Education, candID,  resume.ResumeID)
-	//if err != nil {
-	//	ctx.AbortWithError(http.StatusBadRequest, err)
-	//	return
-	//}
-	//
-	//var customExperience []models.ExperienceCustomComp
-	//for i := range additionParam.CustomExperience {
-	//	item := additionParam.CustomExperience[i]
-	//	dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
-	//	if err != nil {
-	//		ctx.AbortWithError(http.StatusBadRequest, err)
-	//		return
-	//	}
-	//	var dateFinish time.Time
-	//	if !item.ContinueToToday {
-	//		dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
-	//		if err != nil {
-	//			ctx.AbortWithError(http.StatusBadRequest, err)
-	//			return
-	//		}
-	//	} else {
-	//		dateFinish = time.Now()
-	//	}
-	//	//dateBegin := time.Now()
-	//	//dateFinish := time.Now()
-	//
-	//	insertExp := models.ExperienceCustomComp{
-	//		NameJob:         item.NameJob,
-	//		Position:        item.Position,
-	//		Begin:           dateBegin,
-	//		Finish:          &dateFinish,
-	//		Duties:          item.Duties,
-	//		ContinueToToday: &item.ContinueToToday,
-	//	}
-	//	customExperience = append(customExperience, insertExp)
-	//}
-	//
-	//pCustomExperience, err := r.createCustomExperience(customExperience, candID,  resume.ResumeID)
-	//if err != nil {
-	//	ctx.AbortWithError(http.StatusBadRequest, err)
-	//	return
-	//}
-
 	if err != nil {
-		err = fmt.Errorf("error in resume get by id func : %w", err)
 		return nil, err
 	}
-	return r, nil
+
+	err = u.createExperienceAndEducation(template, *result)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
+
+func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, result models.Resume) error {
+	// create experience
+	var err error
+	for i := range template.ExperienceCustomComp {
+		if template.Education[i] == nil {
+			continue
+		}
+		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
+		template.ExperienceCustomComp[i].CandID = result.CandID
+		template.ExperienceCustomComp[i], err = u.customExpUseCase.Create(*template.ExperienceCustomComp[i])
+		if err != nil {
+			return err
+		}
+	}
+	// create education
+	for i := range template.Education {
+		if template.Education[i] == nil {
+			continue
+		}
+		template.Education[i].ResumeId = result.ResumeID
+		template.Education[i].CandID = result.CandID
+		template.Education[i], err = u.educationUseCase.Create(*template.Education[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 
 func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	oldResume, err := u.strg.GetById(resume.ResumeID)
@@ -127,12 +95,19 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 		err = fmt.Errorf("this user cannot update this resume")
 		return nil, err
 	}
-	r, err := u.strg.Update(&resume)
+
+	err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
 	if err != nil {
-		err = fmt.Errorf("error in update resume: %w", err)
 		return nil, err
 	}
-	return r, nil
+	err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := u.strg.Update(resume)
+	err = u.createExperienceAndEducation(resume, resume)
+	return result, err
 }
 
 func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error) {
@@ -211,8 +186,16 @@ func (u *ResumeUseCase) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*m
 	return u.strg.AddFavorite(favoriteForEmpl)
 }
 
-func (u *ResumeUseCase) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
-	return u.strg.RemoveFavorite(favoriteForEmpl)
+func (u *ResumeUseCase) RemoveFavorite(favoriteForEmpl models.FavoritesForEmpl) error {
+	oldFavorite, err := u.strg.GetFavoriteByID(favoriteForEmpl.FavoriteID)
+	if err != nil {
+		return err
+	}
+	if oldFavorite.EmplID != favoriteForEmpl.EmplID {
+		err = fmt.Errorf("error in remove favorite: method not allowed")
+		return err
+	}
+	return u.strg.RemoveFavorite(favoriteForEmpl.FavoriteID)
 }
 
 func (u *ResumeUseCase) GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error) {
@@ -221,36 +204,25 @@ func (u *ResumeUseCase) GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.Bri
 		err = fmt.Errorf("error in get list favorite resume: %w", err)
 		return nil, err
 	}
-
-	var briefRespResumes []models.BriefResumeInfo
-	for i := range r {
-		var insert models.BriefResumeInfo
-		err = copier.Copy(&insert, &r[i].ResumeWithCandidate)
-		if err != nil {
-			err = fmt.Errorf("error in copy resumes for list my favorite: %w", err)
-			return nil, err
-		}
-		insert = DoBriefRespUser(insert, *r[i].ResumeWithCandidate.Candidate)
-		briefRespResumes = append(briefRespResumes, insert)
-	}
-	return briefRespResumes, nil
-
+	return DoBriefRespResume(r)
 }
 
-func (u *ResumeUseCase) GetFavorite(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
+func (u *ResumeUseCase) GetFavoriteByResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
 	return u.strg.GetFavoriteForResume(userID, resumeID)
+}
+
+func (u *ResumeUseCase) GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error) {
+	return u.strg.GetFavoriteByID(favoriteID)
 }
 
 func DoBriefRespResume(resumes []models.Resume) ([]models.BriefResumeInfo, error) {
 	var briefRespResumes []models.BriefResumeInfo
 	for i := range resumes {
-		var insert models.BriefResumeInfo
-		err := copier.Copy(&insert, &resumes[i])
+		brief, err := resumes[i].Brief()
 		if err != nil {
 			return nil, err
 		}
-		insert = DoBriefRespUser(insert, *resumes[i].Candidate)
-		briefRespResumes = append(briefRespResumes, insert)
+		briefRespResumes = append(briefRespResumes, *brief)
 	}
 	return briefRespResumes, nil
 }

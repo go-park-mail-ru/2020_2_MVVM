@@ -16,21 +16,13 @@ func NewPgRepository(db *pg.DB) education.Repository {
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) Create(education []*models.Education) ([]models.Education, error) {
-	var dbEducation []models.Education
-	for _,item := range education {
-		if item == nil {
-			continue
-		}
+func (p *pgReopository) Create(edu models.Education) (*models.Education, error) {
 
-		_, err := p.db.Model(item).Returning("*").Insert()
-		if err != nil {
-			err = fmt.Errorf("error in inserting resume with title: error: %w", err)
-			return nil, err
-		}
-		dbEducation = append(dbEducation, *item)
+	_, err := p.db.Model(&edu).Returning("*").Insert()
+	if err != nil {
+		return nil, err
 	}
-	return dbEducation, nil
+	return &edu, nil
 }
 
 func (p *pgReopository) GetById(id string) (*models.Education, error) {
@@ -52,11 +44,8 @@ func (p *pgReopository) GetAllFromResume(resumeID uuid.UUID) ([]models.Education
 	return educations, nil
 }
 
-func (p *pgReopository) DeleteAllResumeEducation(resumeID uuid.UUID) error {
+func (p *pgReopository) DropAllFromResume(resumeID uuid.UUID) error {
 	var educations models.Education
 	_, err := p.db.Model(&educations).Where("resume_id = ?", resumeID).Delete()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

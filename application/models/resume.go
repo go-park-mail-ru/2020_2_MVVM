@@ -13,9 +13,6 @@ type Resume struct {
 	CandID    uuid.UUID  `pg:"cand_id, fk, type:uuid" json:"cand_id" form:"cand_id"`
 	Candidate *Candidate `pg:"rel:has-one"`
 
-	Education            []*Education            `pg:"rel:has-many" json:"education"`
-	ExperienceCustomComp []*ExperienceCustomComp `pg:"rel:has-many" json:"custom_experience"`
-
 	Title                string                  `pg:"title, notnull" json:"title" form:"title"`
 	SalaryMin            *int                    `pg:"salary_min" json:"salary_min" form:"salary_min"`
 	SalaryMax            *int                    `pg:"salary_max" json:"salary_max" form:"salary_max"`
@@ -28,15 +25,17 @@ type Resume struct {
 	ExperienceMonth      *int                    `pg:"experience_month" json:"experience_month" form:"experience_month"`
 	AreaSearch           *string                 `pg:"area_search" json:"area_search" form:"area_search"`
 	DateCreate           time.Time               `pg:"date_create" json:"date_create" form:"date_create"`
+	Education            []*Education            `pg:"rel:has-many" json:"education"`
+	ExperienceCustomComp []*ExperienceCustomComp `pg:"rel:has-many" json:"custom_experience"`
 }
 
 // TODO Фронт сам решит, что ему надо. Надо вернуть полное резюме
-func (r *Resume) Brief() (error, *BriefResumeInfo) {
+func (r *Resume) Brief() (*BriefResumeInfo, error) {
 	if r.Candidate == nil || r.Candidate.User == nil {
-		return fmt.Errorf("failed to create brief resume description"), nil
+		return nil, fmt.Errorf("failed to create brief resume description")
 	}
 
-	return nil, &BriefResumeInfo{
+	return &BriefResumeInfo{
 		ResumeID:    r.ResumeID,
 		CandID:      r.CandID,
 		UserID:      r.Candidate.UserID,
@@ -47,7 +46,7 @@ func (r *Resume) Brief() (error, *BriefResumeInfo) {
 		Name:        r.Candidate.User.Name,
 		Surname:     r.Candidate.User.Surname,
 		Email:       r.Candidate.User.Email,
-	}
+	}, nil
 }
 
 // TODO ВСЕГДА ИСПОЛЬЗОВАТЬ ТОЛЬКО ОДИН ID
@@ -63,32 +62,3 @@ type BriefResumeInfo struct {
 	Surname     string    `json:"surname"`
 	Email       string    `json:"email"`
 }
-
-type AdditionInResume struct {
-	Education        []Education               `json:"education" form:"education"`
-	CustomExperience []ReqExperienceCustomComp `json:"custom_experience" form:"custom_experience"`
-}
-
-type RespResume struct {
-	Resume           Resume                 `json:"resume"`
-	User             User                   `json:"user"`
-	Educations       []Education            `json:"education"`
-	CustomExperience []ExperienceCustomComp `json:"custom_experience"`
-	IsFavorite       *uuid.UUID             `json:"is_favorite"`
-}
-type Resp struct {
-	Resume []RespResume `json:"resume"`
-}
-
-type ResumeWithCandidate struct {
-	tableName struct{} `pg:"main.resume,discard_unknown_columns"`
-
-	ResumeID    uuid.UUID  `pg:"resume_id,pk,type:uuid" json:"resume_id"`
-	CandID      uuid.UUID  `pg:"cand_id, fk, type:uuid" json:"cand_id"`
-	Title       string     `pg:"title" json:"title"`
-	Description string     `pg:"description" json:"description"`
-	Place       string     `pg:"place" json:"place"`
-	AreaSearch  string     `pg:"area_search" json:"location"`
-	Candidate   *Candidate `pg:"rel:has-one"`
-}
-

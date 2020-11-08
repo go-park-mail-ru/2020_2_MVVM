@@ -51,15 +51,6 @@ func (u *UseCase) GetById(id string) (*models.ExperienceCustomComp, error) {
 	return experience, nil
 }
 
-func (u *UseCase) Update(newExperience []models.ExperienceCustomComp, resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
-	err := u.customExperienceRepository.DeleteAllResumeCustomExperience(resumeID)
-	if err != nil {
-		return nil, err
-	}
-	exp, err := u.customExperienceRepository.Create(newExperience)
-	if err != nil {
-		err = fmt.Errorf("error in update custom experience function: %w", err)
-		return nil, err
-	}
-	return exp, nil
+func (u *UseCase) DropAllFromResume(resumeID uuid.UUID) error {
+	return u.customExperienceRepository.DropAllFromResume(resumeID)
 }

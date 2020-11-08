@@ -7,8 +7,7 @@ import (
 
 type CustomExperienceRepository interface {
 	Create(experience models.ExperienceCustomComp) (*models.ExperienceCustomComp, error)
-	//Update(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
+	DropAllFromResume(resumeID uuid.UUID) error
 	GetById(id string) (*models.ExperienceCustomComp, error)
 	GetAllFromResume(experienceID uuid.UUID) ([]models.ExperienceCustomComp, error)
-	DeleteAllResumeCustomExperience(experienceID uuid.UUID) error
 }
