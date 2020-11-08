@@ -20,8 +20,8 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 		if params.VacCount > 0 {
 			q = q.Where("count_vacancy >= (?)", params.VacCount)
 		}
-		if len(params.Location) != 0 {
-			q = q.Where("location IN (?)", pg.In(params.Location))
+		if len(params.AreaSearch) != 0 {
+			q = q.Where("area_search IN (?)", pg.In(params.AreaSearch))
 		}
 		if params.KeyWords != "" {
 			q = q.Where("LOWER(name) LIKE (?)", "%"+params.KeyWords+"%")

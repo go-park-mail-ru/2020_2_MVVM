@@ -87,7 +87,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		Name        string `json:"name" binding:"required"`
 		Description string `json:"description" binding:"required"`
 		Spheres     []int  `json:"spheres"`
-		Location    string `json:"location" binding:"required"`
+		AreaSearch  string `json:"area_search" binding:"required"`
 		Link        string `json:"link"`
 		Avatar      string `json:"avatar"`
 	}
@@ -112,7 +112,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		return
 	}
 	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
-		Location: req.Location, Link: req.Link, Description: req.Description}, empId)
+		AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return

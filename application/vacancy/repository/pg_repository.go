@@ -118,7 +118,7 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 			q = q.Where("employment IN (?)", pg.In(params.ExperienceMonth))
 		}
 		if len(params.AreaSearch) != 0 {
-			q = q.Where("location IN (?)", pg.In(params.AreaSearch))
+			q = q.Where("area_search IN (?)", pg.In(params.AreaSearch))
 		}
 		if params.SalaryMin != 0 || params.SalaryMax != 0 {
 			q = q.Where("salary_min >= ?", params.SalaryMin).
