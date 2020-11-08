@@ -22,14 +22,10 @@ type RespList struct {
 	Companies []models.OfficialCompany `json:"companyList"`
 }
 
-type RespErr struct {
-	Error string `json:"error"`
-}
-
 const (
-	compPath = "company/"
+	compPath      = "company/"
 	emptyFieldErr = "empty required fields"
-	sessionErr = "session error"
+	sessionErr    = "session error"
 )
 
 func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
@@ -42,10 +38,11 @@ func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	router.GET("/by/id/:company_id", c.handlerGetCompany)
 	router.GET("/page", c.handlerGetCompanyList)
 	router.POST("/search", c.handlerSearchCompanies)
+	router.POST("/", c.handlerCreateCompany)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", c.handlerGetUserCompany)
-		router.POST("/", c.handlerCreateCompany)
+		//router.POST("/", c.handlerCreateCompany)
 		//router.PUT("/", v.handlerUpdateVacancy)
 	}
 }
@@ -56,13 +53,13 @@ func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	compUuid, _ := uuid.Parse(req.CompanyID)
 	comp, err := c.CompUseCase.GetOfficialCompany(compUuid)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -73,12 +70,12 @@ func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
 	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errSession)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: sessionErr})
 		return
 	}
 	comp, err := c.CompUseCase.GetMineCompany(empId)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -92,32 +89,32 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		Spheres     []int  `json:"spheres"`
 		Location    string `json:"location" binding:"required"`
 		Link        string `json:"link"`
-		Avatar      string
+		Avatar      string `json:"avatar"`
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{errImg.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
 		return
 	}
 	session := sessions.Default(ctx).Get("empl_id")
 	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
 		return
 	}
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
 		return
 	}
 	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
 		Location: req.Location, Link: req.Link, Description: req.Description}, empId)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	if file != nil {
@@ -135,12 +132,12 @@ func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.Limit)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -151,12 +148,12 @@ func (c *CompanyHandler) handlerSearchCompanies(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.SearchCompanies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})

@@ -131,7 +131,7 @@ func NewApp(config Config) *App {
 		//Domain:   "localhost", // for postman
 		MaxAge:   int((12 * time.Hour).Seconds()),
 		Secure:   true,
-		HttpOnly: false,
+		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})

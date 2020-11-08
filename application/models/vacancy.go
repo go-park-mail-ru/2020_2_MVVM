@@ -10,6 +10,7 @@ type Vacancy struct {
 	EmpID           uuid.UUID `pg:"empl_id, fk, type:uuid" json:"empl_id"`
 	CompID          uuid.UUID `pg:"comp_id, fk, type:uuid" json:"comp_id"`
 	Title           string    `pg:"title,notnull" json:"title"`
+	Gender          string    `pg:"gender" json:"gender"`
 	SalaryMin       int       `pg:"salary_min" json:"salary_min"`
 	SalaryMax       int       `pg:"salary_max" json:"salary_max"`
 	Description     string    `pg:"description,notnull" json:"description"`
@@ -18,7 +19,8 @@ type Vacancy struct {
 	Skills          string    `pg:"skills" json:"skills"`
 	Sphere          int       `pg:"sphere" json:"sphere"`
 	Employment      string    `pg:"employment" json:"employment"`
-	ExperienceMonth string    `pg:"experience_month" json:"experience_month"`
+	ExperienceMonth int       `pg:"experience_month" json:"experience_month"`
+	AreaSearch      string    `pg:"area_search" json:"area_search"`
 	Location        string    `pg:"location" json:"location"`
 	CareerLevel     string    `pg:"career_level" json:"career_level"`
 	EducationLevel  string    `pg:"education_level" json:"education_level"`
@@ -31,12 +33,13 @@ type VacancySearchParams struct {
 	KeyWords        string   `json:"keywords"`
 	SalaryMin       int      `json:"salary_min"`
 	SalaryMax       int      `json:"salary_max"`
+	Gender          string   `json:"gender"`
 	ExperienceMonth []int    `json:"experience_month"`
 	Employment      []string `json:"employment"`
 	EducationLevel  []string `json:"education_level"`
 	CareerLevel     []string `json:"career_level"`
 	Spheres         []int    `json:"spheres"`
-	Location        []string `json:"location"`
+	AreaSearch      []string `json:"area_search"`
 	OrderBy         string   `json:"order_by"`
 	ByAsc           bool     `json:"byAsc"`
 	DaysFromNow     int      `json:"days_from_now"`
