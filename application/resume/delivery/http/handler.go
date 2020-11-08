@@ -13,14 +13,6 @@ import (
 	"net/http"
 )
 
-type ResumeResponse struct {
-	Resume           models.Resume                  `json:"resume"`
-	User             models.User                    `json:"user"`
-	Educations       []*models.Education            `json:"education"`
-	CustomExperience []*models.ExperienceCustomComp `json:"custom_experience"`
-	IsFavorite       *uuid.UUID                     `json:"is_favorite"`
-}
-
 type ResumeHandler struct {
 	UseCaseResume           resume.UseCase
 	UseCaseEducation        education.UseCase
@@ -97,29 +89,29 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		return
 	}
 
-	resume, err := r.UseCaseResume.Create(*template)
+	result, err := r.UseCaseResume.Create(*template)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	if file != nil {
-		if err := common.AddOrUpdateUserFile(file, resumePath+resume.ResumeID.String()); err != nil {
+		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 
-	resp := ResumeResponse{
-		User:             *resume.Candidate.User,
-		Educations:       resume.Education,
-		CustomExperience: resume.ExperienceCustomComp,
+	resp := resume.ResumeResponse{
+		User:             *result.Candidate.User,
+		Educations:       result.Education,
+		CustomExperience: result.ExperienceCustomComp,
 		IsFavorite:       nil,
 	}
 
-	resume.Candidate = nil
-	resume.Education = nil
-	resume.ExperienceCustomComp = nil
-	resp.Resume = *resume
+	result.Candidate = nil
+	result.Education = nil
+	result.ExperienceCustomComp = nil
+	resp.Resume = *result
 
 	ctx.JSON(http.StatusOK, resp)
 }
@@ -163,7 +155,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		}
 	}
 
-	resp := ResumeResponse{
+	resp := resume.ResumeResponse{
 		User:             *result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -216,47 +208,21 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 	template.CandID = candID
 
-
+	file, errImg := common.GetImageFromBase64(template.Avatar)
+	if errImg != nil {
+		ctx.JSON(http.StatusBadRequest, errImg)
+		return
+	}
 
 	result, err := r.UseCaseResume.Update(template)
 
-	//for i := range additionParam.CustomExperience {
-	//	item := additionParam.CustomExperience[i]
-	//	dateBegin, err := time.Parse(time.RFC3339, item.Begin+"T00:00:00Z")
-	//	if err != nil {
-	//		ctx.AbortWithError(http.StatusBadRequest, err)
-	//		return
-	//	}
-	//	var dateFinish time.Time
-	//	if !item.ContinueToToday {
-	//		dateFinish, err = time.Parse(time.RFC3339, *item.Finish+"T00:00:00Z")
-	//		if err != nil {
-	//			ctx.AbortWithError(http.StatusBadRequest, err)
-	//			return
-	//		}
-	//	} else {
-	//		dateFinish = time.Now()
-	//	}
-	//	//dateBegin := time.Now()
-	//	//dateFinish := time.Now()
-	//	insertExp := models.ExperienceCustomComp{
-	//		NameJob:         item.NameJob,
-	//		Position:        item.Position,
-	//		Begin:           dateBegin,
-	//		Finish:          &dateFinish,
-	//		Duties:          item.Duties,
-	//		ContinueToToday: &item.ContinueToToday,
-	//	}
-	//	customExperience = append(customExperience, insertExp)
-	//}
-	//
-	//pCustomExperience, err := r.handlerUpdateCustomExperience(customExperience, candID, pResume.ResumeID)
-	//if err != nil {
-	//	ctx.AbortWithError(http.StatusBadRequest, err)
-	//	return
-	//}
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
 
-	resp := ResumeResponse{
+	resp := resume.ResumeResponse{
 		User:             *result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,

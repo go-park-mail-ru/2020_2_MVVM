@@ -99,25 +99,26 @@ func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, re
 		if template.ExperienceCustomComp[i] == nil {
 			continue
 		}
-		t := template.ExperienceCustomComp[i].Begin
-		dateBegin, err := time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
-		if err != nil {
-			return err
-		}
-		var dateFinish time.Time
-		if template.ExperienceCustomComp[i].ContinueToToday == nil || !*(template.ExperienceCustomComp[i].ContinueToToday){
-			t = *template.ExperienceCustomComp[i].Finish
-			dateFinish, err = time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
-			if err != nil {
-				return err
-			}
-		} else {
-			dateFinish = time.Now()
+		//t := template.ExperienceCustomComp[i].Begin
+		//dateBegin, err := time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
+		//if err != nil {
+		//	return err
+		//}
+		//var dateFinish time.Time
+		if *(template.ExperienceCustomComp[i].ContinueToToday){
+		//	t = *template.ExperienceCustomComp[i].Finish
+		//	dateFinish, err = time.Parse(time.RFC3339, t.String()+"T00:00:00Z")
+		//	if err != nil {
+		//		return err
+		//	}
+		//} else {
+			dateFinish := time.Now()
+			template.ExperienceCustomComp[i].Finish = &dateFinish
 		}
 		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
 		template.ExperienceCustomComp[i].CandID = result.CandID
-		template.ExperienceCustomComp[i].Begin = dateBegin
-		template.ExperienceCustomComp[i].Finish = &dateFinish
+		//template.ExperienceCustomComp[i].Begin = dateBegin
+		//template.ExperienceCustomComp[i].Finish = &dateFinish
 
 		template.ExperienceCustomComp[i], err = u.customExpUseCase.Create(*template.ExperienceCustomComp[i])
 		if err != nil {
