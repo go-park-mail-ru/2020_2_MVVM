@@ -27,7 +27,7 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 			q = q.Where("LOWER(name) LIKE (?)", "%"+params.KeyWords+"%")
 		}
 		if len(params.Spheres) != 0 {
-			q = q.Where("spheres <@ (?)", pg.Array(params.Spheres))
+			q = q.Where("spheres @> (?)", pg.Array(params.Spheres))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy), nil
