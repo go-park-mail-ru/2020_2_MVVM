@@ -8,28 +8,24 @@ import (
 	"github.com/google/uuid"
 )
 
-type pgReopository struct {
+type pgRepository struct {
 	db *pg.DB
 }
 
 func NewPgRepository(db *pg.DB) custom_experience.CustomExperienceRepository{
-	return &pgReopository{db: db}
+	return &pgRepository{db: db}
 }
 
-func (p *pgReopository) CreateCustomExperience(experience []models.ExperienceCustomComp) ([]models.ExperienceCustomComp, error) {
-	var dbExperience []models.ExperienceCustomComp
-	for _,item := range experience {
-		_, err := p.db.Model(&item).Returning("*").Insert()
-		if err != nil {
-			err = fmt.Errorf("error in inserting custom experience with title: error: %w", err)
-			return nil, err
-		}
-		dbExperience = append(dbExperience, item)
+func (p *pgRepository) Create(experience models.ExperienceCustomComp) (*models.ExperienceCustomComp, error) {
+	_, err := p.db.Model(&experience).Returning("*").Insert()
+	if err != nil {
+		err = fmt.Errorf("error in inserting custom experience with title: error: %w", err)
+		return nil, err
 	}
-	return dbExperience, nil
+	return &experience, nil
 }
 
-func (p *pgReopository) GetCustomExperienceById(id string) (*models.ExperienceCustomComp, error) {
+func (p *pgRepository) GetById(id string) (*models.ExperienceCustomComp, error) {
 	var experience models.ExperienceCustomComp
 	err := p.db.Model(&experience).Where("education_id = ?", id).Select()
 	if err != nil {
@@ -39,7 +35,7 @@ func (p *pgReopository) GetCustomExperienceById(id string) (*models.ExperienceCu
 	return &experience, nil
 }
 
-func (p *pgReopository) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
+func (p *pgRepository) GetAllFromResume(resumeID uuid.UUID) ([]models.ExperienceCustomComp, error) {
 	var experience []models.ExperienceCustomComp
 	err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Limit(5).Select()
 	if err != nil {
@@ -49,11 +45,8 @@ func (p *pgReopository) GetAllResumeCustomExperience(resumeID uuid.UUID) ([]mode
 }
 
 
-func (p *pgReopository) DeleteAllResumeCustomExperience(resumeID uuid.UUID) error {
+func (p *pgRepository) DropAllFromResume(resumeID uuid.UUID) error {
 	var experience models.ExperienceCustomComp
 	_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

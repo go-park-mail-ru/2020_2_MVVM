@@ -11,14 +11,14 @@ import (
 )
 
 type UserHandler struct {
-	UserUseCase user.IUseCaseUser
+	UserUseCase user.UseCase
 }
 
 type Resp struct {
 	User *models.User `json:"user"`
 }
 
-func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, AuthRequired gin.HandlerFunc) *UserHandler {
+func NewRest(router *gin.RouterGroup, useCase user.UseCase, AuthRequired gin.HandlerFunc) *UserHandler {
 	rest := &UserHandler{UserUseCase: useCase}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -240,4 +240,3 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, userUpdate)
 }
-

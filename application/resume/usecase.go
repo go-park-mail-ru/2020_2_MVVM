@@ -5,16 +5,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type IUseCaseResume interface {
-	CreateResume(resume models.Resume) (*models.Resume, error)
-	UpdateResume(resume models.Resume) (*models.Resume, error)
-	SearchResume(searchParams models.SearchResume) ([]models.BriefRespResume, error)
-	GetResume(id string) (*models.Resume, error)
-	GetResumePage(start, limit uint) ([]models.BriefRespResume, error)
-	GetAllUserResume(userid uuid.UUID) ([]models.BriefRespResume, error)
+type UseCase interface {
+	Create(template models.Resume) (*models.Resume, error)
+	Update(resume models.Resume) (*models.Resume, error)
+	Search(searchParams SearchParams) ([]models.BriefResumeInfo, error)
+
+	GetById(id uuid.UUID) (*models.Resume, error)
+	List(start, limit uint) ([]models.BriefResumeInfo, error)
+	GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
-	GetFavoriteForResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
-	RemoveFavorite(favoriteForEmpl uuid.UUID) error
-	GetAllEmplFavoriteResume(userid uuid.UUID) ([]models.BriefRespResume, error)
+	GetFavoriteByResume(userID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
+	RemoveFavorite(favorite models.FavoritesForEmpl) error
+	GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
 }
