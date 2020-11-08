@@ -27,6 +27,7 @@ type Resume struct {
 	DateCreate           time.Time               `pg:"date_create" json:"date_create" form:"date_create"`
 	Education            []*Education            `pg:"rel:has-many" json:"education"`
 	ExperienceCustomComp []*ExperienceCustomComp `pg:"rel:has-many" json:"custom_experience"`
+	Avatar               string                  `pg:"-" json:"avatar"`
 }
 
 // TODO Фронт сам решит, что ему надо. Надо вернуть полное резюме

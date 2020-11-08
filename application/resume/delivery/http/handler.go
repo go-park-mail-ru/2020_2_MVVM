@@ -13,9 +13,6 @@ import (
 	"net/http"
 )
 
-//type Resp struct {
-//	Resume []ResumeResponse `json:"resume"`
-//}
 type ResumeResponse struct {
 	Resume           models.Resume                  `json:"resume"`
 	User             models.User                    `json:"user"`
@@ -30,6 +27,8 @@ type ResumeHandler struct {
 	UseCaseCustomCompany    custom_company.UseCase
 	UseCaseCustomExperience custom_experience.UseCase
 }
+
+const resumePath = "resume/"
 
 func NewRest(router *gin.RouterGroup,
 	useCaseResume resume.UseCase,
@@ -92,10 +91,22 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 	template.CandID = candID
 
+	file, errImg := common.GetImageFromBase64(template.Avatar)
+	if errImg != nil {
+		ctx.JSON(http.StatusBadRequest, errImg)
+		return
+	}
+
 	resume, err := r.UseCaseResume.Create(*template)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
+	}
+
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, resumePath+resume.ResumeID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
 	}
 
 	resp := ResumeResponse{
