@@ -18,10 +18,6 @@ type Resp struct {
 	Vacancy *models.Vacancy `json:"vacancy"`
 }
 
-type RespErr struct {
-	Error string `json:"error"`
-}
-
 type RespList struct {
 	Vacancies []models.Vacancy `json:"vacancyList"`
 }
@@ -30,6 +26,7 @@ type vacRequest struct {
 	Id              string `json:"vac_id,uuid"`
 	Avatar          string `json:"avatar"`
 	Title           string `json:"title" binding:"required"`
+	Gender          string `json:"gender"`
 	SalaryMin       int    `json:"salary_min"`
 	SalaryMax       int    `json:"salary_max"`
 	Description     string `json:"description" binding:"required"`
@@ -38,8 +35,9 @@ type vacRequest struct {
 	Skills          string `json:"skills"`
 	Sphere          int    `json:"sphere"`
 	Employment      string `json:"employment"`
-	ExperienceMonth string `json:"experience_work"`
+	ExperienceMonth int    `json:"experience_month"`
 	Location        string `json:"location"`
+	AreaSearch      string `json:"area_search"`
 	CareerLevel     string `json:"career_level"`
 	EducationLevel  string `json:"education_level"`
 	EmpEmail        string `json:"email"`
@@ -53,11 +51,11 @@ type vacListRequest struct {
 }
 
 const (
-	vacCreate = 0
-	vacUpdate = 1
-	vacPath   = "vacancy/"
+	vacCreate     = 0
+	vacUpdate     = 1
+	vacPath       = "vacancy/"
 	emptyFieldErr = "empty required fields"
-	sessionErr = "session error"
+	sessionErr    = "session error"
 )
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
@@ -85,13 +83,13 @@ func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
 	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -122,12 +120,12 @@ func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
@@ -140,27 +138,27 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{errImg.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
 		return
 	}
-	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax,
-		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills,
-		Sphere: req.Sphere, Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location,
-		CareerLevel: req.CareerLevel, EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail}
+	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax, AreaSearch: req.AreaSearch,
+		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: req.Sphere,
+		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
+		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
 	if treatmentType == vacCreate {
 		session := sessions.Default(ctx).Get("empl_id")
 		if session == nil {
-			ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
 			return
 		}
 		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
-			ctx.JSON(http.StatusInternalServerError, RespErr{sessionErr})
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
 			return
 		}
 		vacNew.EmpID = empId
@@ -170,7 +168,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	if file != nil {
@@ -189,14 +187,14 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	)
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, RespErr{emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	if entityType == vacancy.ByEmpId {
 		session := sessions.Default(ctx).Get("empl_id")
 		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
-			ctx.JSON(http.StatusBadRequest, RespErr{errSession.Error()})
+			ctx.JSON(http.StatusBadRequest, common.RespError{Err: errSession.Error()})
 			return
 		}
 		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, empId, vacancy.ByEmpId)
@@ -209,7 +207,7 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil, vacancy.ByVacId)
 	}
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, RespErr{err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})

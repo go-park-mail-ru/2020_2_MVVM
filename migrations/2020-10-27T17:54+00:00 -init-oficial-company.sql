@@ -13,7 +13,7 @@ create table official_companies
     name text not null,
     spheres int[] null,
     description text null,
-    location text not null,
+    area_search varchar(128) not null,
     link text null,
     count_vacancy int default 0
 );

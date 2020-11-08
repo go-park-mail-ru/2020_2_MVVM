@@ -84,9 +84,9 @@ func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, enti
 	if entityType == vacancy.ByEmpId {
 		err = p.db.Model(&vacList).Where("empl_id= ?", id).Limit(int(limit)).Offset(int(start)).Select()
 	} else if entityType == vacancy.ByCompId {
-		err = p.db.Model(&vacList).Where("comp_id= ?", id).Order("sphere").Limit(int(limit)).Offset(int(start)).Select()
+		err = p.db.Model(&vacList).Where("comp_id= ?", id).Limit(int(limit)).Offset(int(start)).Order("sphere").Select()
 	} else {
-		err = p.db.Model(&vacList).Limit(int(limit)).Offset(int(start)).Order("sphere").Order("sphere").Select()
+		err = p.db.Model(&vacList).Limit(int(limit)).Offset(int(start)).Order("sphere").Select()
 	}
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)
@@ -117,8 +117,8 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		if len(params.Employment) != 0 {
 			q = q.Where("employment IN (?)", pg.In(params.ExperienceMonth))
 		}
-		if len(params.Location) != 0 {
-			q = q.Where("location IN (?)", pg.In(params.Location))
+		if len(params.AreaSearch) != 0 {
+			q = q.Where("area_search IN (?)", pg.In(params.AreaSearch))
 		}
 		if params.SalaryMin != 0 || params.SalaryMax != 0 {
 			q = q.Where("salary_min >= ?", params.SalaryMin).
