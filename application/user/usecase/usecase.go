@@ -84,7 +84,7 @@ func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	return userNew, nil
 }
 
-func (u *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick, name, surname, email, phone,
+func (u *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, name, surname, email, phone,
 	socialNetwork string) (*models.User, error) {
 	user, err := u.GetUserByID(user_id)
 	if err != nil {
@@ -92,9 +92,6 @@ func (u *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, nick,
 		return nil, err
 	}
 
-	if nick != "" {
-		user.Nickname = nick
-	}
 	if name != "" {
 		user.Name = name
 	}

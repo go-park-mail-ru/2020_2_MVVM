@@ -23,7 +23,6 @@ func (p *pgStorage) Login(user models.UserLogin) (*models.User, error) {
 	var userDB models.User
 	err := p.db.Model(&userDB).
 		Where("email = ?", user.Email).
-		Where("nickname = ?", user.Nickname).
 		Select()
 	if err != nil {
 		return nil, err

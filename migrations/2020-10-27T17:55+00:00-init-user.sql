@@ -9,7 +9,6 @@ create table users
         constraint users_pkey primary key,
     user_type users_types default 'candidate',
     email citext not null unique,
-    nickname varchar(128) not null unique,
     password_hash bytea not null,
     name varchar(128) not null,
     surname varchar(128),
@@ -33,7 +32,6 @@ create table employers
         references users(user_id),
     comp_id uuid references official_companies(comp_id)
 );
-
 
 -- +migrate Down
 

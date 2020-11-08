@@ -107,7 +107,7 @@ func (u *UserHandler) handlerGetEmplByID(ctx *gin.Context) {
 func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	var reqUser models.UserLogin
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
-		if errMsg := err.Error(); errMsg == "missing Nickname, Password, or Email" {
+		if errMsg := err.Error(); errMsg == "missing Email or Password" {
 			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
 		} else {
 			ctx.AbortWithError(http.StatusForbidden, err)
@@ -169,7 +169,6 @@ func (u *UserHandler) handlerLogout(ctx *gin.Context) {
 func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	var req struct {
 		UserType      string `json:"user_type" binding:"required"`
-		NickName      string `json:"nickname" binding:"required"`
 		Password      string `json:"password" binding:"required"`
 		Name          string `json:"name" binding:"required"`
 		Surname       string `json:"surname" binding:"required"`
@@ -188,7 +187,6 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	}
 	userNew, err := u.UserUseCase.CreateUser(models.User{
 		UserType:      req.UserType,
-		Nickname:      req.NickName,
 		Name:          req.Name,
 		Surname:       req.Surname,
 		Email:         req.Email,
@@ -210,7 +208,6 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 
 func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 	var req struct {
-		NickName      string `json:"nickname"`
 		Name          string `json:"name"`
 		Surname       string `json:"surname"`
 		Email         string `json:"email"`
@@ -226,7 +223,7 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 
 	session := sessions.Default(ctx)
 	userID := session.Get("user_id")
-	userUpdate, err := u.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.NickName, req.Name,
+	userUpdate, err := u.UserUseCase.UpdateUser(userID.(string), req.NewPassword, req.OldPassword, req.Name,
 		req.Surname, req.Email, req.Phone, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
