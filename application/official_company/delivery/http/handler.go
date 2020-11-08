@@ -92,6 +92,9 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 		Avatar      string `json:"avatar"`
 	}
 
+	//p := bluemonday.UGCPolicy()
+	//t := ctx.Request.GetBody()
+	//fmt.Println(t,errv)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
