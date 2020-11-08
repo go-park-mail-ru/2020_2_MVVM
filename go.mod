@@ -19,4 +19,5 @@ require (
 	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880
 	github.com/rowdyroad/go-yaml-config v0.0.0-20200117233205-1189970f36fb
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )
