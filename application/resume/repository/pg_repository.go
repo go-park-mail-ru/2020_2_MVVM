@@ -166,6 +166,7 @@ func (p *PGRepository) GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resu
 		Relation("Favorites.Resume.Candidate.User").
 		Relation("Favorites.Resume.Education").
 		Relation("Favorites.Resume.ExperienceCustomComp").
+		Where("empl_id = ?", emplID).
 		Select()
 
 	var resumes []models.Resume
