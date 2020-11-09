@@ -18,7 +18,9 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
-	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880
+	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880 // indirect
 	github.com/rowdyroad/go-yaml-config v0.0.0-20200117233205-1189970f36fb
+	github.com/stretchr/objx v0.1.1 // indirect
+	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 )
