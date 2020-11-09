@@ -22,5 +22,6 @@ require (
 	github.com/stretchr/testify v1.6.1
 	github.com/vektra/mockery/v2 v2.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/tools v0.0.0-20201105220310-78b158585360 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0
 )
