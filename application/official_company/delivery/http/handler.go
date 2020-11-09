@@ -84,21 +84,23 @@ func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
 
 func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	var req struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description" binding:"required"`
-		Spheres     []int  `json:"spheres"`
-		AreaSearch  string `json:"area_search" binding:"required"`
-		Link        string `json:"link"`
-		Avatar      string `json:"avatar"`
+		Name        string `json:"name" binding:"required" valid:"alphanum~1,stringlength(4|15)~2"`
+		Description string `json:"description" binding:"required" valid:"-"`
+		Spheres     []int  `json:"spheres" valid:"-"`
+		AreaSearch  string `json:"area_search" valid:"alpha~3,stringlength(4|128)~4"`
+		Link        string `json:"link" valid:"url~5"`
+		Avatar      string `json:"avatar" valid:"-"`
 	}
 
-	//p := bluemonday.UGCPolicy()
-	//t := ctx.Request.GetBody()
-	//fmt.Println(t,errv)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
+	if err := common.ReqValidation(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})

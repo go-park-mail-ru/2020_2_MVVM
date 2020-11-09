@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
@@ -135,6 +136,8 @@ func NewApp(config Config) *App {
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 	})
+	govalidator.SetFieldsRequiredByDefault(false)
+
 	sessionsMiddleware := sessions.Sessions("studhunt", store)
 	r.Use(sessionsMiddleware)
 	api := r.Group("/api/v1")

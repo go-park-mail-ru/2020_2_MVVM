@@ -4,14 +4,16 @@ go 1.15
 
 require (
 	github.com/apsdehal/go-logger v0.0.0-20190515212710-b0d6ccfee0e6
+	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-pg/pg/v9 v9.2.0
+	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
-	github.com/microcosm-cc/bluemonday v1.0.4 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
