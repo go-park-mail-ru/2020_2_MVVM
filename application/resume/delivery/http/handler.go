@@ -101,7 +101,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.ResumeResponse{
+	resp := resume.Response{
 		User:             *result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -155,7 +155,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.ResumeResponse{
+	resp := resume.Response{
 		User:             *result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -222,7 +222,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.ResumeResponse{
+	resp := resume.Response{
 		User:             *result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,

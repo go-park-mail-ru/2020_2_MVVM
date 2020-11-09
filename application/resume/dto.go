@@ -12,11 +12,11 @@ type SearchParams struct {
 	Gender          []string `json:"gender"`
 	EducationLevel  []string `json:"education_level"`
 	CareerLevel     []string `json:"career_level"`
-	ExperienceMonth []string    `json:"experience_month"`
+	ExperienceMonth []int    `json:"experience_month"`
 	AreaSearch      []string `json:"area_search"`
 }
 
-type ResumeResponse struct {
+type Response struct {
 	Resume           models.Resume                  `json:"resume"`
 	User             models.User                    `json:"user"`
 	Educations       []*models.Education            `json:"education"`

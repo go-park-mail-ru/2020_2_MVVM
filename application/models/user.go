@@ -9,7 +9,6 @@ type User struct {
 
 	ID            uuid.UUID `pg:"user_id,pk,type:uuid" json:"id"`
 	UserType      string    `pg:"user_type,notnull" json:"user_type"`
-	Nickname      string    `pg:"nickname,notnull" json:"nickname"`
 	Name          string    `pg:"name,notnull" json:"name"`
 	Surname       string    `pg:"surname" json:"surname"`
 	Email         string    `pg:"email,notnull" json:"email"`
@@ -36,7 +35,6 @@ type Candidate struct {
 }
 
 type UserLogin struct {
-	Nickname string `json:"nickname" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
