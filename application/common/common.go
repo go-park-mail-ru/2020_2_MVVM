@@ -6,6 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	CandID = "cand_id"
+	EmplID = "empl_id"
+	UserID = "user_id"
+)
+
+
 func HandlerGetCurrentUserID(ctx *gin.Context, user string) (id uuid.UUID, err error) {
 	session := sessions.Default(ctx)
 	userIDStr := session.Get(user)

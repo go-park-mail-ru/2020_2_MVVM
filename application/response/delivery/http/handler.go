@@ -7,9 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
-	"github.com/google/uuid"
 	"net/http"
-	"time"
 )
 
 type ResponseHandler struct {
@@ -29,13 +27,13 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.Use(AuthRequired)
 	{
-		router.POST("/", r.handlerCreateResponse)
-		router.PUT("/", r.handlerUpdateStatus)
+		router.POST("/", r.CreateResponse)
+		router.PUT("/", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
 	}
 }
 
-func (r *ResponseHandler) handlerCreateResponse(ctx *gin.Context) {
+func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -43,8 +41,8 @@ func (r *ResponseHandler) handlerCreateResponse(ctx *gin.Context) {
 	}
 	session := sessions.Default(ctx)
 	var userType string
-	candIDStr := session.Get("cand_id")
-	emplIDStr := session.Get("empl_id")
+	candIDStr := session.Get(common.CandID)
+	emplIDStr := session.Get(common.EmplID)
 	if candIDStr != nil && emplIDStr == nil{
 		userType = "candidate"
 	} else if candIDStr == nil && emplIDStr != nil{
@@ -56,9 +54,7 @@ func (r *ResponseHandler) handlerCreateResponse(ctx *gin.Context) {
 	}
 
 	response.Initial = userType
-	response.DateCreate = time.Now()
-	response.Status = "sent"
-	pResponse, err := r.UsecaseResponse.CreateResponse(response)
+	pResponse, err := r.UsecaseResponse.Create(response)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -67,7 +63,7 @@ func (r *ResponseHandler) handlerCreateResponse(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, &pResponse)
 }
 
-func (r *ResponseHandler) handlerUpdateStatus(ctx *gin.Context) {
+func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -75,8 +71,8 @@ func (r *ResponseHandler) handlerUpdateStatus(ctx *gin.Context) {
 	}
 	session := sessions.Default(ctx)
 	var userType string
-	candIDStr := session.Get("cand_id")
-	emplIDStr := session.Get("empl_id")
+	candIDStr := session.Get(common.CandID)
+	emplIDStr := session.Get(common.EmplID)
 	if candIDStr != nil && emplIDStr == nil{
 		userType = "candidate"
 	} else if candIDStr == nil && emplIDStr != nil{
@@ -99,19 +95,15 @@ func (r *ResponseHandler) handlerUpdateStatus(ctx *gin.Context) {
 }
 
 func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
-	userID, err := common.HandlerGetCurrentUserID(ctx, "empl_id")
+	candID, err := common.HandlerGetCurrentUserID(ctx, common.CandID)
 	if err != nil {
-		userID, err = common.HandlerGetCurrentUserID(ctx, "cand_id")
-		if err != nil {
-			ctx.AbortWithError(http.StatusMethodNotAllowed, err)
-			return
-		}
+		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		return
 	}
-
-	pResume, err := r.UsecaseResponse.GetAllUserResponses(userID)
+	responses, err := r.UsecaseResponse.GetAllUserResponses(candID)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, models.Resp{Resume: allResume})
+	ctx.JSON(http.StatusOK, responses)
 }

@@ -130,10 +130,10 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain:   "studhunt.ru",
-		//Domain:   "localhost", // for postman
+		//Domain:   "studhunt.ru",
+		Domain:   "localhost", // for postman
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
@@ -167,7 +167,7 @@ func NewApp(config Config) *App {
 	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
 	responseRep := RepositoryResponse.NewPgRepository(db)
-	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, responseRep)
+	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, *company, responseRep)
 	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
 
 	app := App{

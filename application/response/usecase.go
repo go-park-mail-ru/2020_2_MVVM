@@ -6,7 +6,7 @@ import (
 )
 
 type IUseCaseResponse interface {
-	CreateResponse(models.Response) (*models.Response, error)
+	Create(models.Response) (*models.Response, error)
 	UpdateStatus(models.Response) (*models.Response, error)
-	GetAllUserResponses(uuid.UUID) (*models.ResponseWithTitle, error)
+	GetAllUserResponses(uuid.UUID) ([]models.ResponseWithTitle, error)
 }

@@ -5,6 +5,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-pg/pg/v9"
+	"github.com/google/uuid"
+
 	//"github.com/google/uuid"
 )
 
@@ -16,7 +18,7 @@ func NewPgRepository(db *pg.DB) response.ResponseRepository {
 	return &pgReopository{db: db}
 }
 
-func (p *pgReopository) CreateResponse(response models.Response) (*models.Response, error) {
+func (p *pgReopository) Create(response models.Response) (*models.Response, error) {
 	_, err := p.db.Model(&response).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting response: %w", err)
@@ -33,4 +35,14 @@ func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response
 		return nil, err
 	}
 	return &response, nil
+}
+
+func (p *pgReopository)GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
+	var responses []models.Response
+	err := p.db.Model(&responses).Where("resume_id = ?", resumeID).Select()
+	if err != nil {
+		err = fmt.Errorf("error in get list responses: %w", err)
+		return nil, err
+	}
+	return responses, nil
 }
