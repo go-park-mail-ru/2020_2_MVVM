@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// TODO нужна нормальная структура со всей информацией
 func GetCurrentUserId(ctx *gin.Context, user_type string) (id uuid.UUID, err error) {
 	session := sessions.Default(ctx)
 	userIDStr := session.Get(user_type)
