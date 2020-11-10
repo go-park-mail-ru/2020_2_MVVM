@@ -31,7 +31,8 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 		router.POST("/", r.CreateResponse)
 		router.PUT("/", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
-		router.GET("/free/resumes/:vacancy_id", r.handlerGetAllResumeWithoutResponse)
+		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse)
+		router.GET("/free/vacancies/:entity_id", r.handlerGetAllVacancyWithoutResponse)
 	}
 }
 
@@ -123,6 +124,22 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 }
 
 func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
+
+	candID, vacancyID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.CandID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		return
+	}
+
+	resumes, err := r.UsecaseResponse.GetAllResumeWithoutResponse(candID, vacancyID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, resumes)
+}
+
+func (r *ResponseHandler) handlerGetAllVacancyWithoutResponse(ctx *gin.Context) {
 	var req struct {
 		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
 	}
@@ -130,13 +147,11 @@ func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
-
 	vacancyID, err := uuid.Parse(req.VacancyID)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
-
 	candID, err := common.GetCurrentUserId(ctx, common.CandID)
 	if err != nil {
 		ctx.JSON(http.StatusMethodNotAllowed, err)
@@ -148,7 +163,26 @@ func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
-
-
 	ctx.JSON(http.StatusOK, resumes)
+}
+
+func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, userType string) (uuid.UUID, uuid.UUID, error) {
+	var req struct {
+		EntityID string `uri:"entity_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		return uuid.Nil, uuid.Nil, err
+	}
+
+	entityID, err := uuid.Parse(req.EntityID)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, err
+	}
+
+	userID, err := common.GetCurrentUserId(ctx, userType)
+	if err != nil {
+		return uuid.Nil, uuid.Nil, err
+	}
+
+	return userID, entityID, nil
 }
