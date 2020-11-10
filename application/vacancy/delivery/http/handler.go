@@ -23,25 +23,25 @@ type RespList struct {
 }
 
 type vacRequest struct {
-	Id              string `json:"vac_id,uuid"`
-	Avatar          string `json:"avatar"`
-	Title           string `json:"title" binding:"required"`
-	Gender          string `json:"gender"`
-	SalaryMin       int    `json:"salary_min"`
-	SalaryMax       int    `json:"salary_max"`
-	Description     string `json:"description" binding:"required"`
-	Requirements    string `json:"requirements"`
-	Duties          string `json:"duties"`
-	Skills          string `json:"skills"`
-	Sphere          int    `json:"sphere"`
-	Employment      string `json:"employment"`
-	ExperienceMonth int    `json:"experience_month"`
-	Location        string `json:"location"`
-	AreaSearch      string `json:"area_search"`
-	CareerLevel     string `json:"career_level"`
-	EducationLevel  string `json:"education_level"`
-	EmpEmail        string `json:"email"`
-	EmpPhone        string `json:"phone"`
+	Id              string `json:"vac_id,uuid" valid:"-"`
+	Avatar          string `json:"avatar" valid:"-"`
+	Title           string `json:"title" binding:"required" valid:"stringlength(4|128)"`
+	Gender          string `json:"gender" valid:"-"`
+	SalaryMin       int    `json:"salary_min" valid:"-"`
+	SalaryMax       int    `json:"salary_max" valid:"-"`
+	Description     string `json:"description" binding:"required" valid:"-"`
+	Requirements    string `json:"requirements" valid:"-"`
+	Duties          string `json:"duties" valid:"-"`
+	Skills          string `json:"skills" valid:"-"`
+	Sphere          int    `json:"sphere" valid:"stringlength(4|128)"`
+	Employment      string `json:"employment" valid:"-"`
+	ExperienceMonth int    `json:"experience_month" valid:"-"`
+	Location        string `json:"location" valid:"stringlength(4|512)"`
+	AreaSearch      string `json:"area_search" valid:"stringlength(4|128)"`
+	CareerLevel     string `json:"career_level" valid:"-"`
+	EducationLevel  string `json:"education_level" valid:"-"`
+	EmpEmail        string `json:"email" valid:"email"`
+	EmpPhone        string `json:"phone" valid:"numeric,stringlength(4|18)"`
 }
 
 type vacListRequest struct {
@@ -123,6 +123,11 @@ func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
 		return
 	}
+
+	if err := common.ReqValidation(&searchParams); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
@@ -141,6 +146,12 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
+
+	if err := common.ReqValidation(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
