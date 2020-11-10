@@ -9,7 +9,7 @@ type UseCase interface {
 	GetCandByID(id string) (*models.User, error)
 	GetEmplByID(id string) (*models.User, error)
 	GetEmployerByID(id string) (*models.Employer, error)
-	UpdateEmployer(employer models.Employer) (*models.Employer, error)
+	//UpdateEmployer(employer models.Employer) (*models.Employer, error)
 	GetCandidateByID(id string) (*models.Candidate, error)
 	CreateUser(user models.User) (*models.User, error)
 	UpdateUser(user_id string, newPassword, oldPassword, name, surname, email, phone,
