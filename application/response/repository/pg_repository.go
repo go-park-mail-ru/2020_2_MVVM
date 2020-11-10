@@ -6,7 +6,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
-
 	//"github.com/google/uuid"
 )
 
@@ -45,7 +44,7 @@ func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response
 	return &response, nil
 }
 
-func (p *pgReopository)GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
+func (p *pgReopository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
 	err := p.db.Model(&responses).Where("resume_id = ?", resumeID).Select()
 	if err != nil {
@@ -55,7 +54,7 @@ func (p *pgReopository)GetResumeAllResponse(resumeID uuid.UUID) ([]models.Respon
 	return responses, nil
 }
 
-func (p *pgReopository)GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
+func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
 	err := p.db.Model(&responses).Where("vacancy_id = ?", vacancyID).Select()
 	if err != nil {
@@ -63,4 +62,20 @@ func (p *pgReopository)GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Resp
 		return nil, err
 	}
 	return responses, nil
+}
+
+func (p *pgReopository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
+	var resume []models.Resume
+	query := fmt.Sprintf(`select main.resume.*
+			from main.resume
+			join main.response on main.response.resume_id = main.resume.resume_id
+			where cand_id = '%s'
+			group by main.resume.resume_id
+			having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
+	_, err := p.db.Query(&resume, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return resume, nil
 }

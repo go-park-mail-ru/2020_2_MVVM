@@ -10,4 +10,5 @@ type IUseCaseResponse interface {
 	UpdateStatus(response models.Response, userType string) (*models.Response, error)
 	GetAllCandidateResponses(uuid.UUID) ([]models.ResponseWithTitle, error)
 	GetAllEmployerResponses(uuid.UUID) ([]models.ResponseWithTitle, error)
+	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error)
 }

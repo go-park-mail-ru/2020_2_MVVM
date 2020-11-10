@@ -11,4 +11,5 @@ type ResponseRepository interface {
 	UpdateStatus(models.Response) (*models.Response, error)
 	GetResumeAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetVacancyAllResponse(uuid uuid.UUID) ([]models.Response, error)
+	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error)
 }

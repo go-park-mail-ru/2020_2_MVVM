@@ -141,7 +141,6 @@ func (u *ResumeUseCase) Search(searchParams resume.SearchParams) ([]models.Brief
 	if searchParams.KeyWords != nil {
 		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
 	}
-
 	r, err := u.strg.Search(&searchParams)
 	if err != nil {
 		err = fmt.Errorf("error in resume search: %w", err)

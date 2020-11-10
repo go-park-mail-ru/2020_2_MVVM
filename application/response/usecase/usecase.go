@@ -12,6 +12,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/google/uuid"
+	"github.com/jinzhu/copier"
 	"time"
 )
 
@@ -164,4 +165,23 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID) ([]models.Re
 		responses[i].VacancyName = vac.Title
 	}
 	return responses, nil
+}
+
+func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error) {
+	r, err := u.strg.GetAllResumeWithoutResponse(candID, vacancyID)
+	if err != nil {
+		return nil, err
+	}
+
+	var briefRespResumes []models.BriefResumeInfo
+	for i := range r {
+		var insert models.BriefResumeInfo
+		err = copier.Copy(&insert, &r[i])
+		if err != nil {
+			err = fmt.Errorf("error in copy resume for GetAllResumeWithoutResponse: %w", err)
+			return nil, err
+		}
+		briefRespResumes = append(briefRespResumes, insert)
+	}
+	return briefRespResumes, nil
 }

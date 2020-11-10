@@ -31,6 +31,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 		router.POST("/", r.CreateResponse)
 		router.PUT("/", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
+		router.GET("/free/resumes/:vacancy_id", r.handlerGetAllResumeWithoutResponse)
 	}
 }
 
@@ -119,4 +120,35 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, responses)
+}
+
+func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
+	var req struct {
+		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+
+	vacancyID, err := uuid.Parse(req.VacancyID)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+
+	candID, err := common.GetCurrentUserId(ctx, common.CandID)
+	if err != nil {
+		ctx.JSON(http.StatusMethodNotAllowed, err)
+		return
+	}
+
+	resumes, err := r.UsecaseResponse.GetAllResumeWithoutResponse(candID, vacancyID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		return
+	}
+
+
+	ctx.JSON(http.StatusOK, resumes)
 }
