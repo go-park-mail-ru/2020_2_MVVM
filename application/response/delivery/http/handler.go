@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
+	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -74,9 +75,9 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	candIDStr := session.Get(common.CandID)
 	emplIDStr := session.Get(common.EmplID)
 	if candIDStr != nil && emplIDStr == nil{
-		userType = "candidate"
+		userType = common.Candidate
 	} else if candIDStr == nil && emplIDStr != nil{
-		userType = "employer"
+		userType = common.Employer
 	} else {
 		err := errors.New("this user cannot respond")
 		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
@@ -85,7 +86,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 	response.Initial = userType
 
-	pResponse, err := r.UsecaseResponse.UpdateStatus(response)
+	pResponse, err := r.UsecaseResponse.UpdateStatus(response, userType)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -96,14 +97,26 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	candID, err := common.HandlerGetCurrentUserID(ctx, common.CandID)
-	if err != nil {
+	emplID, err := common.HandlerGetCurrentUserID(ctx, common.EmplID)
+
+	var responses []models.ResponseWithTitle
+	if candID != uuid.Nil && emplID == uuid.Nil{
+		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	} else if candID == uuid.Nil && emplID != uuid.Nil{
+		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		err := errors.New("this user cannot have responses")
 		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
-	responses, err := r.UsecaseResponse.GetAllUserResponses(candID)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
+
 	ctx.JSON(http.StatusOK, responses)
 }

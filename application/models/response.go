@@ -12,7 +12,7 @@ type Response struct {
 	ResumeID   uuid.UUID `pg:"resume_id, fk, type:uuid" json:"resume_id"`
 	VacancyID  uuid.UUID `pg:"vacancy_id, fk, type:uuid" json:"vacancy_id"`
 	Initial    string    `pg:"initial" json:"initial"`
-	Status     string    `pg:"isapply" json:"status"`
+	Status     string    `pg:"status" json:"status"`
 	DateCreate time.Time `pg:"date_create" json:"date_create"`
 }
 
