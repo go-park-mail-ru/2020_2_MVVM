@@ -37,7 +37,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	session := sessions.Default(ctx)
@@ -50,14 +50,14 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 		userType = "employer"
 	} else {
 		err := errors.New("this user cannot respond")
-		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
 		return
 	}
 
 	response.Initial = userType
 	pResponse, err := r.UsecaseResponse.Create(response)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -67,7 +67,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	session := sessions.Default(ctx)
@@ -80,7 +80,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 		userType = common.Employer
 	} else {
 		err := errors.New("this user cannot respond")
-		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -88,7 +88,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 	pResponse, err := r.UsecaseResponse.UpdateStatus(response, userType)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
 
@@ -103,18 +103,18 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	if candID != uuid.Nil && emplID == uuid.Nil{
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID)
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 			return
 		}
 	} else if candID == uuid.Nil && emplID != uuid.Nil{
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID)
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 			return
 		}
 	} else {
 		err := errors.New("this user cannot have responses")
-		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
 		return
 	}
 
