@@ -7,7 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
-	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"strings"
@@ -17,7 +17,7 @@ import (
 type ResumeUseCase struct {
 	infoLogger       *logger.Logger
 	errorLogger      *logger.Logger
-	userUseCase      UserUseCase.UserUseCase
+	userUseCase      user.UseCase
 	educationUseCase education.UseCase
 	customExpUseCase custom_experience.UseCase
 	strg             resume.Repository
@@ -25,7 +25,7 @@ type ResumeUseCase struct {
 
 func NewUseCase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
-	userUseCase UserUseCase.UserUseCase,
+	userUseCase user.UseCase,
 	educationUseCase education.UseCase,
 	customExpUseCase custom_experience.UseCase,
 	strg resume.Repository) resume.UseCase {

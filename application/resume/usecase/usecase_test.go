@@ -3,21 +3,30 @@ package usecase
 import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/user"
+	mExperience "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/custom_experience"
+	mEducation "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/education"
+	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/resume"
+	mUser "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
 
-func beforeTest(t *testing.T) (*mocks.RepositoryUser, UserUseCase) {
+func beforeTest(t *testing.T) (*mResume.Repository, ResumeUseCase) {
 	infoLogger, _ := logger.New("test", 1, os.Stdout)
 	errorLogger, _ := logger.New("test", 2, os.Stderr)
-	mockRepo := new(mocks.RepositoryUser)
-	usecase := UserUseCase{
-		iLog:   infoLogger,
-		errLog: errorLogger,
-		repos:  mockRepo,
+	mockRepo := new(mResume.Repository)
+	mockEducationUS := new(mEducation.UseCase)
+	mockExperienceUS := new(mExperience.UseCase)
+	mockUserUS := new(mUser.UseCase)
+	usecase := ResumeUseCase{
+		infoLogger:       infoLogger,
+		errorLogger:      errorLogger,
+		userUseCase:      mockUserUS,
+		educationUseCase: mockEducationUS,
+		customExpUseCase: mockExperienceUS,
+		strg:             mockRepo,
 	}
 	return mockRepo, usecase
 }
@@ -31,7 +40,7 @@ func TestUserGetById(t *testing.T) {
 	}
 
 	mockRepo.On("GetUserByID", userID.String()).Return(&user, nil)
-	answer, err := usecase.GetUserByID(userID.String())
+	answer, err := usecase.GetById(userID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)

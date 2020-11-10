@@ -10,6 +10,6 @@ type RepositoryUser interface {
 	GetCandidateByID(id string) (*models.Candidate, error)
 	CreateUser(user models.User) (*models.User, error)
 	UpdateUser(user models.User) (*models.User, error)
-	UpdateEmployer(employer models.Employer) (*models.Employer, error)
+	//UpdateEmployer(employer models.Employer) (*models.Employer, error)
 	Login(user models.UserLogin) (*models.User, error)
 }

@@ -28,6 +28,9 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
+	RepositoryResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/repository"
+	ResponseUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/usecase"
 	"github.com/go-pg/pg/v9"
 	"net/http"
 	"os"
@@ -154,7 +157,7 @@ func NewApp(config Config) *App {
 	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
-	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, *userCase, education, customExperience, resumeRep)
+	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, userCase, education, customExperience, resumeRep)
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
 
@@ -166,7 +169,9 @@ func NewApp(config Config) *App {
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
 	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
-	//common.GetImageBase64("")
+	responseRep := RepositoryResponse.NewPgRepository(db)
+	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, *company, responseRep)
+	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
 
 	app := App{
 		config:   config,

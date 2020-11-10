@@ -63,15 +63,15 @@ func (u *UserUseCase) GetEmployerByID(id string) (*models.Employer, error) {
 	return emplById, nil
 }
 
-func (u *UserUseCase) UpdateEmployer(employerNew models.Employer) (*models.Employer, error) {
-	newEmpl, err := u.repos.UpdateEmployer(employerNew)
-	if err != nil {
-		err = fmt.Errorf("error in updating empl with id = %s : %w", newEmpl.ID.String(), err)
-		return nil, err
-	}
-
-	return newEmpl, nil
-}
+//func (u *UserUseCase) UpdateEmployer(employerNew models.Employer) (*models.Employer, error) {
+//	newEmpl, err := u.repos.UpdateEmployer(employerNew)
+//	if err != nil {
+//		err = fmt.Errorf("error in updating empl with id = %s : %w", newEmpl.ID.String(), err)
+//		return nil, err
+//	}
+//
+//	return newEmpl, nil
+//}
 
 func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	userNew, err := u.repos.CreateUser(user)
