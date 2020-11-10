@@ -60,39 +60,62 @@ func TestGetMineCompany(t *testing.T) {
 	assert.Error(t, errNotNil)
 }
 
-/*
-func TestUserCreateUser(t *testing.T) {
-	mockRepo, useCase := beforeTest(t)
-
-	comp := models.comp{
-		UserType: "candidate",
-		Name:     "name",
-		Surname:  "surname",
-		Email:    "email@mail.ru",
+func TestCreateOfficialCompany(t *testing.T)  {
+	mockRepo, useCase := beforeTest()
+	empID, _ := uuid.Parse("28b49c0d-5ded-4f52-afa5-51948c05e0f5")
+	comp := models.OfficialCompany{
+		Name: "name",
+		Description: "description",
+		AreaSearch: "area",
+		Link: "link",
 	}
-
-	mockRepo.On("CreateUser", comp).Return(&comp, nil)
-	answer, err := useCase.CreateUser(comp)
-
-	assert.Nil(t, err)
-	assert.Equal(t, *answer, comp)
+	mockRepo.On("CreateOfficialCompany", comp, empID).Return(&comp, nil)
+	mockRepo.On("CreateOfficialCompany", comp, uuid.Nil).Return(nil, assert.AnError)
+	ansCorrect, errNil := useCase.CreateOfficialCompany(comp, empID)
+	ansWrong, errNotNil := useCase.CreateOfficialCompany(comp, uuid.Nil)
+	assert.Nil(t, errNil)
+	assert.Equal(t, *ansCorrect, comp)
+	assert.Nil(t, ansWrong)
+	assert.Error(t, errNotNil)
 }
 
-func TestUserUpdateUser(t *testing.T) {
-	mockRepo, useCase := beforeTest(t)
-	compID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
-	comp := models.comp{
-		ID:       compID,
-		UserType: "candidate",
-		Name:     "newName",
-		Surname:  "newSurname",
-		Email:    "email@mail.ru",
+func TestGetCompaniesList(t *testing.T)  {
+	var (
+		start uint
+		end uint
+	)
+	start = 0
+	end = 3
+	mockRepo, useCase := beforeTest()
+	compList := []models.OfficialCompany{
+		{Name: "name1", Description: "description1", Link: "link1", AreaSearch: "area1"},
+		{Name: "name2", Description: "description2", Link: "link2", AreaSearch: "area2"},
+		{Name: "name3", Description: "description3", Link: "link3", AreaSearch: "area3"},
 	}
-	mockRepo.On("UpdateUser", comp).Return(&comp, nil)
-	mockRepo.On("GetUserByID", compID.String()).Return(&comp, nil)
-	answer, err := useCase.UpdateUser(comp.ID.String(), "", "", "newName",
-		"newSurname", "", "", "")
 
-	assert.Nil(t, err)
-	assert.Equal(t, *answer, comp)
-}*/
+	mockRepo.On("GetCompaniesList", start, end).Return(compList, nil)
+	mockRepo.On("GetCompaniesList", start, start).Return(nil, assert.AnError)
+	ansCorrect, errNil := useCase.GetCompaniesList(start, end)
+	ansWrong, errNotNil := useCase.GetCompaniesList(start, start)
+	assert.Nil(t, errNil)
+	assert.Equal(t, ansCorrect, compList)
+	assert.Nil(t, ansWrong)
+	assert.Error(t, errNotNil)
+}
+
+func TestSearchCompanies(t *testing.T) {
+	compList := []models.OfficialCompany{
+		{Name: "name1", Description: "description1", Link: "link1", AreaSearch: "area1"},
+		{Name: "Name", Description: "description2", Link: "link2", AreaSearch: "area1"},
+		{Name: "NAME", Description: "description3", Link: "link3", AreaSearch: "area2"},
+	}
+
+	mockRepo, useCase := beforeTest()
+	params := models.CompanySearchParams{
+		AreaSearch: []string{"area1"},
+	}
+	mockRepo.On("SearchCompanies", params).Return(compList[1:], nil)
+	ansCorrect, errNil := useCase.SearchCompanies(params)
+	assert.Nil(t, errNil)
+	assert.Equal(t, ansCorrect, compList[1:])
+}
