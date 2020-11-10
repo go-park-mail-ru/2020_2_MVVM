@@ -12,4 +12,5 @@ type ResponseRepository interface {
 	GetResumeAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetVacancyAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error)
+	GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error)
 }

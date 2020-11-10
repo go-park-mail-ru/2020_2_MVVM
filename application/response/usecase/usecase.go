@@ -185,3 +185,7 @@ func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyI
 	}
 	return briefRespResumes, nil
 }
+
+func (u *UseCaseResponse) GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error) {
+	return u.strg.GetAllVacancyWithoutResponse(emplID, resumeID)
+}

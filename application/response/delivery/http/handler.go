@@ -31,8 +31,8 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 		router.POST("/", r.CreateResponse)
 		router.PUT("/", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
-		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse)
-		router.GET("/free/vacancies/:entity_id", r.handlerGetAllVacancyWithoutResponse)
+		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse) // vacancy_id
+		router.GET("/free/vacancies/:entity_id", r.handlerGetAllVacancyWithoutResponse) // resume_id
 	}
 }
 
@@ -124,7 +124,6 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 }
 
 func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
-
 	candID, vacancyID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.CandID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
@@ -140,30 +139,17 @@ func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 }
 
 func (r *ResponseHandler) handlerGetAllVacancyWithoutResponse(ctx *gin.Context) {
-	var req struct {
-		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
-	}
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
-		return
-	}
-	vacancyID, err := uuid.Parse(req.VacancyID)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
-		return
-	}
-	candID, err := common.GetCurrentUserId(ctx, common.CandID)
-	if err != nil {
-		ctx.JSON(http.StatusMethodNotAllowed, err)
-		return
-	}
-
-	resumes, err := r.UsecaseResponse.GetAllResumeWithoutResponse(candID, vacancyID)
+	emplID, resumeID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.EmplID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, resumes)
+	vacancies, err := r.UsecaseResponse.GetAllVacancyWithoutResponse(emplID, resumeID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		return
+	}
+	ctx.JSON(http.StatusOK, vacancies)
 }
 
 func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, userType string) (uuid.UUID, uuid.UUID, error) {
