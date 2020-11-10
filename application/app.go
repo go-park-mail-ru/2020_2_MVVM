@@ -151,7 +151,7 @@ func NewApp(config Config) *App {
 	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
 	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
-	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, *userCase, education, customExperience, resumeRep)
+	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, userCase, education, customExperience, resumeRep)
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
 
