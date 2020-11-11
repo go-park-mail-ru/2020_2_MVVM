@@ -6,11 +6,10 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
-	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"time"
@@ -20,16 +19,16 @@ type UseCaseResponse struct {
 	infoLogger     *logger.Logger
 	errorLogger    *logger.Logger
 	resumeUsecase  resume.UseCase
-	vacancyUsecase VacancyUseCase.VacancyUseCase
-	companyUsecase CompanyUseCase.CompanyUseCase
+	vacancyUsecase vacancy.IUseCaseVacancy
+	companyUsecase official_company.IUseCaseOfficialCompany
 	strg           response.ResponseRepository
 }
 
 func NewUsecase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
 	resumeUsecase resume.UseCase,
-	vacancyUsecase VacancyUseCase.VacancyUseCase,
-	companyUsecase CompanyUseCase.CompanyUseCase,
+	vacancyUsecase vacancy.IUseCaseVacancy,
+	companyUsecase official_company.IUseCaseOfficialCompany,
 	strg response.ResponseRepository,
 ) *UseCaseResponse {
 	usecase := UseCaseResponse{
@@ -86,7 +85,6 @@ func (u *UseCaseResponse) UpdateStatus(response models.Response, userUpdate stri
 			return nil, err
 		}
 	}
-
 	return u.strg.UpdateStatus(response)
 }
 

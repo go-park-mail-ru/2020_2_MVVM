@@ -173,29 +173,6 @@ func (_m *UseCase) Login(_a0 models.UserLogin) (*models.User, error) {
 	return r0, r1
 }
 
-// UpdateEmployer provides a mock function with given fields: employer
-func (_m *UseCase) UpdateEmployer(employer models.Employer) (*models.Employer, error) {
-	ret := _m.Called(employer)
-
-	var r0 *models.Employer
-	if rf, ok := ret.Get(0).(func(models.Employer) *models.Employer); ok {
-		r0 = rf(employer)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Employer)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(models.Employer) error); ok {
-		r1 = rf(employer)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateUser provides a mock function with given fields: user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork
 func (_m *UseCase) UpdateUser(user_id string, newPassword string, oldPassword string, name string, surname string, email string, phone string, socialNetwork string) (*models.User, error) {
 	ret := _m.Called(user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork)

@@ -173,29 +173,6 @@ func (_m *RepositoryUser) Login(_a0 models.UserLogin) (*models.User, error) {
 	return r0, r1
 }
 
-// UpdateEmployer provides a mock function with given fields: employer
-func (_m *RepositoryUser) UpdateEmployer(employer models.Employer) (*models.Employer, error) {
-	ret := _m.Called(employer)
-
-	var r0 *models.Employer
-	if rf, ok := ret.Get(0).(func(models.Employer) *models.Employer); ok {
-		r0 = rf(employer)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Employer)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(models.Employer) error); ok {
-		r1 = rf(employer)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // UpdateUser provides a mock function with given fields: _a0
 func (_m *RepositoryUser) UpdateUser(_a0 models.User) (*models.User, error) {
 	ret := _m.Called(_a0)

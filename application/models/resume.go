@@ -30,7 +30,6 @@ type Resume struct {
 	Avatar               string                  `pg:"-" json:"avatar"`
 }
 
-// TODO Фронт сам решит, что ему надо. Надо вернуть полное резюме
 func (r *Resume) Brief() (*BriefResumeInfo, error) {
 	if r.Candidate == nil || r.Candidate.User == nil {
 		return nil, fmt.Errorf("failed to create brief resume description")

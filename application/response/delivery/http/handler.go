@@ -29,7 +29,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 	router.Use(AuthRequired)
 	{
 		router.POST("/", r.CreateResponse)
-		router.PUT("/", r.UpdateStatus)
+		router.POST("/update", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
 		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse) // vacancy_id
 		router.GET("/free/vacancies/:entity_id", r.handlerGetAllVacancyWithoutResponse) // resume_id
