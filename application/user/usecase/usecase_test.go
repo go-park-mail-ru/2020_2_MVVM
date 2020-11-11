@@ -6,6 +6,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"testing"
 )
@@ -32,9 +34,13 @@ func TestUserGetById(t *testing.T) {
 
 	mockRepo.On("GetUserByID", userID.String()).Return(&user, nil)
 	answer, err := usecase.GetUserByID(userID.String())
-
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)
+
+	mockRepo.On("GetUserByID", uuid.Nil.String()).Return(nil, assert.AnError)
+	answerNotCorrect, errNotNil := usecase.GetUserByID(uuid.Nil.String())
+	assert.Nil(t, answerNotCorrect)
+	assert.Error(t, errNotNil)
 }
 
 func TestUserCreateUser(t *testing.T) {
@@ -49,12 +55,19 @@ func TestUserCreateUser(t *testing.T) {
 
 	mockRepo.On("CreateUser", user).Return(&user, nil)
 	answer, err := usecase.CreateUser(user)
-
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)
+
+	user.Email = ""
+	mockRepo.On("CreateUser", user).Return(nil, assert.AnError)
+	answerNotCorrect, errNotNil := usecase.CreateUser(user)
+	assert.Nil(t, answerNotCorrect)
+	assert.Error(t, errNotNil)
+	user.Email = "email"
 }
 
 func TestUserUpdateUser(t *testing.T) {
+	var passwordHash, _ = bcrypt.GenerateFromPassword([]byte("oldPas"), bcrypt.DefaultCost)
 	mockRepo, usecase := beforeTest(t)
 	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
 	user := models.User{
@@ -63,14 +76,25 @@ func TestUserUpdateUser(t *testing.T) {
 		Name:     "newName",
 		Surname:  "newSurname",
 		Email:    "email@mail.ru",
+		PasswordHash: passwordHash,
 	}
-	mockRepo.On("UpdateUser", user).Return(&user, nil)
+	new := "new"
+	newUser := user
+	newUser.Email = "newEmail"
+	newUser.Phone = &new
+	newUser.SocialNetwork = &new
+	var newPasswordHash, _ = bcrypt.GenerateFromPassword([]byte("nawPas"), bcrypt.DefaultCost)
+	newUser.PasswordHash = newPasswordHash
+
+
 	mockRepo.On("GetUserByID", userID.String()).Return(&user, nil)
-	answer, err := usecase.UpdateUser(user.ID.String(), "", "", "newName",
-		"newSurname", "", "", "")
+	mockRepo.On("UpdateUser", mock.Anything).Return(&newUser, nil)
+	answer, err := usecase.UpdateUser(user.ID.String(), "newPas", "oldPas", "newName",
+		"newSurname", "newEmail", "new", "new")
+
 
 	assert.Nil(t, err)
-	assert.Equal(t, *answer, user)
+	assert.Equal(t, *answer, newUser)
 }
 
 func TestUserLogin(t *testing.T) {
@@ -104,7 +128,24 @@ func TestUserGetEmployerByID(t *testing.T) {
 	}
 	mockRepo.On("GetEmployerByID", userID.String()).Return(&user, nil)
 	answer, err := usecase.GetEmployerByID(userID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *answer, user)
 
+	mockRepo.On("GetEmployerByID", uuid.Nil.String()).Return(nil, assert.AnError)
+	answerNotCorrect, errNotNil := usecase.GetEmployerByID(uuid.Nil.String())
+	assert.Nil(t, answerNotCorrect)
+	assert.Error(t, errNotNil)
+}
+
+func TestUserGetEmplByID(t *testing.T) {
+	mockRepo, usecase := beforeTest(t)
+	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
+
+	user := models.User{
+		ID: userID,
+	}
+	mockRepo.On("GetEmplByID", userID.String()).Return(&user, nil)
+	answer, err := usecase.GetEmplByID(userID.String())
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)
 }
@@ -117,7 +158,11 @@ func TestUserGetCandidateByID(t *testing.T) {
 	}
 	mockRepo.On("GetCandidateByID", userID.String()).Return(&user, nil)
 	answer, err := usecase.GetCandidateByID(userID.String())
-
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)
+
+	mockRepo.On("GetCandidateByID", uuid.Nil.String()).Return(nil, assert.AnError)
+	answerNotCorrect, errNotNil := usecase.GetCandidateByID(uuid.Nil.String())
+	assert.Nil(t, answerNotCorrect)
+	assert.Error(t, errNotNil)
 }

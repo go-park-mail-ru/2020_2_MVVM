@@ -4,6 +4,7 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	mCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/official_company"
 	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/response"
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/resume"
@@ -18,10 +19,10 @@ import (
 
 var ID, _ = uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
 var testResponse = models.Response{
-	ID:         ID,
-	ResumeID:   ID,
-	VacancyID:  ID,
-	Status: "sent",
+	ID:        ID,
+	ResumeID:  ID,
+	VacancyID: ID,
+	Status:    "sent",
 }
 var testUser = models.User{
 	ID:       ID,
@@ -51,16 +52,29 @@ var briefResume = models.BriefResumeInfo{
 	Email:    "ID",
 }
 var testVacacy = models.Vacancy{
-	ID:              ID,
-	EmpID:           ID,
-	CompID:          ID,
+	ID:     ID,
+	EmpID:  ID,
+	CompID: ID,
 }
 var testCompany = models.OfficialCompany{
-	ID:          ID,
+	ID: ID,
+}
+var respWithTitle = models.ResponseWithTitle{
+	ResponseID:  ID,
+	ResumeID:    ID,
+	ResumeName:  "ID",
+	CandName:    "ID",
+	CandSurname: "ID",
+	VacancyID:   ID,
+	VacancyName: "",
+	CompanyID:   ID,
+	CompanyName: "",
+	Initial:     "",
+	Status:      "sent",
 }
 
 func beforeTest(t *testing.T) (*mResponse.ResponseRepository, *mResume.UseCase, *mVacancy.IUseCaseVacancy,
-								*mCompany.IUseCaseOfficialCompany, *mUser.UseCase, UseCaseResponse) {
+	*mCompany.IUseCaseOfficialCompany, *mUser.UseCase, UseCaseResponse) {
 	infoLogger, _ := logger.New(os.Stdout)
 	errorLogger, _ := logger.New(os.Stderr)
 	mockRepo := new(mResponse.ResponseRepository)
@@ -83,10 +97,10 @@ func beforeTest(t *testing.T) (*mResponse.ResponseRepository, *mResume.UseCase, 
 func TestResponseCreate(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, _, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	testResponse.Initial = common.Candidate
@@ -97,13 +111,11 @@ func TestResponseCreate(t *testing.T) {
 	assert.Nil(t, errNil)
 	assert.Equal(t, *answerCorrect, testResponse)
 
-
 	mockResumeUS.On("GetById", uuid.Nil).Return(nil, assert.AnError)
 	testResponse.ResumeID = uuid.Nil
 	answerWrong, errNotNil := usecase.Create(testResponse)
 	assert.Nil(t, answerWrong)
 	assert.Error(t, errNotNil)
-
 
 	testResponse.Initial = common.Employer
 	mockVacancyUS.On("GetVacancy", ID).Return(&testVacacy, nil)
@@ -112,7 +124,6 @@ func TestResponseCreate(t *testing.T) {
 
 	assert.Nil(t, errNil2)
 	assert.Equal(t, *answerCorrect2, testResponse)
-
 
 	mockVacancyUS.On("GetVacancy", uuid.Nil).Return(nil, assert.AnError)
 	testResponse.VacancyID = uuid.Nil
@@ -125,15 +136,14 @@ func TestResponseCreate(t *testing.T) {
 func TestResponseUpdateStatus(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, _, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	answerWrong, err := usecase.UpdateStatus(testResponse, "sent")
 	assert.Nil(t, answerWrong, err)
-
 
 	testResponse.Status = "accept"
 	testResponse.Status = common.Employer
@@ -152,7 +162,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	assert.Nil(t, answerWromg2)
 	assert.Error(t, errNotNil2)
 
-
 	testResponse.ResumeID = ID
 	testResponse.Status = "accept"
 	testResponse.Status = common.Candidate
@@ -164,23 +173,24 @@ func TestResponseUpdateStatus(t *testing.T) {
 	assert.Nil(t, errNil2)
 	assert.Equal(t, *answerCorrect2, testResponse)
 
-
 	testResponse.VacancyID = uuid.Nil
 	mockRepo.On("GetByID", ID).Return(&testResponse, nil)
 	mockVacancyUS.On("GetVacancy", uuid.Nil).Return(nil, assert.AnError)
 	answerWromg3, errNotNil3 := usecase.UpdateStatus(testResponse, common.Employer)
 	assert.Nil(t, answerWromg3)
 	assert.Error(t, errNotNil3)
+
+	testResponse.VacancyID = ID
 }
 
 //GetAllCandidateResponses(candID uuid.UUID) ([]models.ResponseWithTitle, error)
-func TestResponseGetAllCandidateResponses(t *testing.T) {
+func TestGetAllCandidateResponses(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, mockCompanyUS, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	listResume := []models.BriefResumeInfo{briefResume}
@@ -190,23 +200,58 @@ func TestResponseGetAllCandidateResponses(t *testing.T) {
 	mockVacancyUS.On("GetVacancy", ID).Return(&testVacacy, nil)
 	mockCompanyUS.On("GetOfficialCompany", ID).Return(&testCompany, nil)
 
-	respWithTitle := models.ResponseWithTitle{
-		ResponseID:  ID,
-		ResumeID:    ID,
-		ResumeName:  "ID",
-		CandName:    "ID",
-		CandSurname: "ID",
-		VacancyID:   ID,
-		VacancyName: "",
-		CompanyID:   ID,
-		CompanyName: "",
-		Initial:     "",
-		Status:      "sent",
-	}
 	listRespWithTitle := []models.ResponseWithTitle{respWithTitle}
 	answerCorrect, errNill := usecase.GetAllCandidateResponses(ID)
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listRespWithTitle)
+}
 
+func TestGetAllEmployerResponses(t *testing.T) {
+	mockRepo, mockResumeUS, mockVacancyUS, mockCompanyUS, _, usecase := beforeTest(t)
+	var testResponse = models.Response{
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
+	}
 
+	listResponse := []models.Response{testResponse}
+	listVacancy := []models.Vacancy{testVacacy}
+	mockVacancyUS.On("GetVacancyList", uint(0), uint(100), ID, vacancy.ByEmpId).Return(listVacancy, nil)
+	mockCompanyUS.On("GetOfficialCompany", ID).Return(&testCompany, nil)
+	mockRepo.On("GetVacancyAllResponse", ID).Return(listResponse, nil)
+	mockResumeUS.On("GetById", ID).Return(&testResume, nil)
+
+	listRespWithTitle := []models.ResponseWithTitle{respWithTitle}
+	answerCorrect, errNill := usecase.GetAllEmployerResponses(ID)
+	assert.Nil(t, errNill)
+	assert.Equal(t, answerCorrect, listRespWithTitle)
+}
+
+func TestGetAllResumeWithoutResponse(t *testing.T) {
+	briefResume.UserID = uuid.Nil
+	briefResume.Email = ""
+	briefResume.Name = ""
+	briefResume.Surname = ""
+
+	mockRepo, _, _, _, _, usecase := beforeTest(t)
+	listResume := []models.Resume{testResume}
+	listBriefResume := []models.BriefResumeInfo{briefResume}
+
+	mockRepo.On("GetAllResumeWithoutResponse", ID, ID).Return(listResume, nil)
+
+	answerCorrect, errNill := usecase.GetAllResumeWithoutResponse(ID, ID)
+	assert.Nil(t, errNill)
+	assert.Equal(t, answerCorrect, listBriefResume)
+}
+
+func TestGetAllVacancyWithoutResponse(t *testing.T) {
+	mockRepo, _, _, _, _, usecase := beforeTest(t)
+	listVacancy := []models.Vacancy{testVacacy}
+
+	mockRepo.On("GetAllVacancyWithoutResponse", ID, ID).Return(listVacancy, nil)
+
+	answerCorrect, errNill := usecase.GetAllVacancyWithoutResponse(ID, ID)
+	assert.Nil(t, errNill)
+	assert.Equal(t, answerCorrect, listVacancy)
 }

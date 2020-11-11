@@ -6,16 +6,17 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/go-pg/pg/v9"
-	"github.com/google/uuid"
+	pgwrapper "gitlab.com/slax0rr/go-pg-wrapper"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func NewPgRepository(db *pg.DB) user.RepositoryUser {
-	return &pgStorage{db: db}
+	return &pgStorage{db: pgwrapper.NewDB(db)}
 }
 
 type pgStorage struct {
-	db *pg.DB
+	//db *pg.DB
+	db pgwrapper.DB
 }
 
 
@@ -45,22 +46,22 @@ func (p *pgStorage) GetEmployerByID(id string) (*models.Employer, error) {
 	return &employer, nil
 }
 
-func (p *pgStorage) UpdateEmployer(employerNew models.Employer) (*models.Employer, error) {
-	if employerNew.CompanyID != uuid.Nil {
-		company := models.OfficialCompany{ID: employerNew.CompanyID}
-		if isExist, err := p.db.Model(&company).Exists(); err != nil {
-			return nil, err
-		} else if !isExist {
-			return nil, errors.New("new company doesn't exist")
-		}
-		_, err := p.db.Model(&employerNew).WherePK().Returning("*").Update()
-		if err != nil {
-			err = fmt.Errorf("error in updating employer with id %s, : %w", employerNew.ID.String(), err)
-			return nil, err
-		}
-	}
-	return &employerNew, nil
-}
+//func (p *pgStorage) UpdateEmployer(employerNew models.Employer) (*models.Employer, error) {
+//	if employerNew.CompanyID != uuid.Nil {
+//		company := models.OfficialCompany{ID: employerNew.CompanyID}
+//		if isExist, err := p.db.Model(&company).Exists(); err != nil {
+//			return nil, err
+//		} else if !isExist {
+//			return nil, errors.New("new company doesn't exist")
+//		}
+//		_, err := p.db.Model(&employerNew).WherePK().Returning("*").Update()
+//		if err != nil {
+//			err = fmt.Errorf("error in updating employer with id %s, : %w", employerNew.ID.String(), err)
+//			return nil, err
+//		}
+//	}
+//	return &employerNew, nil
+//}
 func (p *pgStorage) GetCandidateByID(id string) (*models.Candidate, error) {
 	var candidate models.Candidate
 	err := p.db.Model(&candidate).Where("user_id = ?", id).Select()
