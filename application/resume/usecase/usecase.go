@@ -101,7 +101,7 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 		err = fmt.Errorf("this user cannot update this resume")
 		return nil, err
 	}
-
+	resume.DateCreate = oldResume.DateCreate
 	err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
 	if err != nil {
 		return nil, err
