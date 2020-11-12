@@ -25,9 +25,9 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u* UseCaseEducation) GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error) {
-	return u.strg.GetAllFromResume(resumeID)
-}
+//func (u* UseCaseEducation) GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error) {
+//	return u.strg.GetAllFromResume(resumeID)
+//}
 
 func (u *UseCaseEducation) Create(educations models.Education) (*models.Education, error) {
 	ed, err := u.strg.Create(educations)
@@ -38,14 +38,14 @@ func (u *UseCaseEducation) Create(educations models.Education) (*models.Educatio
 	return ed, nil
 }
 
-func (u *UseCaseEducation) GetById(id string) (*models.Education, error) {
-	ed, err := u.strg.GetById(id)
-	if err != nil {
-		err = fmt.Errorf("error in education get by id func : %w", err)
-		return nil, err
-	}
-	return ed, nil
-}
+//func (u *UseCaseEducation) GetById(id string) (*models.Education, error) {
+//	ed, err := u.strg.GetById(id)
+//	if err != nil {
+//		err = fmt.Errorf("error in education get by id func : %w", err)
+//		return nil, err
+//	}
+//	return ed, nil
+//}
 
 func (u *UseCaseEducation) DropAllFromResume(resumeID uuid.UUID) error {
 	return u.strg.DropAllFromResume(resumeID)

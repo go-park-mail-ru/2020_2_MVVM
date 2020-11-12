@@ -8,7 +8,7 @@ import (
 type Repository interface {
 	Create(resume models.Education) (*models.Education, error)
 	//Drop(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
-	GetById(id string) (*models.Education, error)
-	GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error)
+	//GetById(id string) (*models.Education, error)
+	//GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error)
 	DropAllFromResume(resumeID uuid.UUID) error
 }

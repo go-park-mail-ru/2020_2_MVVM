@@ -10,8 +10,6 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	CustomCompanyRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/repository"
-	CustomCompanyUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_company/usecase"
 	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
 	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
@@ -151,15 +149,13 @@ func NewApp(config Config) *App {
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
-	customCompanyRep := CustomCompanyRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
 	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
-	customCompany := CustomCompanyUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, customCompanyRep)
-	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep, customCompanyRep)
+	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep)
 	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, userCase, education, customExperience, resumeRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customCompany, customExperience, common.AuthRequired())
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, common.AuthRequired())
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
