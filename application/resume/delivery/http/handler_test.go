@@ -1,18 +1,16 @@
 package http
 
+/*
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mocksExp "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	mocksEduc "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/education"
 	mocksResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"os"
 	"testing"
@@ -26,8 +24,8 @@ var testData struct {
 	resumeHandler *ResumeHandler
 	router        *gin.Engine
 	mockUseCase   *mocksResume.UseCase
-	mockUSEduc		*mocksEduc.UseCase
-	mockUSExp		*mocksExp.UseCase
+	mockUSEduc    *mocksEduc.UseCase
+	mockUSExp     *mocksExp.UseCase
 	mockAuth      *mocksCommon.AuthTest
 	httpStatus    []int
 	vacList       []models.Resume
@@ -104,8 +102,7 @@ func TestGetResumeListHandler(t *testing.T) {
 		})
 	}
 }
-
-
+*/
 //func TestGetResumeByIdHandler(t *testing.T) {
 //	h, r, mockUseCase := testData.resumeHandler, testData.router, testData.mockUseCase
 //	r.GET("/by/id/:resume_id", h.GetResumeByID)

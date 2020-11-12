@@ -10,6 +10,7 @@ import (
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
@@ -148,30 +149,30 @@ func TestGetEmplByIdHandler(t *testing.T) {
 }
 
 type userReq struct {
-	user_type string
-	password string
-	name string
-	surname string
-	email string
+	UserType      string `json:"user_type"`
+	Password      string `json:"password"`
+	Name          string `json:"name"`
+	Surname       string `json:"surname"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	SocialNetwork string `json:"social_network"`
 }
 
 func TestCreateUserHandler(t *testing.T) {
 	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
 	r.POST("/", u.CreateUserHandler)
+	req := userReq{UserType: "employer", Password: "password", Name: "name", Surname: "surname", Email: "email", Phone: "", SocialNetwork: ""}
 
-	//req := `{"user_type":employer, "password":password, "name":name, "surname":surname, "email":email,}`
-	req := userReq{user_type: "employer", password: "password", name: "name", surname: "surname", email: "email"}
-	user := models.User{}
-	//userEmpty := models.User{}
-	mockUseCase.On("CreateUser", user).Return(&user, nil)
-	mockUseCase.On("CreateUser", user).Return(nil, assert.AnError)
+	userEmpty := models.User{}
+	mockUseCase.On("CreateUser", mock.Anything).Return(&userEmpty, nil)
+	//mockUseCase.On("CreateUser", mock.Call{}).Return(nil, assert.AnError)
 
 	testUrls := []string{
 		userUrlGroup,
 		userUrlGroup,
-		userUrlGroup,
+		//userUrlGroup,
 	}
-	testExpectedBody := []interface{}{user, common.EmptyFieldErr, common.DataBaseErr}
+	testExpectedBody := []interface{}{userEmpty, common.EmptyFieldErr, common.DataBaseErr}
 	testParamsForPost := []interface{}{req, nil, req}
 	for i := range testUrls {
 		t.Run("test responses on different urls for CreateUser handler", func(t *testing.T) {
