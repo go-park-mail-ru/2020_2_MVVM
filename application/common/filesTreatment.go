@@ -18,7 +18,7 @@ const (
 	MaxImgHeight    = 1250     //px
 	MaxImgWidth     = 1250     //px
 	UploadFileError = -1
-	FileValid       = 0
+	//FileValid       = 0
 	pngMime         = "image/png"
 	jpegMime        = "image/jpeg"
 	base64pngTitle  = 22

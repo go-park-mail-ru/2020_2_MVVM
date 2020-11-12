@@ -20,7 +20,7 @@ const (
 )
 
 var testData struct {
-	userHandler  *UserHandler
+	userHandler *UserHandler
 	router      *gin.Engine
 	mockUseCase *mocks.UseCase
 	mockAuth    *mocks2.AuthTest
@@ -91,7 +91,7 @@ func TestGetUserByIdHandler(t *testing.T) {
 	}
 }
 
-func TestGetCandByID(t *testing.T) {
+func TestGetCandByIdHandler(t *testing.T) {
 	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
 	r.GET("cand/by/id/:cand_id", u.GetCandByIdHandler)
 	candID := uuid.New()
@@ -119,7 +119,7 @@ func TestGetCandByID(t *testing.T) {
 	}
 }
 
-func TestGetEmplByID(t *testing.T) {
+func TestGetEmplByIdHandler(t *testing.T) {
 	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
 	r.GET("empl/by/id/:empl_id", u.GetEmplByIdHandler)
 	empID := uuid.New()
@@ -147,3 +147,41 @@ func TestGetEmplByID(t *testing.T) {
 	}
 }
 
+type userReq struct {
+	user_type string
+	password string
+	name string
+	surname string
+	email string
+}
+
+func TestCreateUserHandler(t *testing.T) {
+	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
+	r.POST("/", u.CreateUserHandler)
+
+	//req := `{"user_type":employer, "password":password, "name":name, "surname":surname, "email":email,}`
+	req := userReq{user_type: "employer", password: "password", name: "name", surname: "surname", email: "email"}
+	user := models.User{}
+	//userEmpty := models.User{}
+	mockUseCase.On("CreateUser", user).Return(&user, nil)
+	mockUseCase.On("CreateUser", user).Return(nil, assert.AnError)
+
+	testUrls := []string{
+		userUrlGroup,
+		userUrlGroup,
+		userUrlGroup,
+	}
+	testExpectedBody := []interface{}{user, common.EmptyFieldErr, common.DataBaseErr}
+	testParamsForPost := []interface{}{req, nil, req}
+	for i := range testUrls {
+		t.Run("test responses on different urls for CreateUser handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodPost, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
