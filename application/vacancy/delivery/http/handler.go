@@ -25,7 +25,7 @@ type RespList struct {
 type vacRequest struct {
 	Id              string `json:"vac_id,uuid" valid:"-"`
 	Avatar          string `json:"avatar" valid:"-"`
-	Title           string `json:"title" binding:"required" valid:"stringlength(4|128)"`
+	Title           string `json:"title" binding:"required" valid:"utfletternum~название вакансии может содержать только буквы и цифры.,stringlength(4|128)~название вакансии должно быть от 4 до 128 символов в длину."`
 	Gender          string `json:"gender" valid:"-"`
 	SalaryMin       int    `json:"salary_min" valid:"-"`
 	SalaryMax       int    `json:"salary_max" valid:"-"`
@@ -33,15 +33,15 @@ type vacRequest struct {
 	Requirements    string `json:"requirements" valid:"-"`
 	Duties          string `json:"duties" valid:"-"`
 	Skills          string `json:"skills" valid:"-"`
-	Sphere          int    `json:"sphere" valid:"stringlength(4|128)"`
+	Sphere          int    `json:"sphere" valid:"utfletternum~сфера деятельности должна содержать только буквы или цифры,stringlength(4|128)~длина сферы от 4 до 128 смиволов"`
 	Employment      string `json:"employment" valid:"-"`
 	ExperienceMonth int    `json:"experience_month" valid:"-"`
-	Location        string `json:"location" valid:"stringlength(4|512)"`
-	AreaSearch      string `json:"area_search" valid:"stringlength(4|128)"`
+	Location        string `json:"location" valid:"utfletternum~адрес должен содержать только буквы или цифры,stringlength(4|512)~длина адреса от 4 до 512 смиволов"`
+	AreaSearch      string `json:"area_search" valid:"utfletter~неверный регион,stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
 	CareerLevel     string `json:"career_level" valid:"-"`
 	EducationLevel  string `json:"education_level" valid:"-"`
 	EmpEmail        string `json:"email" valid:"email"`
-	EmpPhone        string `json:"phone" valid:"numeric,stringlength(4|18)"`
+	EmpPhone        string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
 }
 
 type vacListRequest struct {
