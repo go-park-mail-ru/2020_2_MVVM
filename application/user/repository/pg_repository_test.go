@@ -51,48 +51,45 @@ var empl = models.Employer{
 	CompanyID: ID,
 }
 
-func mockQueryUser() (pgStorage, *ormmocks.Query) {
+func mockDB() (*mocks.DB, pgStorage) {
 	db := new(mocks.DB)
-	query := new(ormmocks.Query)
-
 	r := pgStorage{db: db}
+	return db, r
+}
 
-	mockCall := db.On("Model", mock.Anything).Return(query)
+func mockQueryUser(db *mocks.DB) *ormmocks.Query {
+	query := new(ormmocks.Query)
+	mockCall := db.On("Model", mock.AnythingOfType("*models.User")).Return(query)
 	mockCall.RunFn = func(args mock.Arguments) {
 		user := args[0].(*models.User)
 		*user = testUser
 	}
-	return r, query
+	return query
 }
 
-func mockQueryCandidate() (pgStorage, *ormmocks.Query) {
-	db := new(mocks.DB)
+func mockQueryCandidate(db *mocks.DB) *ormmocks.Query  {
 	query := new(ormmocks.Query)
-	r := pgStorage{db: db}
-
-	mockCall := db.On("Model", mock.Anything).Return(query)
+	mockCall := db.On("Model", mock.AnythingOfType("*models.Candidate")).Return(query)
 	mockCall.RunFn = func(args mock.Arguments) {
 		user := args[0].(*models.Candidate)
 		*user = cand
 	}
-	return r, query
+	return query
 }
 
-func mockQueryEmployer() (pgStorage, *ormmocks.Query) {
-	db := new(mocks.DB)
+func mockQueryEmployer(db *mocks.DB) *ormmocks.Query  {
 	query := new(ormmocks.Query)
-	r := pgStorage{db: db}
-
-	mockCall := db.On("Model", mock.Anything).Return(query)
+	mockCall := db.On("Model", mock.AnythingOfType("*models.Employer")).Return(query)
 	mockCall.RunFn = func(args mock.Arguments) {
 		user := args[0].(*models.Employer)
 		*user = empl
 	}
-	return r, query
+	return query
 }
 
 func TestGetUserByID(t *testing.T) {
-	r, query := mockQueryUser()
+	db, r := mockDB()
+	query := mockQueryUser(db)
 
 	query.On("Where", "user_id = ?", ID.String()).Return(query)
 	query.On("Select").Return(nil)
@@ -103,7 +100,8 @@ func TestGetUserByID(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	r, query := mockQueryUser()
+	db, r := mockDB()
+	query := mockQueryUser(db)
 
 	var userLogin = models.UserLogin{
 		Email:    "ID",
@@ -118,7 +116,8 @@ func TestLogin(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	r, query := mockQueryUser()
+	db, r := mockDB()
+	query := mockQueryUser(db)
 
 	mockResult := MockResult{}
 	query.On("WherePK").Return(query)
@@ -131,7 +130,8 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestGetCandidateByID(t *testing.T) {
-	r, query := mockQueryCandidate()
+	db, r := mockDB()
+	query := mockQueryCandidate(db)
 
 	query.On("Where", "user_id = ?", ID.String()).Return(query)
 	query.On("Select").Return(nil)
@@ -142,7 +142,8 @@ func TestGetCandidateByID(t *testing.T) {
 }
 
 func TestGetEmployerByID(t *testing.T) {
-	r, query := mockQueryEmployer()
+	db, r := mockDB()
+	query := mockQueryEmployer(db)
 	query.On("Where", "user_id = ?", ID.String()).Return(query)
 	query.On("Select").Return(nil)
 
@@ -151,43 +152,22 @@ func TestGetEmployerByID(t *testing.T) {
 	assert.Equal(t, empl, *foo)
 }
 
-//func TestCreate(t *testing.T) {
-//	repoUser, queryUser := mockQueryUser()
-//
-//	mockResult := MockResult{}
-//	queryUser.On("Returning", "*").Return(queryUser)
-//	queryUser.On("Insert").Return(mockResult, nil)
-//
-//	mockResult2 := MockResult{}
-//	_, queryEmpl := mockQueryEmployer()
-//	queryEmpl.On("Returning", "*").Return(queryEmpl)
-//	queryEmpl.On("Insert").Return(mockResult2, nil)
-//
-//
-//	foo, err := repoUser.CreateUser(testUser)
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *foo)
-//}
+func TestCreate(t *testing.T) {
+	db, r := mockDB()
+	queryUser := mockQueryUser(db)
+	queryEmpl := mockQueryEmployer(db)
 
-//func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
-//	_, errInsert := p.db.Model(&user).Returning("*").Insert()
-//	if errInsert != nil {
-//		if isExist, err := p.db.Model(&user).Exists(); err != nil {
-//			errInsert = fmt.Errorf("error in inserting user with name: %s : error: %w", user.Name, err)
-//		} else if isExist {
-//			errInsert = errors.New("user already exists")
-//		}
-//		return nil, errInsert
-//	}
-//	if user.UserType == "employer" {
-//		newEmpl := models.Employer{UserID: user.ID}
-//		_, errInsert = p.db.Model(&newEmpl).Returning("*").Insert()
-//	} else if user.UserType == "candidate" {
-//		newCand := models.Candidate{UserID: user.ID}
-//		_, errInsert = p.db.Model(&newCand).Returning("*").Insert()
-//	}
-//	if errInsert != nil {
-//		return nil, errInsert
-//	}
-//	return &user, nil
-//}
+	mockResult := MockResult{}
+	queryUser.On("Returning", "*").Return(queryUser)
+	queryUser.On("Insert").Return(mockResult, nil)
+
+	//mockResult2 := MockResult{}
+
+	queryEmpl.On("Returning", "*").Return(queryEmpl)
+	queryEmpl.On("Insert").Return(mockResult, nil)
+
+
+	foo, err := r.CreateUser(testUser)
+	assert.Nil(t, err)
+	assert.Equal(t, testUser, *foo)
+}
