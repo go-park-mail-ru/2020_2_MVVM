@@ -69,12 +69,7 @@ func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Res
 
 func (p *pgReopository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
 	var resume []models.Resume
-	query := fmt.Sprintf(`select main.resume.*
-			from main.resume
-			left join main.response on main.response.resume_id = main.resume.resume_id
-			where cand_id = '%s'
-			group by main.resume.resume_id
-			having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
+	query := fmt.Sprintf(`select main.resume.* from main.resume left join main.response on main.response.resume_id = main.resume.resume_id where cand_id = '%s' group by main.resume.resume_id having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
 	_, err := p.db.Query(&resume, query)
 	if err != nil {
 		return nil, err

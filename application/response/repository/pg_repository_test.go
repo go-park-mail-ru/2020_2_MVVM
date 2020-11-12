@@ -127,8 +127,10 @@ func TestGetVacancyAllResponse(t *testing.T) {
 //	db, r := mockDB()
 //	query := mockQueryResumeList(db)
 //	mockResult := general.MockResult{}
+//
+//	list := []models.Resume(nil)
 //	queryText := fmt.Sprintf(`select main.resume.* from main.resume left join main.response on main.response.resume_id = main.resume.resume_id where cand_id = '%s' group by main.resume.resume_id having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, ID, ID)
-//	query.On("Query", &listResume, queryText).Return(mockResult)
+//	query.On("Query", &list, queryText).Return(mockResult, nil)
 //
 //	answerCorrect, err := r.GetAllResumeWithoutResponse(ID, ID)
 //	assert.Nil(t, err)
