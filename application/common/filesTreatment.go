@@ -18,55 +18,12 @@ const (
 	MaxImgHeight    = 1250     //px
 	MaxImgWidth     = 1250     //px
 	UploadFileError = -1
-	FileValid       = 0
-	pngMime         = "image/png"
-	jpegMime        = "image/jpeg"
+	//FileValid       = 0
+	PngMime         = "image/png"
+	JpegMime        = "image/jpeg"
 	base64pngTitle  = 22
 	base64jpegTitle = 23
 )
-
-/*
-func GetImageFromForm(req *http.Request, imgName string) (*multipart.File, *Err) {
-	file, header, err := req.FormFile(imgName)
-	if err == nil {
-		if err := fileValidation(header, file, []string{jpegMime, pngMime}, MaxImgSize); err.Code() != FileValid {
-			return nil, &Err{code: http.StatusOK, message: err.String()}
-		}
-	} else if err.Error() != "http: no such file" {
-		return nil, &Err{code: http.StatusBadRequest, message: err.Error()}
-	} else {
-		return nil, nil
-	}
-	return &file, nil
-}
-
-func fileValidation(header *multipart.FileHeader, file multipart.File, allowedFormats []string, allowedSize int64) *Err {
-	if header == nil {
-		return &Err{UploadFileError, "something went wrong", nil}
-	}
-	fileType := header.Header.GetById("Content-Type")
-	extWasFind := false
-	for i := 0; i < len(allowedFormats); i++ {
-		if fileType == allowedFormats[i] {
-			extWasFind = true
-		}
-	}
-	if extWasFind == false {
-		return &Err{UploadFileError, "not supported file extension", allowedFormats}
-	}
-	if header.Size > allowedSize {
-		return &Err{UploadFileError, fmt.Sprintf("file size too big, max allowed: %d kB", allowedSize/1000), nil}
-	}
-
-	img, _, errDecode := image.DecodeConfig(file)
-	if _, errSeek := file.Seek(0, 0); errSeek != nil || errDecode != nil {
-		return &Err{UploadFileError, "something went wrong", nil}
-	}
-	if img.Height > MaxImgHeight || img.Width > MaxImgWidth {
-		return &Err{UploadFileError, fmt.Sprintf("the image size exceeds the allowed height %dpx and width %dpx", MaxImgHeight, MaxImgWidth), nil}
-	}
-	return nil
-}*/
 
 func AddOrUpdateUserFile(data io.Reader, imgName string) *Err {
 	if data == nil {
@@ -107,9 +64,9 @@ func GetImageFromBase64(data string) (io.Reader, *Err) {
 	if data == "" {
 		return nil, nil
 	}
-	if strings.HasPrefix(data, fmt.Sprintf("data:%s", jpegMime)) {
+	if strings.HasPrefix(data, fmt.Sprintf("data:%s", JpegMime)) && len(data) > base64jpegTitle {
 		imgBase64 = data[base64jpegTitle:]
-	} else if strings.HasPrefix(data, fmt.Sprintf("data:%s", pngMime)) {
+	} else if strings.HasPrefix(data, fmt.Sprintf("data:%s", PngMime)) && len(data) > base64pngTitle {
 		imgBase64 = data[base64pngTitle:]
 	} else {
 		return nil, &Err{code: UploadFileError, message: "unsupported image format, allowed: png/jpeg"}

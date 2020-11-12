@@ -48,7 +48,7 @@ func Recovery(log *logger.Logger) gin.HandlerFunc {
 				default:
 					err2 = fmt.Errorf("%v", v)
 				}
-				err2 = fmt.Errorf("error: %w : %w ", fmt.Errorf(string(debug.Stack())), err2)
+				err2 = fmt.Errorf("error: %s : %w ", string(debug.Stack()), err2)
 				c.AbortWithError(http.StatusInternalServerError, err2)
 			}
 		}()
@@ -61,7 +61,7 @@ func ErrorMiddleware() gin.HandlerFunc {
 		c.Writer.Header().Add("Content-type", "application/json")
 		c.Next()
 		if len(c.Errors) > 0 {
-			ret := []interface{}{}
+			var ret []interface{}
 			for _, err := range c.Errors {
 				switch err.Err.(type) {
 				case Err:
@@ -97,9 +97,9 @@ func RequestLogger(log *logger.Logger) gin.HandlerFunc {
 			//ellipsis(string(body), ellipsisLength),
 			c.Writer.Status(),
 			c.Request.Header.Get("X-Request-Id"))
-			//ellipsis(blw.body.String(), ellipsisLength))
+		//ellipsis(blw.body.String(), ellipsisLength))
 
-		if c.Writer.Status() >= 400 &&  c.Writer.Status() < 500 {
+		if c.Writer.Status() >= 400 && c.Writer.Status() < 500 {
 			log.Warning(message)
 		} else if c.Writer.Status() < 400 {
 			log.Infof(message)
@@ -137,8 +137,3 @@ func AuthRequired() gin.HandlerFunc {
 		}
 	}
 }
-
-type AuthTest interface {
-	AuthRequired() gin.HandlerFunc
-}
-

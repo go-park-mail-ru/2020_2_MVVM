@@ -10,6 +10,7 @@ import (
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
@@ -20,7 +21,7 @@ const (
 )
 
 var testData struct {
-	userHandler  *UserHandler
+	userHandler *UserHandler
 	router      *gin.Engine
 	mockUseCase *mocks.UseCase
 	mockAuth    *mocks2.AuthTest
@@ -91,7 +92,7 @@ func TestGetUserByIdHandler(t *testing.T) {
 	}
 }
 
-func TestGetCandByID(t *testing.T) {
+func TestGetCandByIdHandler(t *testing.T) {
 	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
 	r.GET("cand/by/id/:cand_id", u.GetCandByIdHandler)
 	candID := uuid.New()
@@ -119,7 +120,7 @@ func TestGetCandByID(t *testing.T) {
 	}
 }
 
-func TestGetEmplByID(t *testing.T) {
+func TestGetEmplByIdHandler(t *testing.T) {
 	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
 	r.GET("empl/by/id/:empl_id", u.GetEmplByIdHandler)
 	empID := uuid.New()
@@ -147,3 +148,41 @@ func TestGetEmplByID(t *testing.T) {
 	}
 }
 
+type userReq struct {
+	UserType      string `json:"user_type"`
+	Password      string `json:"password"`
+	Name          string `json:"name"`
+	Surname       string `json:"surname"`
+	Email         string `json:"email"`
+	Phone         string `json:"phone"`
+	SocialNetwork string `json:"social_network"`
+}
+
+func TestCreateUserHandler(t *testing.T) {
+	u, r, mockUseCase := testData.userHandler, testData.router, testData.mockUseCase
+	r.POST("/", u.CreateUserHandler)
+	req := userReq{UserType: "employer", Password: "password", Name: "name", Surname: "surname", Email: "email", Phone: "", SocialNetwork: ""}
+
+	userEmpty := models.User{}
+	mockUseCase.On("CreateUser", mock.Anything).Return(&userEmpty, nil)
+	//mockUseCase.On("CreateUser", mock.Call{}).Return(nil, assert.AnError)
+
+	testUrls := []string{
+		userUrlGroup,
+		userUrlGroup,
+		//userUrlGroup,
+	}
+	testExpectedBody := []interface{}{userEmpty, common.EmptyFieldErr, common.DataBaseErr}
+	testParamsForPost := []interface{}{req, nil, req}
+	for i := range testUrls {
+		t.Run("test responses on different urls for CreateUser handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodPost, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
