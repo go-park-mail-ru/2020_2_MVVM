@@ -114,6 +114,10 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		}
 		return
 	}
+	if err := common.ReqValidation(&reqUser); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
 
 	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
@@ -170,10 +174,10 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	var req struct {
 		UserType      string `json:"user_type" binding:"required"`
 		Password      string `json:"password" binding:"required" valid:"utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		Name          string `json:"name" binding:"required" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
-		Surname       string `json:"surname" binding:"required" valid:"utfletter~фамилия должна содержать только буквы,stringlength(5|25)~длина фамилии должна быть от 3 до 25 символов."`
+		Name          string `json:"name" binding:"required" valid:"utfletter~имя должно содержать только буквы,stringlength(1|25)~длина имени должна быть от 1 до 25 символов."`
+		Surname       string `json:"surname" binding:"required" valid:"utfletter~фамилия должна содержать только буквы,stringlength(1|25)~длина фамилии должна быть от 1 до 25 символов."`
 		Email         string `json:"email" binding:"required" valid:"email"`
-		Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
+		Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(1|18)~номер телефона от 1 до 18 цифр"`
 		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
