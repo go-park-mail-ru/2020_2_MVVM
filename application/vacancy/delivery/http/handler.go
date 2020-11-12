@@ -33,7 +33,7 @@ type vacRequest struct {
 	Requirements    string `json:"requirements" valid:"-"`
 	Duties          string `json:"duties" valid:"-"`
 	Skills          string `json:"skills" valid:"-"`
-	Sphere          int    `json:"sphere" valid:"utfletternum~сфера деятельности должна содержать только буквы или цифры,stringlength(4|128)~длина сферы от 4 до 128 смиволов"`
+	Sphere          int    `json:"sphere" valid:"numeric~сфера деятельности должна содержать только код"`
 	Employment      string `json:"employment" valid:"-"`
 	ExperienceMonth int    `json:"experience_month" valid:"-"`
 	Location        string `json:"location" valid:"utfletternum~адрес должен содержать только буквы или цифры,stringlength(4|512)~длина адреса от 4 до 512 смиволов"`

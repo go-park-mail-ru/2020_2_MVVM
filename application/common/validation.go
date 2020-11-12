@@ -26,9 +26,10 @@ func clearHtml(req interface{}) {
 		return
 	}
 	length := val.NumField()
+	typeOfT := val.Type()
 	for i := 0; i < length; i++ {
 		valField := val.Field(i)
-		if valField.Kind() == reflect.String {
+		if valField.Kind() == reflect.String && typeOfT.Field(i).Name != "Avatar" {
 			valStr := valField.String()
 			if valStr != "" {
 				clearText = p.Sanitize(valStr)

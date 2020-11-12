@@ -81,7 +81,7 @@ func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 
 func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
 	var req struct {
-		Name        string `json:"name" binding:"required" valid:"utfletternum~название компании может содержать только буквы и цифры.,stringlength(4|15)~название компании должно быть от 2 до 15 символов."`
+		Name        string `json:"name" binding:"required" valid:"utfletternum~название компании может содержать только буквы и цифры.,stringlength(4|15)~название компании должно быть от 4 до 15 символов."`
 		Description string `json:"description" binding:"required" valid:"-"`
 		Spheres     []int  `json:"spheres" valid:"-"`
 		AreaSearch  string `json:"area_search" valid:"utfletter~неверный регион,stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
