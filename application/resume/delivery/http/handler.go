@@ -173,13 +173,13 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindQuery(&request); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 
 	resumes, err := r.UseCaseResume.List(request.Start, request.Limit)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -238,11 +238,13 @@ func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	var searchParams resume.SearchParams
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	found, err := r.UseCaseResume.Search(searchParams)
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 

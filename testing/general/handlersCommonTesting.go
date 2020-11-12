@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	model "github.com/go-pg/pg/v9/orm"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -44,3 +45,15 @@ func getStrFromJson(in interface{}) string {
 	return string(bArr)
 }
 
+type MockResult struct {
+}
+
+func (r MockResult) Model() model.Model {
+	panic("implement me!")
+}
+func (r MockResult) RowsAffected() int {
+	panic("implement me!")
+}
+func (r MockResult) RowsReturned() int {
+	panic("implement me!")
+}

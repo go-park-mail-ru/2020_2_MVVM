@@ -6,15 +6,18 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
+	pgwrapper "gitlab.com/slax0rr/go-pg-wrapper"
+
 	//"github.com/google/uuid"
 )
 
 type pgReopository struct {
-	db *pg.DB
+	//db *pg.DB
+	db pgwrapper.DB
 }
 
 func NewPgRepository(db *pg.DB) response.ResponseRepository {
-	return &pgReopository{db: db}
+	return &pgReopository{db: pgwrapper.NewDB(db)}
 }
 
 func (p *pgReopository) Create(response models.Response) (*models.Response, error) {

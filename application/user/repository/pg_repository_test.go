@@ -1,32 +1,20 @@
 package repository
 
 import (
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"testing"
 
-	model "github.com/go-pg/pg/v9/orm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gitlab.com/slax0rr/go-pg-wrapper/mocks"
 	ormmocks "gitlab.com/slax0rr/go-pg-wrapper/mocks/orm"
 )
 
-type MockResult struct {
-}
-
-func (r MockResult) Model() model.Model {
-	panic("implement me!")
-}
-func (r MockResult) RowsAffected() int {
-	panic("implement me!")
-}
-func (r MockResult) RowsReturned() int {
-	panic("implement me!")
-}
-
-var ID, _ = uuid.Parse("ab055db8-a31e-4927-9e9c-55441a98c429")
+var ID = uuid.New()
 var passwordHash, _ = bcrypt.GenerateFromPassword([]byte("ID"), bcrypt.DefaultCost)
 var testUser = models.User{
 	ID:            ID,
@@ -94,9 +82,9 @@ func TestGetUserByID(t *testing.T) {
 	query.On("Where", "user_id = ?", ID.String()).Return(query)
 	query.On("Select").Return(nil)
 
-	foo, err := r.GetUserByID(ID.String())
+	answerCorrect, err := r.GetUserByID(ID.String())
 	assert.Nil(t, err)
-	assert.Equal(t, testUser, *foo)
+	assert.Equal(t, testUser, *answerCorrect)
 }
 
 func TestLogin(t *testing.T) {
@@ -119,7 +107,7 @@ func TestUpdate(t *testing.T) {
 	db, r := mockDB()
 	query := mockQueryUser(db)
 
-	mockResult := MockResult{}
+	mockResult := general.MockResult{}
 	query.On("WherePK").Return(query)
 	query.On("Returning", "*").Return(query)
 	query.On("Update").Return(mockResult, nil)
@@ -156,18 +144,26 @@ func TestCreate(t *testing.T) {
 	db, r := mockDB()
 	queryUser := mockQueryUser(db)
 	queryEmpl := mockQueryEmployer(db)
+	queryCand := mockQueryCandidate(db)
+	mockResult := general.MockResult{}
 
-	mockResult := MockResult{}
+	testUser.UserType = common.Employer
 	queryUser.On("Returning", "*").Return(queryUser)
 	queryUser.On("Insert").Return(mockResult, nil)
 
-	//mockResult2 := MockResult{}
-
 	queryEmpl.On("Returning", "*").Return(queryEmpl)
 	queryEmpl.On("Insert").Return(mockResult, nil)
-
-
-	foo, err := r.CreateUser(testUser)
+	answerCorrect, err := r.CreateUser(testUser)
 	assert.Nil(t, err)
-	assert.Equal(t, testUser, *foo)
+	assert.Equal(t, testUser, *answerCorrect)
+
+	testUser.UserType = common.Candidate
+	queryCand.On("Returning", "*").Return(queryEmpl)
+	queryCand.On("Insert").Return(mockResult, nil)
+	answerCorrect2, err := r.CreateUser(testUser)
+	assert.Nil(t, err)
+	assert.Equal(t, testUser, *answerCorrect2)
 }
+
+
+
