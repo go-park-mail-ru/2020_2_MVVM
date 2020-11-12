@@ -20,6 +20,8 @@ type ResponseWithTitle struct {
 	ResponseID  uuid.UUID `json:"response_id"`
 	ResumeID    uuid.UUID `json:"resume_id"`
 	ResumeName  string    `json:"resume_name"`
+	CandName    string    `json:"cand_name"`
+	CandSurname string    `json:"cand_surname"`
 	VacancyID   uuid.UUID `json:"vacancy_id"`
 	VacancyName string    `json:"vacancy_name"`
 	CompanyID   uuid.UUID `json:"company_id"`

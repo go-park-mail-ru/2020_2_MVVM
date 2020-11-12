@@ -170,7 +170,7 @@ func NewApp(config Config) *App {
 	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
 
 	responseRep := RepositoryResponse.NewPgRepository(db)
-	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, *company, responseRep)
+	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
 	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
 
 	app := App{

@@ -35,6 +35,21 @@ var testResume = models.Resume{
 	Candidate: &candidate,
 	Title:     "ID",
 }
+var educationTest = models.Education{
+	EdId:       ID,
+	CandID:     ID,
+	ResumeId:   ID,
+	University: "university",
+}
+var flag = false
+var experienceTest = models.ExperienceCustomComp{
+	ID:              ID,
+	CandID:          ID,
+	ResumeID:        ID,
+	NameJob:         "name job",
+	ContinueToToday: &flag,
+}
+
 var briefResume = models.BriefResumeInfo{
 	ResumeID: ID,
 	CandID:   ID,
@@ -74,17 +89,25 @@ func TestResumeGetById(t *testing.T) {
 	mockRepo, _, _, _, usecase := beforeTest(t)
 
 	mockRepo.On("GetById", ID).Return(&testResume, nil)
-	answer, err := usecase.GetById(ID)
+	mockRepo.On("GetById", uuid.Nil).Return(nil, assert.AnError)
+	answerCorrect, err := usecase.GetById(ID)
+	answerNotCorrect, errNotNil := usecase.GetById(uuid.Nil)
 
 	assert.Nil(t, err)
-	assert.Equal(t, *answer, testResume)
+	assert.Equal(t, *answerCorrect, testResume)
+	assert.Nil(t, answerNotCorrect)
+	assert.Error(t, errNotNil)
 }
 
 func TestResumeCreateResume(t *testing.T) {
-	mockRepo, _, _, _, usecase := beforeTest(t)
+	mockRepo, _, mockEducationUS, mockExperienceUS, usecase := beforeTest(t)
 
+	testResume.ExperienceCustomComp = []*models.ExperienceCustomComp{&experienceTest}
+	testResume.Education = []*models.Education{&educationTest}
 	testResume.DateCreate = time.Now()
 	mockRepo.On("Create", mock.Anything).Return(&testResume, nil)
+	mockExperienceUS.On("Create", experienceTest).Return(&experienceTest, nil)
+	mockEducationUS.On("Create", educationTest).Return(&educationTest, nil)
 	answer, err := usecase.Create(testResume)
 
 	assert.Nil(t, err)
@@ -94,14 +117,34 @@ func TestResumeCreateResume(t *testing.T) {
 func TestResumeUpdateUser(t *testing.T) {
 	mockRepo, _, mockEducationUS, mockExperienceUS, usecase := beforeTest(t)
 
+	testResume.ExperienceCustomComp = []*models.ExperienceCustomComp{&experienceTest}
+	testResume.Education = []*models.Education{&educationTest}
 	mockRepo.On("Update", testResume).Return(&testResume, nil)
 	mockRepo.On("GetById", ID).Return(&testResume, nil)
 	mockEducationUS.On("DropAllFromResume", ID).Return(nil)
 	mockExperienceUS.On("DropAllFromResume", ID).Return(nil)
+	mockExperienceUS.On("Create", experienceTest).Return(&experienceTest, nil)
+	mockEducationUS.On("Create", educationTest).Return(&educationTest, nil)
 	answer, err := usecase.Update(testResume)
 
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, testResume)
+
+	mockRepo.On("GetById", uuid.Nil).Return(nil, assert.AnError)
+	testResume.ResumeID = uuid.Nil
+	answerWrong, errNotNil := usecase.Update(testResume)
+	assert.Nil(t, answerWrong)
+	assert.Error(t, errNotNil)
+
+	testResume.ResumeID = ID
+	mockRepo.On("GetById", ID).Return(&testResume, nil)
+	newTestResume := testResume
+	newTestResume.CandID = uuid.Nil
+	answerWrong2, errNotNil2 := usecase.Update(newTestResume)
+	assert.Nil(t, answerWrong2)
+	assert.Error(t, errNotNil2)
+
+
 }
 
 func TestResumeSearch(t *testing.T) {
@@ -129,9 +172,18 @@ func TestResumeList(t *testing.T) {
 	var listBrief = []models.BriefResumeInfo{briefResume}
 	mockRepo.On("List", uint(1), uint(1)).Return(listResume, nil)
 	answer, err := usecase.List(uint(1), uint(1))
-
 	assert.Nil(t, err)
 	assert.Equal(t, answer, listBrief)
+
+	listResume[0].Candidate = nil
+	mockRepo.On("List", uint(1), uint(1)).Return(listResume, nil)
+	answerWrong, errNotNil := usecase.List(uint(1), uint(1))
+	answerWrong2, errNotNil2 := usecase.List(uint(1), uint(1000))
+
+	assert.Nil(t, answerWrong)
+	assert.Error(t, errNotNil)
+	assert.Nil(t, answerWrong2)
+	assert.Error(t, errNotNil2)
 }
 
 //GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
@@ -162,10 +214,44 @@ func TestResumeAddFavorite(t *testing.T) {
 func TestResumeGetFavoriteByResume(t *testing.T) {
 	mockRepo, _, _, _, usecase := beforeTest(t)
 
-
-	mockRepo.On("GetFavoriteByResume", ID, ID).Return(&favorite, nil)
+	mockRepo.On("GetFavoriteForResume", ID, ID).Return(&favorite, nil)
 	answer, err := usecase.GetFavoriteByResume(ID, ID)
 
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, favorite)
+}
+
+//GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
+func TestResumeGetFavoriteByID(t *testing.T) {
+	mockRepo, _, _, _, usecase := beforeTest(t)
+
+	mockRepo.On("GetFavoriteByID", ID).Return(&favorite, nil)
+	answer, err := usecase.GetFavoriteByID(ID)
+
+	assert.Nil(t, err)
+	assert.Equal(t, *answer, favorite)
+}
+
+//RemoveFavorite(favorite models.FavoritesForEmpl) error
+func TestResumeRemoveFavorite(t *testing.T) {
+	mockRepo, _, _, _, usecase := beforeTest(t)
+
+	mockRepo.On("GetFavoriteByID", ID).Return(&favorite, nil)
+	mockRepo.On("RemoveFavorite", ID).Return(nil)
+	err := usecase.RemoveFavorite(favorite)
+
+	assert.Nil(t, err)
+}
+
+//GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
+func TestResumeGetAllEmplFavoriteResume(t *testing.T) {
+	mockRepo, _, _, _, usecase := beforeTest(t)
+
+	var listResume = []models.Resume{testResume}
+	var listBrief = []models.BriefResumeInfo{briefResume}
+	mockRepo.On("GetAllEmplFavoriteResume", ID).Return(listResume, nil)
+	answer, err := usecase.GetAllEmplFavoriteResume(ID)
+
+	assert.Nil(t, err)
+	assert.Equal(t, answer, listBrief)
 }
