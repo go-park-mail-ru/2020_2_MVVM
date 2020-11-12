@@ -137,9 +137,8 @@ func AuthRequired() gin.HandlerFunc {
 		}
 	}
 }
-/*
-func parseJsonMiddleware() gin.HandlerFunc {
-	return func (c *gin.Context) {
 
-	}
-}*/
+type AuthTest interface {
+	AuthRequired() gin.HandlerFunc
+}
+

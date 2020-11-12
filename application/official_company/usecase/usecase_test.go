@@ -1,30 +1,24 @@
 package usecase
 
 import (
-	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/official_company"
+	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"os"
 	"testing"
 )
 
 func beforeTest() (*mocks.OfficialCompanyRepository, CompanyUseCase) {
-	infoLogger, _ := logger.New("test", 1, os.Stdout)
-	errorLogger, _ := logger.New("test", 2, os.Stderr)
 	mockRepo := new(mocks.OfficialCompanyRepository)
 	useCase := CompanyUseCase{
-		iLog:   infoLogger,
-		errLog: errorLogger,
-		repos:  mockRepo,
+		repos: mockRepo,
 	}
 	return mockRepo, useCase
 }
 
 func TestGetOfficialCompany(t *testing.T) {
 	mockRepo, useCase := beforeTest()
-	compID, _ := uuid.Parse("28b49c0d-5ded-4f52-afa5-51948c05e0f5")
+	compID := uuid.New()
 	emptyCompID := uuid.Nil
 	comp := models.OfficialCompany{
 		ID: compID,
@@ -41,8 +35,8 @@ func TestGetOfficialCompany(t *testing.T) {
 
 func TestGetMineCompany(t *testing.T) {
 	mockRepo, useCase := beforeTest()
-	empID, _ := uuid.Parse("28b49c0d-5ded-4f52-afa5-51948c05e0f5")
-	compID, _ := uuid.Parse("1dbd3178-84ad-4d0d-b61d-6116fda279ef")
+	empID := uuid.New()
+	compID := uuid.New()
 	employer := models.Employer{
 		ID:        empID,
 		CompanyID: compID,
@@ -60,14 +54,14 @@ func TestGetMineCompany(t *testing.T) {
 	assert.Error(t, errNotNil)
 }
 
-func TestCreateOfficialCompany(t *testing.T)  {
+func TestCreateOfficialCompany(t *testing.T) {
 	mockRepo, useCase := beforeTest()
-	empID, _ := uuid.Parse("28b49c0d-5ded-4f52-afa5-51948c05e0f5")
+	empID := uuid.New()
 	comp := models.OfficialCompany{
-		Name: "name",
+		Name:        "name",
 		Description: "description",
-		AreaSearch: "area",
-		Link: "link",
+		AreaSearch:  "area",
+		Link:        "link",
 	}
 	mockRepo.On("CreateOfficialCompany", comp, empID).Return(&comp, nil)
 	mockRepo.On("CreateOfficialCompany", comp, uuid.Nil).Return(nil, assert.AnError)
@@ -79,10 +73,10 @@ func TestCreateOfficialCompany(t *testing.T)  {
 	assert.Error(t, errNotNil)
 }
 
-func TestGetCompaniesList(t *testing.T)  {
+func TestGetCompaniesList(t *testing.T) {
 	var (
 		start uint
-		end uint
+		end   uint
 	)
 	start = 0
 	end = 3
@@ -114,8 +108,14 @@ func TestSearchCompanies(t *testing.T) {
 	params := models.CompanySearchParams{
 		AreaSearch: []string{"area1"},
 	}
-	mockRepo.On("SearchCompanies", params).Return(compList[1:], nil)
+
+	paramsErr := models.CompanySearchParams{}
+	mockRepo.On("SearchCompanies", params).Return(compList[:2], nil)
+	mockRepo.On("SearchCompanies", paramsErr).Return(nil, assert.AnError)
 	ansCorrect, errNil := useCase.SearchCompanies(params)
+	ansWrong, errNotNil := useCase.SearchCompanies(paramsErr)
 	assert.Nil(t, errNil)
-	assert.Equal(t, ansCorrect, compList[1:])
+	assert.Equal(t, ansCorrect, compList[:2])
+	assert.Error(t, errNotNil)
+	assert.Nil(t, ansWrong)
 }

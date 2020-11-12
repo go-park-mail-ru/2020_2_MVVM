@@ -30,24 +30,23 @@ const (
 
 func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
 	rest := &CompanyHandler{CompUseCase: useCase}
-	rest.routes(router, AuthRequired)
+	rest.Routes(router, AuthRequired)
 	return rest
 }
 
-func (c *CompanyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.GET("/by/id/:company_id", c.handlerGetCompany)
-	router.GET("/page", c.handlerGetCompanyList)
-	router.POST("/search", c.handlerSearchCompanies)
-	router.POST("/", c.handlerCreateCompany)
+func (c *CompanyHandler) Routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.GET("/by/id/:company_id", c.GetCompanyHandler)
+	router.GET("/page", c.GetCompanyListHandler)
+	router.POST("/search", c.SearchCompaniesHandler)
 	router.Use(AuthRequired)
 	{
-		router.GET("/mine", c.handlerGetUserCompany)
-		//router.POST("/", c.handlerCreateCompany)
-		//router.PUT("/", v.handlerUpdateVacancy)
+		router.GET("/mine", c.GetUserCompanyHandler)
+		router.POST("/", c.CreateCompanyHandler)
+		//router.PUT("/", c.handlerUpdateCompany)
 	}
 }
 
-func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
+func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 	var req struct {
 		CompanyID string `uri:"company_id" binding:"required,uuid"`
 	}
@@ -66,7 +65,7 @@ func (c *CompanyHandler) handlerGetCompany(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Company: comp})
 }
 
-func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
+func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
@@ -82,7 +81,7 @@ func (c *CompanyHandler) handlerGetUserCompany(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Company: comp})
 }
 
-func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
+func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
 	var req struct {
 		Name        string `json:"name" binding:"required" valid:"alphanum~1,stringlength(4|15)~2"`
 		Description string `json:"description" binding:"required" valid:"-"`
@@ -130,7 +129,7 @@ func (c *CompanyHandler) handlerCreateCompany(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{Company: compNew})
 }
 
-func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
+func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 	var req struct {
 		Start uint `form:"start"`
 		Limit uint `form:"limit" binding:"required"`
@@ -149,11 +148,11 @@ func (c *CompanyHandler) handlerGetCompanyList(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})
 }
 
-func (c *CompanyHandler) handlerSearchCompanies(ctx *gin.Context) {
+func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.SearchCompanies(searchParams)
