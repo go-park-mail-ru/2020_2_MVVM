@@ -54,8 +54,6 @@ const (
 	vacCreate     = 0
 	vacUpdate     = 1
 	vacPath       = "vacancy/"
-	emptyFieldErr = "empty required fields"
-	sessionErr    = "session error"
 )
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
@@ -65,62 +63,62 @@ func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequi
 }
 
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.GET("/by/id/:vacancy_id", v.handlerGetVacancyById)
-	router.GET("/page/comp", v.handlerGetCompVacancyList)
-	router.GET("/page", v.handlerGetVacancyList)
-	router.POST("/search", v.handlerSearchVacancies)
+	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
+	router.GET("/page/comp", v.GetCompVacancyListHandler)
+	router.GET("/page", v.GetVacancyListHandler)
+	router.POST("/search", v.SearchVacanciesHandler)
 	router.Use(AuthRequired)
 	{
-		router.GET("/mine", v.handlerGetUserVacancyList)
-		router.PUT("/", v.handlerUpdateVacancy)
-		router.POST("/", v.handlerCreateVacancy)
+		router.GET("/mine", v.GetUserVacancyListHandler)
+		router.PUT("/", v.UpdateVacancyHandler)
+		router.POST("/", v.CreateVacancyHandler)
 	}
 }
 
-func (v *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
+func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	var req struct {
 		VacID string `uri:"vacancy_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
 	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
 }
 
-func (v *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
+func (v *VacancyHandler) CreateVacancyHandler(ctx *gin.Context) {
 	vacHandlerCommon(v, ctx, vacCreate)
 }
 
-func (v *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
+func (v *VacancyHandler) UpdateVacancyHandler(ctx *gin.Context) {
 	vacHandlerCommon(v, ctx, vacUpdate)
 }
 
-func (v *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
+func (v *VacancyHandler) GetVacancyListHandler(ctx *gin.Context) {
 	vacListHandlerCommon(v, ctx, vacancy.ByVacId)
 }
 
-func (v *VacancyHandler) handlerGetUserVacancyList(ctx *gin.Context) {
+func (v *VacancyHandler) GetUserVacancyListHandler(ctx *gin.Context) {
 	vacListHandlerCommon(v, ctx, vacancy.ByEmpId)
 }
 
-func (v *VacancyHandler) handlerGetCompVacancyList(ctx *gin.Context) {
+func (v *VacancyHandler) GetCompVacancyListHandler(ctx *gin.Context) {
 	vacListHandlerCommon(v, ctx, vacancy.ByCompId)
 }
 
-func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
+func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 
@@ -130,7 +128,7 @@ func (v *VacancyHandler) handlerSearchVacancies(ctx *gin.Context) {
 	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
@@ -143,7 +141,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	)
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 
@@ -164,12 +162,12 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	if treatmentType == vacCreate {
 		session := sessions.Default(ctx).Get("empl_id")
 		if session == nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
 		}
 		empId, errSession := uuid.Parse(session.(string))
 		if errSession != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
 		}
 		vacNew.EmpID = empId
@@ -179,7 +177,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err:  common.DataBaseErr})
 		return
 	}
 	if file != nil {
@@ -195,30 +193,25 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		req     vacListRequest
 		err     error
 		vacList []models.Vacancy
+		id      = uuid.Nil
 	)
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if entityType == vacancy.ByEmpId {
 		session := sessions.Default(ctx).Get("empl_id")
-		empId, errSession := uuid.Parse(session.(string))
-		if errSession != nil {
-			ctx.JSON(http.StatusBadRequest, common.RespError{Err: errSession.Error()})
+		if id, err = uuid.Parse(session.(string)); err != nil {
+			ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
 			return
 		}
-		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, empId, vacancy.ByEmpId)
 	} else if entityType == vacancy.ByCompId {
-		compId, _ := uuid.Parse(req.CompId)
-		if compId != uuid.Nil {
-			vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, compId, vacancy.ByCompId)
-		}
-	} else {
-		vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, uuid.Nil, vacancy.ByVacId)
+		id, _ = uuid.Parse(req.CompId)
 	}
+	vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, id, entityType)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
