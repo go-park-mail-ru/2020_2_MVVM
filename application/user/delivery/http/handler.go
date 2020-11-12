@@ -226,13 +226,13 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	var req struct {
-		Name          string `json:"name" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
-		Surname       string `json:"surname" valid:"utfletter~фамилия должна содержать только буквы,stringlength(5|25)~длина фамилии должна быть от 3 до 25 символов."`
-		Email         string `json:"email" valid:"email"`
-		NewPassword   string `json:"new_password" binding:"required" valid:"utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		OldPassword   string `json:"old_password" binding:"required" valid:"utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
-		SocialNetwork string `json:"social_network"`
+		Name          string `json:"name" valid:"optional,utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
+		Surname       string `json:"surname" valid:"optional,utfletter~фамилия должна содержать только буквы,stringlength(5|25)~длина фамилии должна быть от 3 до 25 символов."`
+		Email         string `json:"email" valid:"optional, email"`
+		NewPassword   string `json:"new_password" valid:"optional, utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
+		OldPassword   string `json:"old_password" valid:"optional, utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
+		Phone         string `json:"phone" valid:"optional, numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
+		SocialNetwork string `json:"social_network" valid:"-"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
