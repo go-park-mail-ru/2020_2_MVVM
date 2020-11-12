@@ -23,9 +23,7 @@ type RespList struct {
 }
 
 const (
-	compPath      = "company/"
-	emptyFieldErr = "empty required fields"
-	sessionErr    = "session error"
+	compPath = "company/"
 )
 
 func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
@@ -52,13 +50,13 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compUuid, _ := uuid.Parse(req.CompanyID)
 	comp, err := c.CompUseCase.GetOfficialCompany(compUuid)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -69,12 +67,12 @@ func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: sessionErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
 		return
 	}
 	comp, err := c.CompUseCase.GetMineCompany(empId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -92,7 +90,7 @@ func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
@@ -107,18 +105,18 @@ func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
 	}
 	session := sessions.Default(ctx).Get("empl_id")
 	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: sessionErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
 	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
 		AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	if file != nil {
@@ -136,12 +134,12 @@ func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.Limit)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -152,12 +150,12 @@ func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: emptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.SearchCompanies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})

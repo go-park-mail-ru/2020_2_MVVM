@@ -85,7 +85,7 @@ func TestGetVacancyByIdHandler(t *testing.T) {
 		fmt.Sprintf("%sby/id/invalidUuid", vacUrlGroup),
 		fmt.Sprintf("%sby/id/%s", vacUrlGroup, uuid.Nil),
 	}
-	testExpectedBody := []interface{}{vac, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{vac, common.EmptyFieldErr, common.DataBaseErr}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for getVacancy handler", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestGetVacancyListHandler(t *testing.T) {
 		fmt.Sprintf("%spage?start=%d&limit=%d", vacUrlGroup, end, end),
 	}
 
-	testExpectedBody := []interface{}{testData.vacList, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{testData.vacList, common.EmptyFieldErr, common.DataBaseErr}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
 			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
@@ -144,7 +144,7 @@ func TestGetCompVacancyListHandler(t *testing.T) {
 		fmt.Sprintf("%spage/comp?start=%d&limit=%d&comp_id=%s", vacUrlGroup, end, end, compID),
 	}
 
-	testExpectedBody := []interface{}{testData.vacList, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{testData.vacList, common.EmptyFieldErr, common.DataBaseErr}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getCompVacancyList handler", func(t *testing.T) {
 			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
@@ -176,7 +176,7 @@ func TestSearchVacanciesHandler(t *testing.T) {
 		fmt.Sprintf("%ssearch", vacUrlGroup),
 	}
 
-	testExpectedBody := []interface{}{vacList, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{vacList, common.EmptyFieldErr, common.DataBaseErr}
 	testParamsForPost := []interface{}{params, nil, paramsEmpty}
 	for i := range testUrls {
 		t.Run("test responses on different urls for SearchVacancies handler", func(t *testing.T) {

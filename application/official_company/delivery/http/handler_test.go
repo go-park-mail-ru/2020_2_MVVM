@@ -85,7 +85,7 @@ func TestGetCompanyHandler(t *testing.T) {
 		fmt.Sprintf("%sby/id/invalidUuid", compUrlGroup),
 		fmt.Sprintf("%sby/id/%s", compUrlGroup, uuid.Nil),
 	}
-	testExpectedBody := []interface{}{comp, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{comp, common.EmptyFieldErr, common.DataBaseErr}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for getCompany handler", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestGetCompanyListHandler(t *testing.T) {
 		fmt.Sprintf("%spage?start=%d&limit=%d", compUrlGroup, end, end),
 	}
 
-	testExpectedBody := []interface{}{testData.compList, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{testData.compList, common.EmptyFieldErr, common.DataBaseErr}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getCompanyList handler", func(t *testing.T) {
 			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
@@ -147,7 +147,7 @@ func TestSearchCompaniesHandler(t *testing.T) {
 		fmt.Sprintf("%ssearch", compUrlGroup),
 	}
 
-	testExpectedBody := []interface{}{compList, emptyFieldErr, assert.AnError}
+	testExpectedBody := []interface{}{compList, common.EmptyFieldErr, common.DataBaseErr}
 	testParamsForPost := []interface{}{params, nil, paramsEmpty}
 	for i := range testUrls {
 		t.Run("test responses on different urls for SearchCompanies handler", func(t *testing.T) {

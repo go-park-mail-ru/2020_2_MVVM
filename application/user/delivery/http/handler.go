@@ -25,106 +25,106 @@ func NewRest(router *gin.RouterGroup, useCase user.UseCase, AuthRequired gin.Han
 }
 
 func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.GET("/by/id/:user_id", u.handlerGetUserByID)
-	router.GET("cand/by/id/:cand_id", u.handlerGetCandByID)
-	router.GET("empl/by/id/:empl_id", u.handlerGetEmplByID)
-	router.POST("/", u.handlerCreateUser)
-	router.POST("/login", u.handlerLogin)
+	router.GET("/by/id/:user_id", u.GetUserByIdHandler)
+	router.GET("cand/by/id/:cand_id", u.GetCandByIdHandler)
+	router.GET("empl/by/id/:empl_id", u.GetEmplByIdHandler)
+	router.POST("/", u.CreateUserHandler)
+	router.POST("/login", u.LoginHandler)
 	router.Use(AuthRequired)
 	{
-		router.POST("/logout", u.handlerLogout)
-		router.GET("/me", u.handlerGetCurrentUser)
-		router.PUT("/", u.handlerUpdateUser)
+		router.POST("/logout", u.LogoutHandler)
+		router.GET("/me", u.GetCurrentUserHandler)
+		router.PUT("/", u.UpdateUserHandler)
 	}
 }
 
-func (u *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
+func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	userID := session.Get("user_id")
 
 	userById, err := u.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: userById})
 }
 
-func (u *UserHandler) handlerGetUserByID(ctx *gin.Context) {
+func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 	var req struct {
 		UserID string `uri:"user_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	user, err := u.UserUseCase.GetUserByID(req.UserID)
 
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
 	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
-func (u *UserHandler) handlerGetCandByID(ctx *gin.Context) {
+func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 	var req struct {
 		UserID string `uri:"cand_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	user, err := u.UserUseCase.GetCandByID(req.UserID)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
-func (u *UserHandler) handlerGetEmplByID(ctx *gin.Context) {
+func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 	var req struct {
 		UserID string `uri:"empl_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	user, err := u.UserUseCase.GetEmplByID(req.UserID)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
-	ctx.JSON(http.StatusOK, user)
+	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
-func (u *UserHandler) handlerLogin(ctx *gin.Context) {
+func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
 		if errMsg := err.Error(); errMsg == "missing Email or Password" {
 			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
 		} else {
-			ctx.AbortWithError(http.StatusForbidden, err)
+			ctx.JSON(http.StatusForbidden, common.RespError{Err: common.EmptyFieldErr})
 		}
 		return
 	}
 
 	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	session := sessions.Default(ctx)
 	if user.UserType == "candidate" {
 		cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			return
 		}
 		session.Set("cand_id", cand.ID.String())
@@ -133,7 +133,7 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	} else if user.UserType == "employer" {
 		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			return
 		}
 		session.Set("empl_id", empl.ID.String())
@@ -146,7 +146,7 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 	session.Set("user_id", user.ID.String())
 	err = session.Save()
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
 
@@ -154,19 +154,19 @@ func (u *UserHandler) handlerLogin(ctx *gin.Context) {
 
 }
 
-func (u *UserHandler) handlerLogout(ctx *gin.Context) {
+func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	session.Clear()
 	session.Options(sessions.Options{MaxAge: -1})
 	err := session.Save()
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
 	ctx.Status(http.StatusOK)
 }
 
-func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
+func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	var req struct {
 		UserType      string `json:"user_type" binding:"required"`
 		Password      string `json:"password" binding:"required"`
@@ -177,12 +177,12 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	userNew, err := u.UserUseCase.CreateUser(models.User{
@@ -198,7 +198,7 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 		if errMsg := err.Error(); errMsg == "user already exists" {
 			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
 		} else {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		}
 		return
 	}
@@ -206,7 +206,7 @@ func (u *UserHandler) handlerCreateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
-func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
+func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	var req struct {
 		Name          string `json:"name"`
 		Surname       string `json:"surname"`
@@ -217,7 +217,7 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 
@@ -227,12 +227,12 @@ func (u *UserHandler) handlerUpdateUser(ctx *gin.Context) {
 		req.Surname, req.Email, req.Phone, req.SocialNetwork)
 	if err != nil {
 		if err == common.ErrInvalidUpdatePassword {
-			ctx.AbortWithError(http.StatusForbidden, err)
+			ctx.JSON(http.StatusForbidden, err)
 			return
 		}
 	}
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, userUpdate)

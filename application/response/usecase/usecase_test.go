@@ -4,11 +4,11 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	mCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/official_company"
-	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/response"
-	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/resume"
-	mUser "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/user"
-	mVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/mocks/application/vacancy"
+	mCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
+	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/response"
+	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
+	mUser "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
+	mVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/vacancy"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,10 +18,10 @@ import (
 
 var ID, _ = uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
 var testResponse = models.Response{
-	ID:         ID,
-	ResumeID:   ID,
-	VacancyID:  ID,
-	Status: "sent",
+	ID:        ID,
+	ResumeID:  ID,
+	VacancyID: ID,
+	Status:    "sent",
 }
 var testUser = models.User{
 	ID:       ID,
@@ -51,16 +51,16 @@ var briefResume = models.BriefResumeInfo{
 	Email:    "ID",
 }
 var testVacacy = models.Vacancy{
-	ID:              ID,
-	EmpID:           ID,
-	CompID:          ID,
+	ID:     ID,
+	EmpID:  ID,
+	CompID: ID,
 }
 var testCompany = models.OfficialCompany{
-	ID:          ID,
+	ID: ID,
 }
 
 func beforeTest(t *testing.T) (*mResponse.ResponseRepository, *mResume.UseCase, *mVacancy.IUseCaseVacancy,
-								*mCompany.IUseCaseOfficialCompany, *mUser.UseCase, UseCaseResponse) {
+	*mCompany.IUseCaseOfficialCompany, *mUser.UseCase, UseCaseResponse) {
 	infoLogger, _ := logger.New(os.Stdout)
 	errorLogger, _ := logger.New(os.Stderr)
 	mockRepo := new(mResponse.ResponseRepository)
@@ -83,10 +83,10 @@ func beforeTest(t *testing.T) (*mResponse.ResponseRepository, *mResume.UseCase, 
 func TestResponseCreate(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, _, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	testResponse.Initial = common.Candidate
@@ -97,13 +97,11 @@ func TestResponseCreate(t *testing.T) {
 	assert.Nil(t, errNil)
 	assert.Equal(t, *answerCorrect, testResponse)
 
-
 	mockResumeUS.On("GetById", uuid.Nil).Return(nil, assert.AnError)
 	testResponse.ResumeID = uuid.Nil
 	answerWrong, errNotNil := usecase.Create(testResponse)
 	assert.Nil(t, answerWrong)
 	assert.Error(t, errNotNil)
-
 
 	testResponse.Initial = common.Employer
 	mockVacancyUS.On("GetVacancy", ID).Return(&testVacacy, nil)
@@ -112,7 +110,6 @@ func TestResponseCreate(t *testing.T) {
 
 	assert.Nil(t, errNil2)
 	assert.Equal(t, *answerCorrect2, testResponse)
-
 
 	mockVacancyUS.On("GetVacancy", uuid.Nil).Return(nil, assert.AnError)
 	testResponse.VacancyID = uuid.Nil
@@ -125,15 +122,14 @@ func TestResponseCreate(t *testing.T) {
 func TestResponseUpdateStatus(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, _, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	answerWrong, err := usecase.UpdateStatus(testResponse, "sent")
 	assert.Nil(t, answerWrong, err)
-
 
 	testResponse.Status = "accept"
 	testResponse.Status = common.Employer
@@ -152,7 +148,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	assert.Nil(t, answerWromg2)
 	assert.Error(t, errNotNil2)
 
-
 	testResponse.ResumeID = ID
 	testResponse.Status = "accept"
 	testResponse.Status = common.Candidate
@@ -163,7 +158,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	answerCorrect2, errNil2 := usecase.UpdateStatus(testResponse, common.Employer)
 	assert.Nil(t, errNil2)
 	assert.Equal(t, *answerCorrect2, testResponse)
-
 
 	testResponse.VacancyID = uuid.Nil
 	mockRepo.On("GetByID", ID).Return(&testResponse, nil)
@@ -177,10 +171,10 @@ func TestResponseUpdateStatus(t *testing.T) {
 func TestResponseGetAllCandidateResponses(t *testing.T) {
 	mockRepo, mockResumeUS, mockVacancyUS, mockCompanyUS, _, usecase := beforeTest(t)
 	var testResponse = models.Response{
-		ID:         ID,
-		ResumeID:   ID,
-		VacancyID:  ID,
-		Status: "sent",
+		ID:        ID,
+		ResumeID:  ID,
+		VacancyID: ID,
+		Status:    "sent",
 	}
 
 	listResume := []models.BriefResumeInfo{briefResume}
@@ -207,6 +201,5 @@ func TestResponseGetAllCandidateResponses(t *testing.T) {
 	answerCorrect, errNill := usecase.GetAllCandidateResponses(ID)
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listRespWithTitle)
-
 
 }

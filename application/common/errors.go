@@ -4,6 +4,12 @@ import (
 	"encoding/json"
 )
 
+const (
+	EmptyFieldErr = "Обязательные поля не заполнены."
+	SessionErr    = "Ошибка авторизации. Попробуйте авторизоваться повторно."
+	DataBaseErr   = "Что-то пошло не так. Попробуйте позже."
+)
+
 type Err struct {
 	code    int         `json:"code"`
 	message string      `json:"message"`
