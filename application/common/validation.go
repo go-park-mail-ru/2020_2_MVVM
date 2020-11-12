@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	validateErr = "validation failed with error code: "
-	nameTag     = "alphanum~1,The name should contain alphanumeric characters.,stringlength(4|15)~2,The name must contain between 4 and 15 characters."
+	validateErr = "Неправильные значения полей: "
 )
 
 
