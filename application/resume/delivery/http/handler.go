@@ -77,6 +77,10 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if err := common.ReqValidation(template); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
 	template.CandID = candID
 
 	file, errImg := common.GetImageFromBase64(template.Avatar)
@@ -202,6 +206,10 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	if err := common.ReqValidation(template); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
 	template.CandID = candID
 
 	file, errImg := common.GetImageFromBase64(template.Avatar)
@@ -211,6 +219,11 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	result, err := r.UseCaseResume.Update(template)
+
+	if err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
@@ -239,6 +252,10 @@ func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		return
+	}
+	if err := common.ReqValidation(&searchParams); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
 	found, err := r.UseCaseResume.Search(searchParams)

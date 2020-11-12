@@ -45,6 +45,7 @@ func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 	userById, err := u.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -58,12 +59,14 @@ func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetUserByID(req.UserID)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
@@ -77,11 +80,13 @@ func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetCandByID(req.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, Resp{User: user})
@@ -94,11 +99,13 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetEmplByID(req.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, Resp{User: user})
@@ -118,6 +125,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	session := sessions.Default(ctx)
@@ -125,6 +133,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		session.Set("cand_id", cand.ID.String())
@@ -134,6 +143,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 		session.Set("empl_id", empl.ID.String())
