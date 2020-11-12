@@ -36,11 +36,10 @@ func (c *CompanyHandler) Routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	router.GET("/by/id/:company_id", c.GetCompanyHandler)
 	router.GET("/page", c.GetCompanyListHandler)
 	router.POST("/search", c.SearchCompaniesHandler)
-	router.POST("/", c.CreateCompanyHandler)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", c.GetUserCompanyHandler)
-		//router.POST("/", c.CreateCompanyHandler)
+		router.POST("/", c.CreateCompanyHandler)
 		//router.PUT("/", c.handlerUpdateCompany)
 	}
 }
