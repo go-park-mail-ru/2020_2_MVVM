@@ -44,6 +44,6 @@ func ReqValidation(req interface{},) error {
 	if _, err := govalidator.ValidateStruct(req); err != nil {
 		return errors.New(validateErr + err.Error())
 	}
-	//clearHtml(req)
+	clearHtml(req)
 	return nil
 }
