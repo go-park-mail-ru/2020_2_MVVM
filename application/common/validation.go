@@ -12,7 +12,7 @@ const (
 )
 
 
-//TODO: если использование санитайзера действительно оправдано, определить все разрешенные тэги и символы, добавить обработку строчных слайсов
+//TODO: определить все разрешенные тэги и символы, добавить обработку строчных слайсов
 func clearHtml(req interface{}) {
 	var clearText string
 
@@ -29,7 +29,7 @@ func clearHtml(req interface{}) {
 	typeOfT := val.Type()
 	for i := 0; i < length; i++ {
 		valField := val.Field(i)
-		if valField.Kind() == reflect.String && typeOfT.Field(i).Name != "Avatar" {
+		if valField.Kind() == reflect.String && typeOfT.Field(i).Name != "Avatar" && typeOfT.Field(i).Name != "Password"{
 			valStr := valField.String()
 			if valStr != "" {
 				clearText = p.Sanitize(valStr)

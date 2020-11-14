@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/go-pg/pg/v9"
@@ -26,12 +27,15 @@ func (p *pgStorage) Login(user models.UserLogin) (*models.User, error) {
 		Where("email = ?", user.Email).
 		Select()
 	if err != nil {
+		if err.Error() == "pg: no rows in result set" {
+			err = errors.New(common.AuthErr)
+		}
 		return nil, err
 	}
 	// compare password with the hashed one
 	err = bcrypt.CompareHashAndPassword(userDB.PasswordHash, []byte(user.Password))
 	if err != nil {
-		return nil, err
+		return nil, errors.New(common.AuthErr)
 	}
 	return &userDB, nil
 }
@@ -108,7 +112,7 @@ func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
 		if isExist, err := p.db.Model(&user).Exists(); err != nil {
 			errInsert = fmt.Errorf("error in inserting user with name: %s : error: %w", user.Name, err)
 		} else if isExist {
-			errInsert = errors.New("user already exists")
+			errInsert = errors.New(common.UserExistErr)
 		}
 		return nil, errInsert
 	}

@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"errors"
 	"fmt"
 	logger "github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -76,7 +77,7 @@ func (u *UserUseCase) GetEmployerByID(id string) (*models.Employer, error) {
 func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	userNew, err := u.repos.CreateUser(user)
 	if err != nil {
-		if err.Error() != "user already exists" {
+		if err.Error() != common.UserExistErr {
 			err = fmt.Errorf("error in user get by id func : %w", err)
 		}
 		return nil, err
@@ -84,47 +85,40 @@ func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
 	return userNew, nil
 }
 
-func (u *UserUseCase) UpdateUser(user_id string, newPassword, oldPassword, name, surname, email, phone,
-	socialNetwork string) (*models.User, error) {
-	user, err := u.GetUserByID(user_id)
+func (u *UserUseCase) UpdateUser(userNew models.User) (*models.User, error) {
+	userOld, err := u.GetUserByID(userNew.ID.String())
 	if err != nil {
-		err = fmt.Errorf("error get user with id %s : %w", user_id, err)
+		err = fmt.Errorf("error get user with id %s : %w", userNew.ID, err)
 		return nil, err
 	}
-
-	if name != "" {
-		user.Name = name
+	if userNew.Name != "" {
+		userOld.Name = userNew.Name
 	}
-	if surname != "" {
-		user.Surname = surname
+	if userNew.Surname != "" {
+		userOld.Surname = userNew.Surname
 	}
-	if email != "" {
-		user.Email = email
+	if userNew.Email != "" {
+		userOld.Email = userNew.Email
 	}
-	if phone != "" {
-		user.Phone = &phone
+	if userNew.Phone != nil && *userNew.Phone != "" {
+		userOld.Phone = userNew.Phone
 	}
-	if socialNetwork != "" {
-		user.SocialNetwork = &socialNetwork
+	if userNew.SocialNetwork != nil && *userNew.SocialNetwork != "" {
+		userOld.SocialNetwork= userNew.SocialNetwork
 	}
-	if oldPassword != "" {
-		isEqual := bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(oldPassword))
+	if userNew.PasswordHash != nil {
+		isEqual := bcrypt.CompareHashAndPassword(userOld.PasswordHash, userNew.PasswordHash)
 		if isEqual != nil {
-			return nil, common.ErrInvalidUpdatePassword
+			return nil, errors.New(common.WrongPasswd)
 		}
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-		if err != nil {
-			err = fmt.Errorf("error in crypting password : %W", err)
-			return nil, err
-		}
-		user.PasswordHash = passwordHash
+		userOld.PasswordHash = userNew.PasswordHash
 	}
-
-	newUser, err := u.repos.UpdateUser(*user)
+	newUser, err := u.repos.UpdateUser(*userOld)
 	if err != nil {
-		err = fmt.Errorf("error in updating user with id = %s : %w", user.ID.String(), err)
+		if err.Error() != common.UserExistErr {
+			err = fmt.Errorf("error in updating user with id = %s : %w", userOld.ID.String(), err)
+		}
 		return nil, err
 	}
-
 	return newUser, nil
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/google/uuid"
@@ -45,7 +46,9 @@ func NewCompUseCase(iLog *logger.Logger, errLog *logger.Logger,
 func (c *CompanyUseCase) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
 	comp, err := c.repos.CreateOfficialCompany(company, empId)
 	if err != nil {
-		err = fmt.Errorf("error in create official company function: %w", err)
+		if err.Error() != common.EmpHaveComp {
+			err = fmt.Errorf("error in create official company function: %w", err)
+		}
 		return nil, err
 	}
 	return comp, nil

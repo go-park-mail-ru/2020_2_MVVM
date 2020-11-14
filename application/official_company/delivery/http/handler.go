@@ -116,7 +116,11 @@ func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
 	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
 		AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.DataBaseErr})
+		if errMsg := err.Error(); errMsg == common.EmpHaveComp {
+			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		}
 		return
 	}
 	if file != nil {

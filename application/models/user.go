@@ -36,5 +36,5 @@ type Candidate struct {
 
 type UserLogin struct {
 	Email    string `json:"email" binding:"required" valid:"email"`
-	Password string `json:"password" binding:"required" valid:"utfletternum~пароль содержит неразрешенные символы,stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
+	Password string `json:"password" binding:"required" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
 }

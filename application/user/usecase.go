@@ -12,7 +12,6 @@ type UseCase interface {
 	//UpdateEmployer(employer models.Employer) (*models.Employer, error)
 	GetCandidateByID(id string) (*models.Candidate, error)
 	CreateUser(user models.User) (*models.User, error)
-	UpdateUser(user_id string, newPassword, oldPassword, name, surname, email, phone,
-			   socialNetwork string) (*models.User, error)
+	UpdateUser(user models.User) (*models.User, error)
 	Login(user models.UserLogin) (*models.User, error)
 }

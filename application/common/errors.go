@@ -8,6 +8,10 @@ const (
 	EmptyFieldErr = "Обязательные поля не заполнены."
 	SessionErr    = "Ошибка авторизации. Попробуйте авторизоваться повторно."
 	DataBaseErr   = "Что-то пошло не так. Попробуйте позже."
+	UserExistErr  = "Пользователь уже существует."
+	AuthErr       = "Пользователь с такими данными не зарегистрирован."
+	WrongPasswd   = "Не верное имя пользователя или пароль."
+	EmpHaveComp   = "Работодатель может являться представителем только одной компании."
 )
 
 type Err struct {
@@ -47,8 +51,9 @@ func NewErr(code int, message string, meta interface{}) Err {
 		meta:    meta,
 	}
 }
-
+/*
 var ErrBadRequest = NewErr(400, "Неправильный запрос к серверу", nil)
 var ErrInternalServerError = NewErr(500, "Внутренняя ошибка сервера", nil)
 
 var ErrInvalidUpdatePassword = NewErr(1001, "неверный пароль", nil)
+*/

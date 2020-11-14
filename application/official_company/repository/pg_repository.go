@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-pg/pg/v9"
@@ -74,7 +76,8 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	employer := models.Employer{ID: empId}
 	err := p.db.Model(&employer).WherePK().Select()
 	if err != nil || employer.CompanyID != uuid.Nil {
-		return nil, fmt.Errorf("error employer with id = %s doesn't exist or already have company", empId.String())
+		return nil, errors.New(common.EmpHaveComp)
+		//fmt.Errorf("error employer with id = %s doesn't exist or already have company", empId.String())
 	}
 	//_, err = p.db.Model(&company).WherePK().Drop()
 	_, err = p.db.Model(&company).Returning("*").Insert()
