@@ -25,7 +25,7 @@ type RespList struct {
 type vacRequest struct {
 	Id              string `json:"vac_id,uuid" valid:"-"`
 	Avatar          string `json:"avatar" valid:"-"`
-	Title           string `json:"title" binding:"required" valid:"utfletternum~название вакансии может содержать только буквы и цифры.,stringlength(4|128)~название вакансии должно быть от 4 до 128 символов в длину."`
+	Title           string `json:"title" binding:"required" valid:"stringlength(4|128)~название вакансии должно быть от 4 до 128 символов в длину."`
 	Gender          string `json:"gender" valid:"-"`
 	SalaryMin       int    `json:"salary_min" valid:"-"`
 	SalaryMax       int    `json:"salary_max" valid:"-"`

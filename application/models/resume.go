@@ -13,7 +13,7 @@ type Resume struct {
 	CandID    uuid.UUID  `pg:"cand_id, fk, type:uuid" json:"cand_id" form:"cand_id" valid:"-"`
 	Candidate *Candidate `pg:"rel:has-one" valid:"-"`
 
-	Title                string                  `pg:"title, notnull" json:"title" form:"title" valid:"utfletternum~название резюме может содержать только буквы и цифры.,stringlength(4|128)~название резюме должно быть от 4 до 128 символов в длину." `
+	Title                string                  `pg:"title, notnull" json:"title" form:"title" valid:"stringlength(4|128)~название резюме должно быть от 4 до 128 символов в длину." `
 	SalaryMin            *int                    `pg:"salary_min" json:"salary_min" form:"salary_min" valid:"-"`
 	SalaryMax            *int                    `pg:"salary_max" json:"salary_max" form:"salary_max" valid:"-"`
 	Description          string                  `pg:"description, notnull" json:"description" form:"description" valid:"-"`
