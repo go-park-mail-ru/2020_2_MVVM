@@ -7,6 +7,8 @@ import (
 
 type OfficialCompanyRepository interface {
 	CreateOfficialCompany(models.OfficialCompany, uuid.UUID) (*models.OfficialCompany, error)
+	UpdateOfficialCompany(models.OfficialCompany, uuid.UUID) (*models.OfficialCompany, error)
+	DeleteOfficialCompany(uuid.UUID, uuid.UUID) error
 	GetCompaniesList(uint, uint) ([]models.OfficialCompany, error)
 	GetMineCompany(uuid.UUID) (*models.OfficialCompany, error)
 	GetOfficialCompany(uuid.UUID) (*models.OfficialCompany, error)

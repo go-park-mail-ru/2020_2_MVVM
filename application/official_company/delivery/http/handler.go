@@ -23,7 +23,10 @@ type RespList struct {
 }
 
 const (
-	compPath = "company/"
+	compCreate = 0
+	compUpdate = 1
+	compDelete = 2
+	compPath   = "company/"
 )
 
 func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
@@ -36,11 +39,13 @@ func (c *CompanyHandler) Routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	router.GET("/by/id/:company_id", c.GetCompanyHandler)
 	router.GET("/page", c.GetCompanyListHandler)
 	router.POST("/search", c.SearchCompaniesHandler)
+	router.DELETE("/", c.DeleteCompanyHandler)
 	router.Use(AuthRequired)
 	{
 		router.GET("/mine", c.GetUserCompanyHandler)
 		router.POST("/", c.CreateCompanyHandler)
-		//router.PUT("/", c.handlerUpdateCompany)
+		router.PUT("/", c.UpdateCompanyHandler)
+		//router.DELETE("/", c.DeleteCompanyHandler)
 	}
 }
 
@@ -80,55 +85,7 @@ func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 }
 
 func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
-	var req struct {
-		Name        string `json:"name" binding:"required" valid:"stringlength(4|15)~название компании должно быть от 4 до 15 символов."`
-		Description string `json:"description" binding:"required" valid:"-"`
-		Spheres     []int  `json:"spheres" valid:"-"`
-		AreaSearch  string `json:"area_search" valid:"utfletter~неверный регион,stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
-		Link        string `json:"link" valid:"url~неверный формат ссылки"`
-		Avatar      string `json:"avatar" valid:"-"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
-		return
-	}
-	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
-		return
-	}
-
-	file, errImg := common.GetImageFromBase64(req.Avatar)
-	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
-		return
-	}
-	session := sessions.Default(ctx).Get("empl_id")
-	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
-		return
-	}
-	empId, errSession := uuid.Parse(session.(string))
-	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
-		return
-	}
-	compNew, err := c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
-		AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
-	if err != nil {
-		if errMsg := err.Error(); errMsg == common.EmpHaveComp {
-			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
-		} else {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
-		}
-		return
-	}
-	if file != nil {
-		if err := common.AddOrUpdateUserFile(file, compPath+compNew.ID.String()); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-		}
-	}
-	ctx.JSON(http.StatusOK, Resp{Company: compNew})
+	compHandlerCommon(c, ctx, compCreate)
 }
 
 func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
@@ -163,4 +120,84 @@ func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})
+}
+
+func (c *CompanyHandler) UpdateCompanyHandler(ctx *gin.Context) {
+	compHandlerCommon(c, ctx, compUpdate)
+}
+
+func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
+	/*session := sessions.Default(ctx).Get("empl_id")
+	empId, errSession := uuid.Parse(session.(string))
+	if errSession != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
+		return
+	}*/
+	empId, err := uuid.Parse("92f68cc8-45e7-41a6-966e-6599d7142ea8")
+	err = c.CompUseCase.DeleteOfficialCompany(uuid.Nil, empId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, nil)
+}
+
+func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
+	var (
+		req struct {
+			Name        string `json:"name" binding:"required" valid:"stringlength(4|15)~название компании должно быть от 4 до 15 символов."`
+			Description string `json:"description" binding:"required" valid:"-"`
+			Spheres     []int  `json:"spheres" valid:"-"`
+			AreaSearch  string `json:"area_search" valid:"utfletter~неверный регион,stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
+			Link        string `json:"link" valid:"url~неверный формат ссылки"`
+			Avatar      string `json:"avatar" valid:"-"`
+		}
+		compNew *models.OfficialCompany
+		err     error
+	)
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		return
+	}
+	if err := common.ReqValidation(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		return
+	}
+	file, errImg := common.GetImageFromBase64(req.Avatar)
+	if errImg != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
+		return
+	}
+	session := sessions.Default(ctx).Get("empl_id")
+	if session == nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		return
+	}
+	empId, errSession := uuid.Parse(session.(string))
+	if errSession != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		return
+	}
+	if treatmentType == compCreate {
+		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
+			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
+	} else {
+		compNew, err = c.CompUseCase.UpdateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
+			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
+	}
+	if err != nil {
+		if errMsg := err.Error(); errMsg == common.EmpHaveComp {
+			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+		} else {
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		}
+		return
+	}
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, compPath+compNew.ID.String()); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+	ctx.JSON(http.StatusOK, Resp{Company: compNew})
 }

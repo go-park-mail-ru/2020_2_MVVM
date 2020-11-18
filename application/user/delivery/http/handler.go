@@ -115,6 +115,7 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 
 func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
+
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
 		ctx.JSON(http.StatusForbidden, common.RespError{Err: common.EmptyFieldErr})
 		return

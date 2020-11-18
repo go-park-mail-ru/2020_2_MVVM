@@ -7,7 +7,7 @@ import (
 type User struct {
 	tableName struct{} `pg:"main.users,discard_unknown_columns"`
 
-	ID            uuid.UUID `pg:"user_id,pk,type:uuid" json:"id"`
+	ID            uuid.UUID `gorm:"column:user_id;primary_key" json:"id"`
 	UserType      string    `pg:"user_type,notnull" json:"user_type"`
 	Name          string    `pg:"name,notnull" json:"name"`
 	Surname       string    `pg:"surname" json:"surname"`

@@ -10,26 +10,11 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
-	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
-	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
-	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
-	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
-	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
-	ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
-	RepositoryResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/repository"
-	ResponseUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/usecase"
-	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
-	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
-	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
-	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
-	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
-	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
-	"github.com/go-pg/pg/v9"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
@@ -63,7 +48,7 @@ type App struct {
 	log      *Logger
 	doneChan chan bool
 	route    *gin.Engine
-	db       *pg.DB
+	db       *gorm.DB
 }
 
 func NewApp(config Config) *App {
@@ -114,15 +99,14 @@ func NewApp(config Config) *App {
 	} else {
 		log.ErrorLogger.Warning("Document path is undefined")
 	}
-
-	db := pg.Connect(&pg.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Db.Host, config.Db.Port),
-		User:     config.Db.User,
-		Password: config.Db.Password,
-		Database: config.Db.Name,
-	})
-
 	gin.Default()
+
+	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
+		config.Db.Password, config.Db.Name,
+		config.Db.Host, config.Db.Port)), &gorm.Config{})
+	if err != nil {
+		log.ErrorLogger.Fatal("connection to postgres db failed...")
+	}
 	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
 	if err != nil {
 		log.ErrorLogger.Fatal("connection to redis db failed...")
@@ -148,7 +132,7 @@ func NewApp(config Config) *App {
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
 
-	resumeRep := ResumeRepository.NewPgRepository(db)
+	/*resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
@@ -168,7 +152,7 @@ func NewApp(config Config) *App {
 
 	responseRep := RepositoryResponse.NewPgRepository(db)
 	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
-	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
+	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())*/
 
 	app := App{
 		config:   config,
@@ -217,7 +201,6 @@ func (a *App) Run() {
 }
 
 func (a *App) Close() {
-	a.db.Close()
 	a.doneChan <- true
 }
 

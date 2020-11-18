@@ -11,16 +11,49 @@ import (
 	"github.com/google/uuid"
 )
 
-type pgReopository struct {
+type pgRepository struct {
 	db *pg.DB
 }
 
-func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]models.OfficialCompany, error) {
+func (p *pgRepository) UpdateOfficialCompany(newComp models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+	if _, err := p.db.Model(&newComp).WherePK().Returning("*").Update(); err != nil {
+		return nil, fmt.Errorf("can't update company with id: %s", newComp.ID)
+	}
+	return &newComp, nil
+
+}
+
+func (p *pgRepository) DeleteOfficialCompany(compId uuid.UUID, empId uuid.UUID) error {
+	var (
+		comp *models.OfficialCompany
+		err error
+	)
+	if comp, err = p.GetMineCompany(empId); err != nil {
+		return fmt.Errorf("can't delete employer company with EmpId: %s", empId)
+	}
+
+	var employer = models.Employer{ID: empId}
+	_, err = p.db.Model(&employer).Column("comp_id").WherePK().Update()
+	if err != nil {
+		err = fmt.Errorf("error in select employer with id: %s : error: %w", empId, err)
+		return err
+	}
+	if _, err := p.db.Model(comp).WherePK().Delete(); err != nil {
+		return fmt.Errorf("can't delete company with id: %s", comp.ID)
+	}
+	return nil
+}
+
+func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository {
+	return &pgRepository{db: db}
+}
+
+func (p *pgRepository) SearchCompanies(params models.CompanySearchParams) ([]models.OfficialCompany, error) {
 	var compList []models.OfficialCompany
 
 	err := p.db.Model(&compList).WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 		if params.VacCount > 0 {
-			q = q.Where("count_vacancy >= (?)", params.VacCount)
+			q = q.Where("count_company >= (?)", params.VacCount)
 		}
 		if len(params.AreaSearch) != 0 {
 			q = q.Where("area_search IN (?)", pg.In(params.AreaSearch))
@@ -42,7 +75,7 @@ func (p *pgReopository) SearchCompanies(params models.CompanySearchParams) ([]mo
 	return compList, nil
 }
 
-func (p *pgReopository) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
+func (p *pgRepository) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
 	var compList []models.OfficialCompany
 	if limit <= start {
 		return nil, fmt.Errorf("selection with useless positions")
@@ -55,7 +88,7 @@ func (p *pgReopository) GetCompaniesList(start uint, limit uint) ([]models.Offic
 	return compList, nil
 }
 
-func (p *pgReopository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {
+func (p *pgRepository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {
 	var employer models.Employer
 	err := p.db.Model(&employer).Where("empl_id = ?", empId).Select()
 	if err != nil {
@@ -65,11 +98,7 @@ func (p *pgReopository) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany
 	return p.GetOfficialCompany(employer.CompanyID)
 }
 
-func NewPgRepository(db *pg.DB) official_company.OfficialCompanyRepository {
-	return &pgReopository{db: db}
-}
-
-func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
+func (p *pgRepository) CreateOfficialCompany(company models.OfficialCompany, empId uuid.UUID) (*models.OfficialCompany, error) {
 	if empId == uuid.Nil {
 		return nil, fmt.Errorf("error in inserting official company:empId = nil")
 	}
@@ -92,7 +121,7 @@ func (p *pgReopository) CreateOfficialCompany(company models.OfficialCompany, em
 	return &company, nil
 }
 
-func (p *pgReopository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error) {
+func (p *pgRepository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCompany, error) {
 	var company models.OfficialCompany
 	if compId == uuid.Nil {
 		return nil, nil
