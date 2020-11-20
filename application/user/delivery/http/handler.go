@@ -27,17 +27,17 @@ func NewRest(router *gin.RouterGroup, useCase user.UseCase, AuthRequired gin.Han
 }
 
 func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.GET("/by/id/:user_id", u.GetUserByIdHandler)
+	/*router.GET("/by/id/:user_id", u.GetUserByIdHandler)
 	router.GET("cand/by/id/:cand_id", u.GetCandByIdHandler)
 	router.GET("empl/by/id/:empl_id", u.GetEmplByIdHandler)
-	router.POST("/", u.CreateUserHandler)
-	router.POST("/login", u.LoginHandler)
-	router.Use(AuthRequired)
+	router.POST("/login", u.LoginHandler)*/
+	router.POST("/", u.CreateUserHandler1)
+	/*router.Use(AuthRequired)
 	{
 		router.POST("/logout", u.LogoutHandler)
 		router.GET("/me", u.GetCurrentUserHandler)
 		router.PUT("/", u.UpdateUserHandler)
-	}
+	}*/
 }
 
 func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
@@ -264,4 +264,8 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, userUpdate)
+}
+
+func (u *UserHandler) CreateUserHandler1(ctx *gin.Context) {
+	fmt.Println("aaaaaaaaaaa")
 }

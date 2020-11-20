@@ -65,7 +65,7 @@ func (v VacancyUseCase) GetVacancyList(start uint, limit uint, id uuid.UUID, typ
 
 func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]models.Vacancy, error) {
 	if params.SalaryMax == 0 {
-		params.SalaryMax = math.MaxInt64
+		params.SalaryMax = math.MaxInt32
 	}
 	if params.DaysFromNow > 0 {
 		params.StartDate = time.Now().AddDate(0, 0, -params.DaysFromNow).Format("2006-01-02")

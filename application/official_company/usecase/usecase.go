@@ -25,12 +25,12 @@ func (c *CompanyUseCase) DeleteOfficialCompany(compId uuid.UUID, empId uuid.UUID
 }
 
 func (c *CompanyUseCase) GetCompaniesList(start uint, limit uint) ([]models.OfficialCompany, error) {
-	vacList, err := c.repos.GetCompaniesList(start, limit)
+	compList, err := c.repos.GetCompaniesList(start, limit)
 	if err != nil {
 		err = fmt.Errorf("error in company list creation: %w", err)
 		return nil, err
 	}
-	return vacList, nil
+	return compList, nil
 }
 
 func (c *CompanyUseCase) GetMineCompany(empId uuid.UUID) (*models.OfficialCompany, error) {

@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	logger "github.com/apsdehal/go-logger"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -136,4 +138,37 @@ func AuthRequired() gin.HandlerFunc {
 			c.Abort()
 		}
 	}
+}
+
+func Cors() gin.HandlerFunc {
+	// Only for requests WITHOUT credentials, the literal value "*" can be specified
+	return cors.New(cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return strings.HasPrefix(origin, "http://127.0.0.1") ||
+				strings.HasPrefix(origin, "http://localhost") ||
+				strings.HasPrefix(origin, "https://localhost") ||
+				strings.HasPrefix(origin, "http://studhunt") ||
+				strings.HasPrefix(origin, "https://studhunt")
+		},
+		MaxAge: time.Hour,
+	})
+}
+
+func Sessions(store sessions.Store) gin.HandlerFunc {
+	store.Options(sessions.Options{
+		//Domain: "studhunt.ru",
+		Domain:   "localhost", // for postman
+		MaxAge:   int((12 * time.Hour).Seconds()),
+		Secure:   false,
+		HttpOnly: true,
+		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
+		//SameSite: http.SameSiteStrictMode, // prevent csrf attack
+	})
+
+	return sessions.Sessions("studhunt", store)
 }

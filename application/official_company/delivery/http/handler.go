@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"net/http"
 )
 
@@ -180,10 +181,10 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		return
 	}
 	if treatmentType == compCreate {
-		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
+		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
 			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	} else {
-		compNew, err = c.CompUseCase.UpdateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: req.Spheres,
+		compNew, err = c.CompUseCase.UpdateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
 			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	}
 	if err != nil {
@@ -200,4 +201,12 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		}
 	}
 	ctx.JSON(http.StatusOK, Resp{Company: compNew})
+}
+
+func convertSliceToPqArr(slice []int) pq.Int64Array {
+	arr := make(pq.Int64Array, len(slice))
+	for i, e := range slice {
+		arr[i] = int64(e)
+	}
+	return arr
 }

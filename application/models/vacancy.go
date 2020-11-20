@@ -5,28 +5,27 @@ import (
 )
 
 type Vacancy struct {
-	tableName       struct{}  `pg:"main.vacancy,discard_unknown_columns"`
-	ID              uuid.UUID `pg:"vac_id,pk,type:uuid" json:"vac_id"`
-	EmpID           uuid.UUID `pg:"empl_id, fk, type:uuid" json:"empl_id"`
-	CompID          uuid.UUID `pg:"comp_id, fk, type:uuid" json:"comp_id"`
-	Title           string    `pg:"title,notnull" json:"title"`
-	Gender          string    `pg:"gender" json:"gender"`
-	SalaryMin       int       `pg:"salary_min" json:"salary_min"`
-	SalaryMax       int       `pg:"salary_max" json:"salary_max"`
-	Description     string    `pg:"description,notnull" json:"description"`
-	Requirements    string    `pg:"requirements" json:"requirements"`
-	Duties          string    `pg:"duties" json:"duties"`
-	Skills          string    `pg:"skills" json:"skills"`
-	Sphere          int       `pg:"sphere" json:"sphere"`
-	Employment      string    `pg:"employment" json:"employment"`
-	ExperienceMonth int       `pg:"experience_month" json:"experience_month"`
-	AreaSearch      string    `pg:"area_search" json:"area_search"`
-	Location        string    `pg:"location" json:"location"`
-	CareerLevel     string    `pg:"career_level" json:"career_level"`
-	EducationLevel  string    `pg:"education_level" json:"education_level"`
-	DateCreate      string    `pg:"date_create" json:"date_create"`
-	EmpEmail        string    `pg:"empl_email" json:"email"`
-	EmpPhone        string    `pg:"empl_phone" json:"phone"`
+	ID              uuid.UUID `gorm:"column:vac_id;primaryKey;type:uuid" json:"vac_id"`
+	EmpID           uuid.UUID `gorm:"column:empl_id; foreign_key; type:uuid" json:"empl_id"`
+	CompID          uuid.UUID `gorm:"column:comp_id; foreign_key; type:uuid" json:"comp_id"`
+	Title           string    `gorm:"column:title;notnull" json:"title"`
+	Gender          string    `gorm:"column:gender" json:"gender"`
+	SalaryMin       int       `gorm:"column:salary_min" json:"salary_min"`
+	SalaryMax       int       `gorm:"column:salary_max" json:"salary_max"`
+	Description     string    `gorm:"column:description;notnull" json:"description"`
+	Requirements    string    `gorm:"column:requirements" json:"requirements"`
+	Duties          string    `gorm:"column:duties" json:"duties"`
+	Skills          string    `gorm:"column:skills" json:"skills"`
+	Sphere          int       `gorm:"column:sphere" json:"sphere"`
+	Employment      string    `gorm:"column:employment" json:"employment"`
+	ExperienceMonth int       `gorm:"column:experience_month" json:"experience_month"`
+	AreaSearch      string    `gorm:"column:area_search" json:"area_search"`
+	Location        string    `gorm:"column:location" json:"location"`
+	CareerLevel     string    `gorm:"column:career_level" json:"career_level"`
+	EducationLevel  string    `gorm:"column:education_level" json:"education_level"`
+	DateCreate      string    `gorm:"column:date_create" json:"date_create"`
+	EmpEmail        string    `gorm:"column:empl_email" json:"email"`
+	EmpPhone        string    `gorm:"column:empl_phone" json:"phone"`
 }
 
 type VacancySearchParams struct {

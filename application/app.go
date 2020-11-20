@@ -5,20 +5,14 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/asaskevich/govalidator"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
-	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
-	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -52,54 +46,22 @@ type App struct {
 }
 
 func NewApp(config Config) *App {
+	gin.Default()
+	r := gin.New()
 
-	infoLogger, err := logger.New("test", 1, os.Stdout)
-	errorLogger, err := logger.New("test", 2, os.Stderr)
+	infoLogger, err := logger.New("Info logger", 1, os.Stdout)
+	errorLogger, err := logger.New("Error logger", 2, os.Stderr)
 
 	log := &Logger{
-		//InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
-		//ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
 		InfoLogger:  infoLogger,
 		ErrorLogger: errorLogger,
 	}
-
 	infoLogger.SetLogLevel(logger.DebugLevel)
-
-	r := gin.New()
-	r.Use(common.RequestLogger(log.InfoLogger))
-	r.Use(common.ErrorLogger(log.ErrorLogger))
-	r.Use(common.ErrorMiddleware())
-	r.Use(common.Recovery(log.ErrorLogger))
-
-	// Only for requests WITHOUT credentials, the literal value "*" can be specified
-	corsMiddleware := cors.New(cors.Config{
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			return strings.HasPrefix(origin, "http://127.0.0.1") ||
-				strings.HasPrefix(origin, "http://localhost") ||
-				strings.HasPrefix(origin, "https://localhost") ||
-				strings.HasPrefix(origin, "http://studhunt") ||
-				strings.HasPrefix(origin, "https://studhunt")
-		},
-		MaxAge: time.Hour,
-	})
-
-	r.Use(corsMiddleware)
-
-	r.NoRoute(func(c *gin.Context) {
-		c.AbortWithStatus(http.StatusNotFound)
-	})
-	r.GET("/health", healthCheck())
-
 	if config.DocPath != "" {
 		r.Static("/doc/api", config.DocPath)
 	} else {
 		log.ErrorLogger.Warning("Document path is undefined")
 	}
-	gin.Default()
 
 	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
 		config.Db.Password, config.Db.Name,
@@ -112,25 +74,32 @@ func NewApp(config Config) *App {
 		log.ErrorLogger.Fatal("connection to redis db failed...")
 	}
 
-	store.Options(sessions.Options{
-		Domain: "studhunt.ru",
-		//Domain:   "localhost", // for postman
-		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-		//SameSite: http.SameSiteStrictMode, // prevent csrf attack
+	r.Use(common.RequestLogger(log.InfoLogger))
+	r.Use(common.ErrorLogger(log.ErrorLogger))
+	r.Use(common.ErrorMiddleware())
+	r.Use(common.Recovery(log.ErrorLogger))
+	r.Use(common.Cors())
+	r.Use(common.Sessions(store))
+	r.NoRoute(func(c *gin.Context) {
+		c.AbortWithStatus(http.StatusNotFound)
 	})
+	r.GET("/health", healthCheck())
+
 	govalidator.SetFieldsRequiredByDefault(false)
 
-	sessionsMiddleware := sessions.Sessions("studhunt", store)
-	r.Use(sessionsMiddleware)
-	api := r.Group("/api/v1")
+	//api := r.Group("/api/v1")
 
-	UserRep := UserRepository.NewPgRepository(db)
+	/*UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
+
+	vacancyRep := RepositoryVacancy.NewPgRepository(db)
+	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
+
+	companyRep := RepositoryCompany.NewPgRepository(db)
+	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
+	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())*/
 
 	/*resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)

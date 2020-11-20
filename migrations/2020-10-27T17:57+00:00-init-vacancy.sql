@@ -15,7 +15,7 @@ create table vacancy (
     requirements text null,
     duties text null,
     skills text null,
-    sphere varchar(128) null,
+    sphere int default -1,
     gender gender_type null,
     employment employment_type default 'full-time',
     area_search varchar(128) null,

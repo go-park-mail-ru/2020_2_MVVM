@@ -2,18 +2,17 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type OfficialCompany struct {
-	tableName struct{} `pg:"main.official_companies,discard_unknown_columns"`
-
-	ID          uuid.UUID `pg:"comp_id,pk,type:uuid" json:"id"`
-	Name        string    `pg:"name,notnull" json:"name"`
-	Spheres     []int     `pg:"spheres,array" json:"spheres"`
-	Description string    `pg:"description,notnull" json:"description"`
-	AreaSearch  string    `pg:"area_search" json:"area_search"`
-	Link        string    `pg:"link" json:"link"`
-	VacCount    int       `pg:"count_vacancy" json:"vac_count"`
+	ID          uuid.UUID     `gorm:"column:comp_id;primaryKey" json:"id"`
+	Name        string        `gorm:"column:name;notnull" json:"name"`
+	Spheres     pq.Int64Array `gorm:"column:spheres" json:"spheres"`
+	Description string        `gorm:"column:description;notnull" json:"description"`
+	AreaSearch  string        `gorm:"column:area_search" json:"area_search"`
+	Link        string        `gorm:"column:link" json:"link"`
+	VacCount    int           `gorm:"column:count_vacancy" json:"vac_count"`
 }
 
 type CompanySearchParams struct {
