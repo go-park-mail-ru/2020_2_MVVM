@@ -51,9 +51,9 @@ type vacListRequest struct {
 }
 
 const (
-	vacCreate     = 0
-	vacUpdate     = 1
-	vacPath       = "vacancy/"
+	vacCreate = 0
+	vacUpdate = 1
+	vacPath   = "vacancy/"
 )
 
 func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
@@ -67,16 +67,12 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	router.GET("/page/comp", v.GetCompVacancyListHandler)
 	router.GET("/page", v.GetVacancyListHandler)
 	router.POST("/search", v.SearchVacanciesHandler)
-
-	router.GET("/mine", v.GetUserVacancyListHandler)
-	router.PUT("/", v.UpdateVacancyHandler)
-	router.POST("/", v.CreateVacancyHandler)
-	//router.Use(AuthRequired)
-	//{
-	//	router.GET("/mine", v.GetUserVacancyListHandler)
-	//	router.PUT("/", v.UpdateVacancyHandler)
-	//	router.POST("/", v.CreateVacancyHandler)
-	//}
+	router.Use(AuthRequired)
+	{
+		router.GET("/mine", v.GetUserVacancyListHandler)
+		router.PUT("/", v.UpdateVacancyHandler)
+		router.POST("/", v.CreateVacancyHandler)
+	}
 }
 
 func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
@@ -91,7 +87,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	vacId, _ := uuid.Parse(req.VacID)
 	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -132,7 +128,7 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	}
 	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
@@ -164,7 +160,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
 		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
 	if treatmentType == vacCreate {
-		/*session := sessions.Default(ctx).Get("empl_id")
+		session := sessions.Default(ctx).Get("empl_id")
 		if session == nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
@@ -174,8 +170,6 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
 		}
-		vacNew.EmpID = empId*/
-		empId, _ := uuid.Parse("ce6c12bb-98be-40ec-bd5f-cf1f7506f894")
 		vacNew.EmpID = empId
 		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
 	} else {
@@ -183,7 +177,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err:  common.DataBaseErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	if file != nil {
@@ -217,7 +211,7 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	}
 	vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, id, entityType)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})

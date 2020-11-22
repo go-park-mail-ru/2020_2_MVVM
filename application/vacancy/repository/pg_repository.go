@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type pgRepository struct {
@@ -21,25 +22,25 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 	employer := new(models.Employer)
 	company  := new(models.OfficialCompany)
 
-	err := p.db.Table("main.employers").Take(employer,"empl_id = ?", vac.EmpID).Error
+	err := p.db.Take(employer,"empl_id = ?", vac.EmpID).Error
 	if err != nil {
 		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", vac.EmpID, err)
 		return nil, err
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
 		vac.ID = uuid.New()
+		vac.DateCreate = time.Now().Format("2006-01-02")
 		vac.CompID = compId
 		company.ID = compId
 	} else {
 		return nil, errors.New("error: employer must have company for vacancy creation")
 	}
-	err = p.db.Table("main.vacancy").Create(&vac).Error
+	err = p.db.Create(&vac).Error
 	if err != nil {
 		err = fmt.Errorf("error in inserting vacancy with title: %s : error: %w", vac.Title, err)
 		return nil, err
 	}
-	//_, err = p.db.Model(&company).WherePK().Set("count_vacancy = count_vacancy + 1").Update()
-	err = p.db.Model(&company).UpdateColumn("count_vacancy", gorm.Expr("count_vacancy + ?", 1)).Error
+	err = p.db.Table("main.official_companies").Where("comp_id", vac.CompID).UpdateColumn("count_vacancy", gorm.Expr("count_vacancy + ?", 1)).Error
 	if err != nil {
 		return nil, fmt.Errorf("error in update company with id:  %s vacCount  : error: %w", company.ID.String(), err)
 	}
@@ -51,7 +52,7 @@ func (p *pgRepository) GetVacancyById(id uuid.UUID) (*models.Vacancy, error) {
 	if id == uuid.Nil {
 		return nil, nil
 	}
-	err := p.db.Table("main.vacancy").Take(vac, "vac_id = ?", id).Error
+	err := p.db.Take(vac, "vac_id = ?", id).Error
 	if err != nil {
 		return nil, fmt.Errorf("error in select vacancy with id: %s : error: %w", id.String(), err)
 	}
@@ -82,11 +83,11 @@ func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, enti
 	}
 
 	if entityType == vacancy.ByEmpId {
-		err = p.db.Table("main.vacancy").Where("empl_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Where("empl_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
 	} else if entityType == vacancy.ByCompId {
-		err = p.db.Table("main.vacancy").Where("comp_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Where("comp_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
 	} else {
-		err = p.db.Table("main.vacancy").Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
 	}
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)

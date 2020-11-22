@@ -5,11 +5,11 @@ import (
 )
 
 type Vacancy struct {
-	ID              uuid.UUID `gorm:"column:vac_id;primaryKey;type:uuid" json:"vac_id"`
-	EmpID           uuid.UUID `gorm:"column:empl_id; foreign_key; type:uuid" json:"empl_id"`
-	CompID          uuid.UUID `gorm:"column:comp_id; foreign_key; type:uuid" json:"comp_id"`
+	ID              uuid.UUID `gorm:"column:vac_id;default:uuid_generate_v4()" json:"vac_id"`
+	EmpID           uuid.UUID `gorm:"column:empl_id;type:uuid" json:"empl_id"`
+	CompID          uuid.UUID `gorm:"column:comp_id;type:uuid" json:"comp_id"`
 	Title           string    `gorm:"column:title;notnull" json:"title"`
-	Gender          string    `gorm:"column:gender" json:"gender"`
+	Gender          string    `gorm:"column:gender;default:\"male\"" json:"gender"`
 	SalaryMin       int       `gorm:"column:salary_min" json:"salary_min"`
 	SalaryMax       int       `gorm:"column:salary_max" json:"salary_max"`
 	Description     string    `gorm:"column:description;notnull" json:"description"`
@@ -43,4 +43,8 @@ type VacancySearchParams struct {
 	ByAsc           bool     `json:"byAsc"`
 	DaysFromNow     int      `json:"days_from_now"`
 	StartDate       string   `json:"start_date"`
+}
+
+func (v Vacancy) TableName() string {
+	return "main.vacancy"
 }

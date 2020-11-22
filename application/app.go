@@ -8,6 +8,15 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
+	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
+	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
+	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
+	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
+	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
+	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
+	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
+	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
@@ -87,9 +96,9 @@ func NewApp(config Config) *App {
 
 	govalidator.SetFieldsRequiredByDefault(false)
 
-	//api := r.Group("/api/v1")
+	api := r.Group("/api/v1")
 
-	/*UserRep := UserRepository.NewPgRepository(db)
+	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
 
@@ -99,7 +108,7 @@ func NewApp(config Config) *App {
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())*/
+	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
 
 	/*resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)

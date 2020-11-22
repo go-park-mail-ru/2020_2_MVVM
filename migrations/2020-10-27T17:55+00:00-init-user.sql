@@ -21,7 +21,7 @@ create table candidates
     cand_id uuid default uuid_generate_v4() not null
         constraint candidates_pkey primary key,
     user_id uuid default uuid_generate_v4() not null
-            references users(user_id)
+            references users(user_id) ON DELETE CASCADE
 );
 
 create table employers
@@ -29,8 +29,9 @@ create table employers
     empl_id uuid default uuid_generate_v4() not null
         constraint employers_pkey primary key,
     user_id uuid default uuid_generate_v4() not null
-        references users(user_id),
-    comp_id uuid references official_companies(comp_id)
+        references users(user_id) ON DELETE CASCADE,
+    comp_id uuid
+        references official_companies(comp_id) ON DELETE SET NULL
 );
 
 -- +migrate Down

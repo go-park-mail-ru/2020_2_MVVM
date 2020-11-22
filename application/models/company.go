@@ -6,13 +6,18 @@ import (
 )
 
 type OfficialCompany struct {
-	ID          uuid.UUID     `gorm:"column:comp_id;primaryKey" json:"id"`
+	ID          uuid.UUID     `gorm:"column:comp_id;default:uuid_generate_v4()" json:"id"`
 	Name        string        `gorm:"column:name;notnull" json:"name"`
 	Spheres     pq.Int64Array `gorm:"column:spheres" json:"spheres"`
 	Description string        `gorm:"column:description;notnull" json:"description"`
 	AreaSearch  string        `gorm:"column:area_search" json:"area_search"`
 	Link        string        `gorm:"column:link" json:"link"`
 	VacCount    int           `gorm:"column:count_vacancy" json:"vac_count"`
+}
+
+
+func (c OfficialCompany) TableName() string {
+	return "main.official_companies"
 }
 
 type CompanySearchParams struct {

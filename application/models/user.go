@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID `gorm:"column:user_id;primaryKey" json:"id"`
+	ID            uuid.UUID `gorm:"column:user_id;default:uuid_generate_v4()" json:"id"`
 	UserType      string    `gorm:"column:user_type;notnull" json:"user_type"`
 	Name          string    `gorm:"column:name;notnull" json:"name"`
 	Surname       string    `gorm:"column:surname" json:"surname"`
@@ -15,17 +15,29 @@ type User struct {
 	SocialNetwork *string   `gorm:"column:social_network" json:"social_network"`
 }
 
+func (u User) TableName() string {
+	return "main.users"
+}
+
 type Employer struct {
-	ID        uuid.UUID           `gorm:"column:empl_id;primaryKey;type:uuid" json:"empl_id"`
-	UserID    uuid.UUID           `gorm:"column:user_id;type:uuid" json:"user_id"`
-	CompanyID uuid.UUID           `gorm:"column:comp_id;type:uuid" json:"comp_id"`
-	//Favorites []*FavoritesForEmpl `gorm:"column:has-many"`
+	ID        uuid.UUID           `gorm:"column:empl_id;default:uuid_generate_v4()" json:"empl_id"`
+	UserID    uuid.UUID           `gorm:"column:user_id;foreignKey:user_id" json:"user_id"`
+	CompanyID uuid.UUID           `gorm:"column:comp_id;foreignKey:comp_id" json:"comp_id"`
+	Favorites []*FavoritesForEmpl `gorm:"foreignKey:favorite_id"`
+}
+
+func (e Employer) TableName() string {
+	return "main.employers"
 }
 
 type Candidate struct {
-	ID     uuid.UUID `gorm:"column:cand_id;primaryKey;type:uuid" json:"cand_id"`
+	ID     uuid.UUID `gorm:"column:cand_id;default:uuid_generate_v4()" json:"cand_id"`
 	UserID uuid.UUID `gorm:"column:user_id;type:uuid" json:"user_id"`
-	User   *User     `gorm:"column:rel:has-one"`
+	User   *User     `gorm:"foreignKey:user_id"`
+}
+
+func (c Candidate) TableName() string {
+	return "main.candidates"
 }
 
 type UserLogin struct {

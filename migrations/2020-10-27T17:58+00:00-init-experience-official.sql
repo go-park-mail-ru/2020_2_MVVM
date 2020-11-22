@@ -8,11 +8,11 @@ create table experience_in_official_company
         constraint experience_in_official_company_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references candidates(cand_id),
+            references candidates(cand_id) ON DELETE CASCADE,
     resume_id uuid default uuid_generate_v4() not null
-            references resume(resume_id),
+            references resume(resume_id) ON DELETE CASCADE,
     company_id uuid default uuid_generate_v4() not null
-            references official_companies(comp_id),
+            references official_companies(comp_id) ON DELETE CASCADE,
     position text,
     begin date not null,
     finish date null,

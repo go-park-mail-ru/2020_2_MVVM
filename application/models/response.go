@@ -6,14 +6,16 @@ import (
 )
 
 type Response struct {
-	tableName struct{} `pg:"main.response,discard_unknown_columns"`
+	ID         uuid.UUID `gorm:"column:response_id;default:uuid_generate_v4()" json:"response_id"`
+	ResumeID   uuid.UUID `gorm:"column:resume_id; fk; type:uuid" json:"resume_id"`
+	VacancyID  uuid.UUID `gorm:"column:vacancy_id; fk; type:uuid" json:"vacancy_id"`
+	Initial    string    `gorm:"column:initial" json:"initial"`
+	Status     string    `gorm:"column:status" json:"status"`
+	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`
+}
 
-	ID         uuid.UUID `pg:"response_id,pk,type:uuid" json:"response_id"`
-	ResumeID   uuid.UUID `pg:"resume_id, fk, type:uuid" json:"resume_id"`
-	VacancyID  uuid.UUID `pg:"vacancy_id, fk, type:uuid" json:"vacancy_id"`
-	Initial    string    `pg:"initial" json:"initial"`
-	Status     string    `pg:"status" json:"status"`
-	DateCreate time.Time `pg:"date_create" json:"date_create"`
+func (r Response) TableName() string {
+	return "main.response"
 }
 
 type ResponseWithTitle struct {
