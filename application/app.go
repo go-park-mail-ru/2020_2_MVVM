@@ -160,7 +160,7 @@ func NewApp(config Config) *App {
 	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep)
 	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, userCase, education, customExperience, resumeRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, common.AuthRequired())
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, common.AuthRequired())
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
@@ -172,7 +172,7 @@ func NewApp(config Config) *App {
 
 	responseRep := RepositoryResponse.NewPgRepository(db)
 	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
-	ResponseHandler.NewRest(api.Group("/response"), response, common.AuthRequired())
+	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, common.AuthRequired())
 
 	app := App{
 		config:   config,

@@ -2,7 +2,6 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
@@ -25,11 +24,13 @@ func NewRest(router *gin.RouterGroup,
 	useCaseResume resume.UseCase,
 	useCaseEducation education.UseCase,
 	useCaseCustomExperience custom_experience.UseCase,
+	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *ResumeHandler {
 	rest := &ResumeHandler{
 		UseCaseResume:           useCaseResume,
 		UseCaseEducation:        useCaseEducation,
 		UseCaseCustomExperience: useCaseCustomExperience,
+		SessionBuilder:          sessionBuilder,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -52,14 +53,17 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 }
 
 func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
-	candID, err := common.GetCurrentUserId(ctx, "cand_id")
+	session := r.SessionBuilder.Build(ctx)
+	candID, err := common.GetCurrentUserId(session, "cand_id")
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err:  common.AuthRequiredErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	result, err := r.UseCaseResume.GetAllUserResume(candID)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -67,14 +71,16 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
-	candID, err := common.GetCurrentUserId(ctx, "cand_id")
+	session := r.SessionBuilder.Build(ctx)
+	candID, err := common.GetCurrentUserId(session, "cand_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	var template *models.Resume
-	if err := ctx.ShouldBindBodyWith(&template, binding.JSON); err != nil {
+	var template models.Resume
+	if err := ctx.ShouldBindJSON(&template); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -90,8 +96,9 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		return
 	}
 
-	result, err := r.UseCaseResume.Create(*template)
+	result, err := r.UseCaseResume.Create(template)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -123,6 +130,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -135,12 +143,14 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 
 	result, err := r.UseCaseResume.GetById(resumeID)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	var isFavorite *uuid.UUID = nil
-	emplID, err := common.GetCurrentUserId(ctx, "empl_id")
+	session := r.SessionBuilder.Build(ctx)
+	emplID, err := common.GetCurrentUserId(session, "empl_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -192,7 +202,8 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
-	candID, err := common.GetCurrentUserId(ctx, "cand_id")
+	session := r.SessionBuilder.Build(ctx)
+	candID, err := common.GetCurrentUserId(session, "cand_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -203,7 +214,8 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	var template models.Resume
-	if err := ctx.ShouldBindBodyWith(&template, binding.JSON); err != nil {
+	if err := ctx.ShouldBindJSON(&template); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -220,8 +232,8 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	result, err := r.UseCaseResume.Update(template)
-
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -274,6 +286,7 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 		ResumeID string `uri:"resume_id" binding:"required,uuid"`
 	}
 	if err := ctx.ShouldBindUri(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -283,7 +296,8 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 		return
 	}
 
-	emplID, err := common.GetCurrentUserId(ctx, "empl_id")
+	session := r.SessionBuilder.Build(ctx)
+	emplID, err := common.GetCurrentUserId(session, "empl_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -297,15 +311,16 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 
 	favorite, err := r.UseCaseResume.AddFavorite(favoriteForEmpl)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	type Response struct {
-		Favorite models.FavoritesForEmpl `json:"favorite_for_empl"`
-	}
+	//type Response struct {
+	//	Favorite models.FavoritesForEmpl `json:"favorite_for_empl"`
+	//}
 
-	ctx.JSON(http.StatusOK, Response{Favorite: *favorite})
+	ctx.JSON(http.StatusOK, *favorite)
 }
 
 func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
@@ -313,6 +328,7 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 		FavoriteID string `uri:"favorite_id" binding:"required,uuid"`
 	}
 	if err := ctx.ShouldBindUri(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -322,7 +338,8 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 		return
 	}
 
-	emplID, err := common.GetCurrentUserId(ctx, "empl_id")
+	session := r.SessionBuilder.Build(ctx)
+	emplID, err := common.GetCurrentUserId(session, "empl_id")
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -335,22 +352,26 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 	favoriteForEmpl := models.FavoritesForEmpl{FavoriteID: favoriteID, EmplID: emplID}
 	err = r.UseCaseResume.RemoveFavorite(favoriteForEmpl)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.JSON(http.StatusOK, nil)
 }
 
 func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
-	emplID, err := common.GetCurrentUserId(ctx, "empl_id")
+	session := r.SessionBuilder.Build(ctx)
+	emplID, err := common.GetCurrentUserId(session, "empl_id")
 	if err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.AuthRequiredErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	emplFavoriteResume, err := r.UseCaseResume.GetAllEmplFavoriteResume(emplID)
 	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}

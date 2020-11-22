@@ -16,9 +16,8 @@ func (sb *NewSessionBuilder) Build (ctx *gin.Context) sessions.Session {
 	return sessions.Default(ctx)
 }
 
-func GetCurrentUserId(ctx *gin.Context, user_type string) (id uuid.UUID, err error) {
-	session := sessions.Default(ctx)
-	userIDStr := session.Get(user_type)
+func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID, err error) {
+	userIDStr := session.Get(userType)
 	if userIDStr == nil {
 		return uuid.Nil, nil
 	}

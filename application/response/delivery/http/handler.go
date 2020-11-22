@@ -13,13 +13,16 @@ import (
 
 type ResponseHandler struct {
 	UsecaseResponse response.IUseCaseResponse
+	SessionBuilder  common.SessionBuilder
 }
 
 func NewRest(router *gin.RouterGroup,
 	usecaseResponse response.IUseCaseResponse,
+	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *ResponseHandler {
 	rest := &ResponseHandler{
 		UsecaseResponse: usecaseResponse,
+		SessionBuilder:  sessionBuilder,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -31,7 +34,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 		router.POST("/", r.CreateResponse)
 		router.POST("/update", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
-		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse) // vacancy_id
+		router.GET("/free/resumes/:entity_id", r.handlerGetAllResumeWithoutResponse)    // vacancy_id
 		router.GET("/free/vacancies/:entity_id", r.handlerGetAllVacancyWithoutResponse) // resume_id
 	}
 }
@@ -46,9 +49,9 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	var userType string
 	candIDStr := session.Get(common.CandID)
 	emplIDStr := session.Get(common.EmplID)
-	if candIDStr != nil && emplIDStr == nil{
+	if candIDStr != nil && emplIDStr == nil {
 		userType = "candidate"
-	} else if candIDStr == nil && emplIDStr != nil{
+	} else if candIDStr == nil && emplIDStr != nil {
 		userType = "employer"
 	} else {
 		err := errors.New("this user cannot respond")
@@ -76,9 +79,9 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	var userType string
 	candIDStr := session.Get(common.CandID)
 	emplIDStr := session.Get(common.EmplID)
-	if candIDStr != nil && emplIDStr == nil{
+	if candIDStr != nil && emplIDStr == nil {
 		userType = common.Candidate
-	} else if candIDStr == nil && emplIDStr != nil{
+	} else if candIDStr == nil && emplIDStr != nil {
 		userType = common.Employer
 	} else {
 		err := errors.New("this user cannot respond")
@@ -102,13 +105,13 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	emplID, err := common.HandlerGetCurrentUserID(ctx, common.EmplID)
 
 	var responses []models.ResponseWithTitle
-	if candID != uuid.Nil && emplID == uuid.Nil{
+	if candID != uuid.Nil && emplID == uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
 			return
 		}
-	} else if candID == uuid.Nil && emplID != uuid.Nil{
+	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: err.Error()})
@@ -165,7 +168,8 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 		return uuid.Nil, uuid.Nil, err
 	}
 
-	userID, err := common.GetCurrentUserId(ctx, userType)
+	session := r.SessionBuilder.Build(ctx)
+	userID, err := common.GetCurrentUserId(session, userType)
 	if err != nil {
 		return uuid.Nil, uuid.Nil, err
 	}

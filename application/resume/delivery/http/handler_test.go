@@ -11,7 +11,9 @@ import (
 	mocksExp "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	mocksEduc "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/education"
 	mocksResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
@@ -21,26 +23,28 @@ const (
 	resumeUrlGroup = "/api/v1/resume/"
 )
 
-var testData struct {
+type TestData struct {
 	resumeHandler *ResumeHandler
 	router        *gin.Engine
 	mockUseCase   *mocksResume.UseCase
 	mockUSEduc    *mocksEduc.UseCase
 	mockUSExp     *mocksExp.UseCase
 	mockAuth      *mocksCommon.AuthTest
+	mockSB        *mocksCommon.SessionBuilder
+	mockSession   *mocksCommon.Session
 	httpStatus    []int
 	resList       []models.Resume
 	resBriefList  []models.BriefResumeInfo
 }
 
 func TestMain(m *testing.M) {
-	setUp()
 	retCode := m.Run()
 	os.Exit(retCode)
 }
 
-func setUp() {
+func beforeTest() TestData {
 	gin.SetMode(gin.TestMode)
+	testData := TestData{}
 	testData.httpStatus = []int{
 		http.StatusOK,
 		http.StatusBadRequest,
@@ -54,16 +58,29 @@ func setUp() {
 		{Title: "title1", Description: "description1"},
 		{Title: "title2", Description: "description2"},
 		{Title: "title3", Description: "description3"}}
+	testData.mockSB = new(mocksCommon.SessionBuilder)
+	testData.mockSession = new(mocksCommon.Session)
 	testData.mockUseCase = new(mocksResume.UseCase)
 	testData.mockUSEduc = new(mocksEduc.UseCase)
 	testData.mockUSExp = new(mocksExp.UseCase)
 	testData.router = gin.Default()
 	api := testData.router.Group("/api/v1")
-	testData.resumeHandler = NewRest(api.Group("/resume"), testData.mockUseCase, testData.mockUSEduc, testData.mockUSExp, nil)
+	testData.resumeHandler = NewRest(api.Group("/resume"), testData.mockUseCase,
+		testData.mockUSEduc,
+		testData.mockUSExp,
+		testData.mockSB,
+		func(context *gin.Context) {})
+	return testData
 }
 
 func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
+	case resume.Response:
+		resp := entity.(resume.Response)
+		return &resp
+	case models.FavoritesForEmpl:
+		resp := entity.(models.FavoritesForEmpl)
+		return &resp
 	case models.Resume:
 		resume := entity.(models.Resume)
 		return &resume
@@ -86,11 +103,11 @@ func getRespStruct(entity interface{}) interface{} {
 func TestGetResumePageHandler(t *testing.T) {
 	var start uint = 0
 	var end uint = 2
-	v, r, mockUseCase := testData.resumeHandler, testData.router, testData.mockUseCase
-	r.GET("/page", v.GetResumePage)
+	td := beforeTest()
+	td.router.GET("/page", td.resumeHandler.GetResumePage)
 
-	mockUseCase.On("List", start, end).Return(testData.resBriefList, nil)
-	mockUseCase.On("List", start, uint(1000)).Return(nil, assert.AnError)
+	td.mockUseCase.On("List", start, end).Return(td.resBriefList, nil)
+	td.mockUseCase.On("List", start, uint(1000)).Return(nil, assert.AnError)
 
 	testUrls := []string{
 		fmt.Sprintf("%spage?start=%d&limit=%d", resumeUrlGroup, start, end),
@@ -98,14 +115,14 @@ func TestGetResumePageHandler(t *testing.T) {
 		fmt.Sprintf("%spage?start=%d&limit=%d", resumeUrlGroup, start, uint(1000)),
 	}
 
-	testExpectedBody := []interface{}{testData.resBriefList, common.EmptyFieldErr, common.DataBaseErr}
+	testExpectedBody := []interface{}{td.resBriefList, common.EmptyFieldErr, common.DataBaseErr}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
-			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
+			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -113,8 +130,8 @@ func TestGetResumePageHandler(t *testing.T) {
 }
 
 func TestGetResumeSearchHandler(t *testing.T) {
-	v, r, mockUseCase := testData.resumeHandler, testData.router, testData.mockUseCase
-	r.GET("/search", v.GetResumePage)
+	td := beforeTest()
+	td.router.GET("/search", td.resumeHandler.GetResumePage)
 
 	params := resume.SearchParams{
 		KeyWords:        nil,
@@ -126,22 +143,309 @@ func TestGetResumeSearchHandler(t *testing.T) {
 		ExperienceMonth: nil,
 		AreaSearch:      nil,
 	}
-	mockUseCase.On("Search", params).Return(testData.resBriefList, nil)
+	td.mockUseCase.On("Search", params).Return(td.resBriefList, nil)
 
 	testUrls := []string{
 		fmt.Sprintf("%ssearch", resumeUrlGroup),
 		fmt.Sprintf("%ssearch", resumeUrlGroup),
 	}
 
-	testExpectedBody := []interface{}{testData.resBriefList, common.EmptyFieldErr}
+	testExpectedBody := []interface{}{td.resBriefList, common.EmptyFieldErr}
 	testParamsForPost := []interface{}{params, nil}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
-			w, err := general.PerformRequest(r, http.MethodPost, testUrls[i], testParamsForPost[i])
+			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestGetResumeByID(t *testing.T) {
+	td := beforeTest()
+	td.router.GET("/by/id/:resume_id", td.resumeHandler.GetResumeByID)
+
+	ID := uuid.New()
+	user := models.User{ID: ID}
+	cand := models.Candidate{User: &user}
+	res := models.Resume{
+		ResumeID:  ID,
+		Candidate: &cand,
+	}
+
+	favorite := models.FavoritesForEmpl{ FavoriteID: ID }
+
+	td.mockUseCase.On("GetById", ID).Return(&res, nil)
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.EmplID).Return(ID.String())
+	td.mockUseCase.On("GetFavoriteByResume", ID, ID).Return(&favorite, nil)
+
+	td.mockUseCase.On("GetById", uuid.Nil).Return(nil, assert.AnError)
+
+	res2 := res
+	resp := resume.Response{
+		User:             *res2.Candidate.User,
+		Educations:       res2.Education,
+		CustomExperience: res2.ExperienceCustomComp,
+		IsFavorite:       &favorite.FavoriteID,
+	}
+	res2.Candidate = nil
+	resp.Resume = res2
+
+	testUrls := []string{
+		fmt.Sprintf("%sby/id/%s", resumeUrlGroup, ID.String()),
+		fmt.Sprintf("%sby/id/invalidUuid", resumeUrlGroup),
+		fmt.Sprintf("%sby/id/%s", resumeUrlGroup, uuid.Nil),
+	}
+
+	testExpectedBody := []interface{}{resp, common.EmptyFieldErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestGetMineResume(t *testing.T) {
+	td := beforeTest()
+	td.router.GET("/mine", td.resumeHandler.GetMineResume)
+
+	ID := uuid.New()
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
+	td.mockUseCase.On("GetAllUserResume", ID).Return(td.resBriefList, nil).Once()
+
+	td.mockSession.On("Get", common.CandID).Return("nil").Once()
+
+	td.mockSession.On("Get", common.CandID).Return(nil).Once()
+	td.mockUseCase.On("GetAllUserResume", uuid.Nil).Return(nil, assert.AnError)
+
+	testUrls := []string{
+		fmt.Sprintf("%smine", resumeUrlGroup),
+		fmt.Sprintf("%smine", resumeUrlGroup),
+		fmt.Sprintf("%smine", resumeUrlGroup),
+	}
+
+	testExpectedBody := []interface{}{td.resBriefList, common.AuthRequiredErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestCreateResume(t *testing.T) {
+	td := beforeTest()
+	td.router.POST("/", td.resumeHandler.CreateResume)
+
+	ID := uuid.New()
+	user := models.User{ID: ID}
+	cand := models.Candidate{User: &user}
+	res := models.Resume{
+		ResumeID:  ID,
+		CandID: ID,
+		Candidate: &cand,
+	}
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.CandID).Return(ID.String())
+	td.mockUseCase.On("Create", res).Return(&res, nil).Once()
+	td.mockUseCase.On("Create", res).Return(nil, assert.AnError)
+
+	res2 := res
+	resp := resume.Response{
+		User:             *res2.Candidate.User,
+		Educations:       res2.Education,
+		CustomExperience: res2.ExperienceCustomComp,
+		IsFavorite:       nil,
+	}
+	res2.Candidate = nil
+	resp.Resume = res2
+
+	testUrls := []string{
+		resumeUrlGroup,
+		resumeUrlGroup,
+		resumeUrlGroup,
+	}
+	testParamsForPost := []interface{}{res, nil, res}
+	testExpectedBody := []interface{}{resp, common.EmptyFieldErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestUpdateResume(t *testing.T) {
+	td := beforeTest()
+	td.router.PUT("/", td.resumeHandler.UpdateResume)
+
+	ID := uuid.New()
+	user := models.User{ID: ID}
+	cand := models.Candidate{User: &user}
+	res := models.Resume{
+		ResumeID:  ID,
+		CandID: ID,
+		Candidate: &cand,
+	}
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.CandID).Return(ID.String())
+	td.mockUseCase.On("Update", res).Return(&res, nil).Once()
+	td.mockUseCase.On("Update", res).Return(nil, assert.AnError)
+
+	res2 := res
+	resp := resume.Response{
+		User:             *res2.Candidate.User,
+		Educations:       res2.Education,
+		CustomExperience: res2.ExperienceCustomComp,
+		IsFavorite:       nil,
+	}
+	res2.Candidate = nil
+	resp.Resume = res2
+
+	testUrls := []string{
+		resumeUrlGroup,
+		resumeUrlGroup,
+		resumeUrlGroup,
+	}
+	testParamsForPost := []interface{}{res, nil, res}
+	testExpectedBody := []interface{}{resp, common.EmptyFieldErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPut, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestAddFavorite(t *testing.T) {
+	td := beforeTest()
+	td.router.POST("/favorite/by/id/:resume_id", td.resumeHandler.AddFavorite)
+
+	ID := uuid.New()
+	favoriteForEmpl := models.FavoritesForEmpl{EmplID: ID, ResumeID: ID}
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.EmplID).Return(ID.String())
+	td.mockUseCase.On("AddFavorite", favoriteForEmpl).Return(&favoriteForEmpl, nil).Once()
+
+	favoriteForEmplInvalid := models.FavoritesForEmpl{EmplID: ID, ResumeID: uuid.Nil}
+	td.mockUseCase.On("AddFavorite", favoriteForEmplInvalid).Return(nil, assert.AnError).Once()
+
+
+	testUrls := []string{
+		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, ID),
+		fmt.Sprintf("%sfavorite/by/id/invalidID", resumeUrlGroup),
+		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, uuid.Nil),
+	}
+
+	testExpectedBody := []interface{}{favoriteForEmpl, common.EmptyFieldErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestRemoveFavorite(t *testing.T) {
+	td := beforeTest()
+	td.router.DELETE("/favorite/by/id/:resume_id", td.resumeHandler.RemoveFavorite)
+
+	ID := uuid.New()
+	favoriteForEmpl := models.FavoritesForEmpl{FavoriteID:ID, EmplID: ID}
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.EmplID).Return(ID.String())
+	td.mockUseCase.On("RemoveFavorite", favoriteForEmpl).Return(nil).Once()
+
+	favoriteForEmplInvalid := models.FavoritesForEmpl{FavoriteID:uuid.Nil, EmplID: ID}
+	td.mockUseCase.On("RemoveFavorite", favoriteForEmplInvalid).Return(assert.AnError).Once()
+
+
+	testUrls := []string{
+		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, ID),
+		fmt.Sprintf("%sfavorite/by/id/invalidID", resumeUrlGroup),
+		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, uuid.Nil),
+	}
+
+	testExpectedBody := []interface{}{nil, common.EmptyFieldErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodDelete, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestGetAllFavoritesResume(t *testing.T) {
+	td := beforeTest()
+	td.router.GET("/myfavorites", td.resumeHandler.GetAllFavoritesResume)
+
+	ID := uuid.New()
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Once()
+	td.mockUseCase.On("GetAllEmplFavoriteResume", ID).Return(td.resBriefList, nil).Once()
+
+	td.mockSession.On("Get", common.EmplID).Return("nil").Once()
+
+	td.mockSession.On("Get", common.EmplID).Return(uuid.Nil.String()).Once()
+	td.mockUseCase.On("GetAllEmplFavoriteResume", uuid.Nil).Return(nil, assert.AnError)
+
+	testUrls := []string{
+		fmt.Sprintf("%smyfavorites", resumeUrlGroup),
+		fmt.Sprintf("%smyfavorites", resumeUrlGroup),
+		fmt.Sprintf("%smyfavorites", resumeUrlGroup),
+	}
+
+	testExpectedBody := []interface{}{td.resBriefList, common.AuthRequiredErr, common.DataBaseErr}
+	for i := range testUrls {
+		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})

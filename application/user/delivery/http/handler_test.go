@@ -20,16 +20,6 @@ const (
 	userUrlGroup = "/api/v1/users/"
 )
 
-var testData struct {
-	userHandler *UserHandler
-	router      *gin.Engine
-	mockUseCase *mUser.UseCase
-	mockAuth    *mocksCommon.AuthTest
-	mockSB      *mocksCommon.SessionBuilder
-	mockSession *mocksCommon.Session
-	httpStatus  []int
-}
-
 type TestData struct {
 	userHandler *UserHandler
 	router      *gin.Engine
@@ -60,8 +50,7 @@ func beforeTest() TestData {
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
 	//testData.mockAuth.On("AuthRequired").Return(nil)
-	testData.userHandler = NewRest(api.Group("/users"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {
-	})
+	testData.userHandler = NewRest(api.Group("/users"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {})
 	return testData
 }
 
