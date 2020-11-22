@@ -11,6 +11,7 @@ require (
 	github.com/go-pg/pg/v9 v9.2.0
 	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.2
+	github.com/gorilla/websocket v1.4.2
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -25,4 +26,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20201021035429-f5854403a974 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	gopkg.in/olahol/melody.v1 v1.0.0-20170518105555-d52139073376
 )
