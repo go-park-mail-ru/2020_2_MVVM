@@ -16,6 +16,7 @@ type ResumeHandler struct {
 	UseCaseResume           resume.UseCase
 	UseCaseEducation        education.UseCase
 	UseCaseCustomExperience custom_experience.UseCase
+	SessionBuilder          common.SessionBuilder
 }
 
 const resumePath = "resume/"

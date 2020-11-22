@@ -32,7 +32,7 @@ func ResponseComparator(w httptest.ResponseRecorder, expectedCode int, expectedB
 	expectedBody := getStrFromJson(expectedBodyIn)
 	actualBody := w.Body.String()
 	if expectedBody != actualBody {
-		return errors.New(fmt.Sprintf("Expected to get response %s but instead got %s\n", actualBody, expectedBody))
+		return errors.New(fmt.Sprintf("Expected to get response %s but instead got %s\n", expectedBody, actualBody))
 	}
 	return nil
 }

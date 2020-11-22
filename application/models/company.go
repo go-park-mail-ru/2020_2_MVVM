@@ -24,9 +24,3 @@ type CompanySearchParams struct {
 	ByAsc      bool     `json:"byAsc"`
 	VacCount   int      `json:"vac_count"`
 }
-
-//dont work
-type CustomCompany struct {
-}
-type ReqCustomCompany struct {
-}

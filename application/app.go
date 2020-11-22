@@ -29,6 +29,7 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-pg/pg/v9"
 	"net/http"
 	"os"
@@ -129,10 +130,10 @@ func NewApp(config Config) *App {
 	}
 
 	store.Options(sessions.Options{
-		Domain: "studhunt.ru",
-		//Domain:   "localhost", // for postman
+		//Domain: "studhunt.ru",
+		Domain:   "localhost", // for postman
 		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
@@ -146,7 +147,10 @@ func NewApp(config Config) *App {
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api.Group("/users"), userCase, common.AuthRequired())
+
+	sessionBuilder := SessionBuilder.NewSessionBuilder{}
+
+	UserHandler.NewRest(api.Group("/users"), userCase, &sessionBuilder, common.AuthRequired())
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
