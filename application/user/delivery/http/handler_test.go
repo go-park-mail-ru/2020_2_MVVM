@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -46,10 +47,8 @@ func beforeTest() TestData {
 	testData.mockUseCase = new(mUser.UseCase)
 	testData.mockSB = new(mocksCommon.SessionBuilder)
 	testData.mockSession = new(mocksCommon.Session)
-	//testData.mockAuth = new(mocksCommon.AuthTest)
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	//testData.mockAuth.On("AuthRequired").Return(nil)
 	testData.userHandler = NewRest(api.Group("/users"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {})
 	return testData
 }
@@ -180,7 +179,8 @@ func TestCreateUserHandler(t *testing.T) {
 		SocialNetwork: nil,
 	}
 
-	td.mockUseCase.On("CreateUser", mock.Anything).Return(&userCand, nil)
+	td.mockUseCase.On("CreateUser", mock.Anything).Return(&userCand, nil).Once()
+	td.mockUseCase.On("CreateUser", mock.Anything).Return(nil, assert.AnError)
 
 	reqUser := models.UserLogin{
 		Email:    "email@email.ru",
@@ -204,14 +204,11 @@ func TestCreateUserHandler(t *testing.T) {
 	td.mockSession.On("Set", common.UserID, IDCand.String())
 	td.mockSession.On("Save").Return(nil)
 
-	testUrls := []string{
-		userUrlGroup,
-	}
 	testExpectedBody := []interface{}{userCand, common.EmptyFieldErr, common.DataBaseErr}
 	testParamsForPost := []interface{}{req, nil, req}
-	for i := range testUrls {
+	for i := range testExpectedBody {
 		t.Run("test responses on different urls for CreateUser handler", func(t *testing.T) {
-			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
+			w, err := general.PerformRequest(td.router, http.MethodPost, userUrlGroup, testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
@@ -230,26 +227,25 @@ func TestGetCurrentUserHandler(t *testing.T) {
 	user := models.User{ID: userID}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.UserID).Return(userID.String())
-	//td.mockSession.On("Get", common.UserID).Return(uuid.Nil)
+	td.mockSession.On("Get", common.UserID).Return(userID.String()).Once()
+	td.mockSession.On("Get", common.UserID).Return(uuid.Nil.String())
 
-	td.mockUseCase.On("GetUserByID", userID.String()).Return(&user, nil)
-	//mockUseCase.On("GetUserByID", uuid.Nil.String()).Return(nil, assert.AnError)
+	td.mockUseCase.On("GetUserByID", userID.String()).Return(&user, nil).Once()
+	td.mockUseCase.On("GetUserByID", uuid.Nil.String()).Return(nil, assert.AnError)
 
-	testUrls := []string{
-		fmt.Sprintf("%sme", userUrlGroup),
-		//fmt.Sprintf("%sby/id/invalidUuid", userUrlGroup),
-		//fmt.Sprintf("%sby/id/%s", userUrlGroup, uuid.Nil),
+	testStatuses := []int{
+		http.StatusOK,
+		http.StatusInternalServerError,
 	}
-	testExpectedBody := []interface{}{user}
+	testExpectedBody := []interface{}{user, common.DataBaseErr}
 
-	for i := range testUrls {
+	for i := range testStatuses {
 		t.Run("test responses on different urls for get current User handler", func(t *testing.T) {
-			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
+			w, err := general.PerformRequest(td.router, http.MethodGet, fmt.Sprintf("%sme", userUrlGroup), nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, testStatuses[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -263,20 +259,22 @@ func TestLogoutHandler(t *testing.T) {
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("Clear")
 	td.mockSession.On("Options", mock.Anything)
-	td.mockSession.On("Save").Return(nil)
+	td.mockSession.On("Save").Return(nil).Once()
+	td.mockSession.On("Save").Return(assert.AnError).Once()
 
-	testUrls := []string{
-		fmt.Sprintf("%slogout", userUrlGroup),
+	testExpectedBody := []interface{}{nil, common.SessionErr}
+	testStatuses := []int{
+		http.StatusOK,
+		http.StatusInternalServerError,
 	}
-	testExpectedBody := []interface{}{nil}
 
-	for i := range testUrls {
+	for i := range testExpectedBody {
 		t.Run("test responses on different urls for logoutUser handler", func(t *testing.T) {
-			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], nil)
+			w, err := general.PerformRequest(td.router, http.MethodPost, fmt.Sprintf("%slogout", userUrlGroup), nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, testStatuses[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -286,44 +284,51 @@ func TestLogoutHandler(t *testing.T) {
 func TestUpdateUserHandler(t *testing.T) {
 	td := beforeTest()
 	td.router.PUT("/", td.userHandler.UpdateUserHandler)
+	uidNil := uuid.Nil
+	id := uuid.New()
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.UserID).Return(mock.Anything)
-	//mockSession.On("Get", common.UserID).Return(assert.AnError)
+	td.mockSession.On("Get", common.UserID).Return(uidNil.String()).Once()
+	td.mockSession.On("Get", common.UserID).Return(nil).Once()
+	td.mockSession.On("Get", common.UserID).Return("wrong").Once()
+	td.mockSession.On("Get", common.UserID).Return(id.String())
 
-	req := userReq{Name: "name", Surname: "surname", Email: "email", Phone: "", SocialNetwork: ""}
+	req := userReq{Name: "name", Surname: "surname", Email: "email@mail.ru"}
 
-	userEmpty := models.User{
-		UserType:      "",
-		Name:          "name",
-		Surname:       "surname",
-		Email:         "email",
-		PasswordHash:  nil,
-		Phone:         nil,
-		SocialNetwork: nil,
+	userNew := models.User{
+		Name:    req.Name,
+		Surname: req.Surname,
+		Email:   req.Email,
 	}
-	td.mockUseCase.On("UpdateUser", mock.Anything, "", "", "name", "surname", "email", "", "").Return(&userEmpty, nil)
-	//mockUseCase.On("UpdateUser", mock.Call{}).Return(nil, assert.AnError)
+	td.mockUseCase.On("UpdateUser", mock.Anything).Return(nil, assert.AnError).Once()
+	td.mockUseCase.On("UpdateUser", mock.Anything).Return(nil, errors.New(common.WrongPasswd)).Once()
+	td.mockUseCase.On("UpdateUser", mock.Anything).Return(&userNew, nil)
 
-	testUrls := []string{
-		userUrlGroup,
+	testStatuses := []int{
+		http.StatusBadRequest,
+		http.StatusBadRequest,
+		http.StatusInternalServerError,
+		http.StatusInternalServerError,
+		http.StatusInternalServerError,
+		http.StatusConflict,
+		http.StatusOK,
 	}
-	testExpectedBody := []interface{}{userEmpty}
-	testParamsForPost := []interface{}{req}
-	for i := range testUrls {
+	testExpectedBody := []interface{}{common.EmptyFieldErr, errors.New("Неправильные значения полей: имя должно содержать только буквы"), common.DataBaseErr, common.SessionErr, common.SessionErr, common.WrongPasswd, userNew}
+	testParamsForPost := []interface{}{nil, userReq{Name: ")"}, req, req, req, req, req}
+	for i := range testStatuses {
 		t.Run("test responses on different urls for UpdateUser handler", func(t *testing.T) {
-			w, err := general.PerformRequest(td.router, http.MethodPut, testUrls[i], testParamsForPost[i])
+			w, err := general.PerformRequest(td.router, http.MethodPut, userUrlGroup, testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, testStatuses[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})
 	}
 }
 
-func TestLoginHandler(t *testing.T) {
+func TestRegister(t *testing.T) {
 	td := beforeTest()
 	td.router.POST("/login", td.userHandler.LoginHandler)
 
@@ -353,8 +358,9 @@ func TestLoginHandler(t *testing.T) {
 		UserID: ID,
 	}
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockUseCase.On("Login", reqUser).Return(&userCand, nil)
-	td.mockUseCase.On("GetCandidateByID", ID.String()).Return(&cand, nil)
+	td.mockUseCase.On("Login", reqUser).Return(&userCand, nil).Once()
+	td.mockUseCase.On("Login", reqUser).Return(nil, assert.AnError).Once()
+	td.mockUseCase.On("GetCandidateByID", ID.String()).Return(&cand, nil).Once()
 	td.mockSession.On("Set", common.CandID, ID.String())
 	td.mockSession.On("Set", common.EmplID, nil)
 	td.mockSession.On("Set", common.UserID, ID.String())
@@ -363,27 +369,30 @@ func TestLoginHandler(t *testing.T) {
 		ID:     ID,
 		UserID: ID,
 	}
-	td.mockUseCase.On("Login", reqEmpl).Return(&userEmpl, nil)
-	td.mockUseCase.On("GetEmployerByID", ID.String()).Return(&empl, nil)
+	td.mockUseCase.On("Login", reqEmpl).Return(&userEmpl, nil).Once()
+	td.mockUseCase.On("GetEmployerByID", ID.String()).Return(&empl, nil).Once()
 	td.mockSession.On("Set", common.CandID, nil)
 	td.mockSession.On("Set", common.EmplID, ID.String())
 	td.mockSession.On("Set", common.UserID, ID.String())
 	td.mockSession.On("Save").Return(nil)
 
-	testUrls := []string{
-		fmt.Sprintf("%slogin", userUrlGroup),
-		fmt.Sprintf("%slogin", userUrlGroup),
+	testStatuses := []int{
+		http.StatusOK,
+		http.StatusOK,
+		http.StatusInternalServerError,
+		http.StatusBadRequest,
+		http.StatusBadRequest,
 	}
-	testExpectedBody := []interface{}{userCand, userEmpl}
-	testParamsForPost := []interface{}{reqUser, reqEmpl}
+	testExpectedBody := []interface{}{userCand, userEmpl, common.DataBaseErr, common.EmptyFieldErr, errors.New("Неправильные значения полей: длина пароля должна быть от 5 до 25 символов.")}
+	testParamsForPost := []interface{}{reqUser, reqEmpl, reqUser, nil, models.UserLogin{Email: "e@e.ru", Password: "err"}}
 
-	for i := range testUrls {
-		t.Run("test responses on different urls for loginUser handler", func(t *testing.T) {
-			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
+	for i := range testStatuses {
+		t.Run("test responses on different urls for register func", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPost, fmt.Sprintf("%slogin", userUrlGroup), testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := general.ResponseComparator(*w, 200, getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, testStatuses[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})

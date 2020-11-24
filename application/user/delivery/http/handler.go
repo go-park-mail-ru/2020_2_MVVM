@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -12,7 +13,7 @@ import (
 )
 
 type UserHandler struct {
-	UserUseCase user.UseCase
+	UserUseCase    user.UseCase
 	SessionBuilder common.SessionBuilder
 }
 
@@ -42,8 +43,6 @@ func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFu
 
 func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 	session := u.SessionBuilder.Build(ctx)
-
-	//session := sessions.Default(ctx)
 	userID := session.Get(common.UserID)
 
 	userById, err := u.UserUseCase.GetUserByID(userID.(string))
@@ -119,7 +118,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
-		ctx.JSON(http.StatusForbidden, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&reqUser); err != nil {
@@ -127,29 +126,27 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	user := u.Login(ctx, reqUser)
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	user, status, err := u.register(ctx, reqUser)
+	if err != nil {
+		ctx.JSON(status, common.RespError{Err: err.Error()})
+	} else {
+		ctx.JSON(status, Resp{User: user})
+	}
 }
 
-func (u *UserHandler) Login(ctx *gin.Context, reqUser models.UserLogin) *models.User {
+func (u *UserHandler) register(ctx *gin.Context, reqUser models.UserLogin) (*models.User, int, error) {
 	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.AuthErr {
-			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
-		} else {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			return nil, http.StatusConflict, err
 		}
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return nil
+		return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 	}
 	session := u.SessionBuilder.Build(ctx)
-	//session := sessions.Default(ctx)
 	if user.UserType == common.Candidate {
 		cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
-			return nil
+			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
 		session.Set(common.CandID, cand.ID.String())
 		session.Set(common.EmplID, nil)
@@ -157,27 +154,24 @@ func (u *UserHandler) Login(ctx *gin.Context, reqUser models.UserLogin) *models.
 	} else if user.UserType == common.Employer {
 		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
-			return nil
+			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
 		session.Set("empl_id", empl.ID.String())
 		session.Set("cand_id", nil)
 	} else {
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: common.AuthErr})
+		return nil, http.StatusMethodNotAllowed, errors.New(common.AuthErr)
 	}
 
 	session.Set("user_id", user.ID.String())
 	err = session.Save()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
-		return nil
+		return nil, http.StatusInternalServerError, errors.New(common.SessionErr)
 	}
-	return user
+	return user, http.StatusOK, nil
 }
 
 func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	session := u.SessionBuilder.Build(ctx)
-	//session := sessions.Default(ctx)
 	session.Clear()
 	session.Options(sessions.Options{MaxAge: -1})
 	err := session.Save()
@@ -185,7 +179,6 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
-	//ctx.Status(http.StatusOK)
 	ctx.JSON(http.StatusOK, nil)
 }
 
@@ -234,12 +227,11 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		Email:    userNew.Email,
 		Password: req.Password,
 	}
-	u.Login(ctx, reqUser)
+	u.register(ctx, reqUser)
 
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
-// TODO: fix update on frontend require password for update and deletion
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	var req struct {
 		Name          string `json:"name" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
@@ -260,7 +252,6 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	}
 
 	session := u.SessionBuilder.Build(ctx)
-	//session := sessions.Default(ctx)
 	userIDFromSession := session.Get("user_id")
 	if userIDFromSession == nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
@@ -281,5 +272,5 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 		}
 		return
 	}
-	ctx.JSON(http.StatusOK, userUpdate)
+	ctx.JSON(http.StatusOK, Resp{User: userUpdate})
 }

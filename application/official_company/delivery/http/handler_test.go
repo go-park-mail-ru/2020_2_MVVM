@@ -6,7 +6,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
-	mocks2 "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,6 @@ var testData struct {
 	compHandler *CompanyHandler
 	router      *gin.Engine
 	mockUseCase *mocks.IUseCaseOfficialCompany
-	mockAuth    *mocks2.AuthTest
 	httpStatus  []int
 	compList    []models.OfficialCompany
 }
@@ -47,10 +45,8 @@ func setUp() {
 		{Name: "name3", Description: "description3", Link: "link3", AreaSearch: "area3"},
 	}
 	testData.mockUseCase = new(mocks.IUseCaseOfficialCompany)
-	//testData.mockAuth = new(mocks2.AuthTest)
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	//testData.mockAuth.On("AuthRequired").Return(nil)
 	testData.compHandler = NewRest(api.Group("/company"), testData.mockUseCase, nil)
 }
 

@@ -7,7 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"golang.org/x/crypto/bcrypt"
 	"os"
 	"testing"
 )
@@ -67,7 +66,6 @@ func TestUserCreateUser(t *testing.T) {
 }
 
 func TestUserUpdateUser(t *testing.T) {
-	var passwordHash, _ = bcrypt.GenerateFromPassword([]byte("oldPas"), bcrypt.DefaultCost)
 	mockRepo, usecase := beforeTest(t)
 	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
 	user := models.User{
@@ -76,25 +74,25 @@ func TestUserUpdateUser(t *testing.T) {
 		Name:     "newName",
 		Surname:  "newSurname",
 		Email:    "email@mail.ru",
-		PasswordHash: passwordHash,
 	}
-	new := "new"
-	newUser := user
-	newUser.Email = "newEmail"
-	newUser.Phone = &new
-	newUser.SocialNetwork = &new
-	var newPasswordHash, _ = bcrypt.GenerateFromPassword([]byte("nawPas"), bcrypt.DefaultCost)
-	newUser.PasswordHash = newPasswordHash
+	newUser := models.User{
+		ID:       userID,
+		UserType: "candidate",
+		Name:     "newName",
+		Surname:  "newSurname",
+		Email:    "newEmail",
+	}
 
+	mockRepo.On("GetUserByID", userID.String()).Return(&user, nil).Once()
+	mockRepo.On("GetUserByID", userID.String()).Return(nil, assert.AnError)
+	mockRepo.On("UpdateUser", mock.Anything).Return(&newUser, nil).Once()
+	answer, errNil := usecase.UpdateUser(user)
+	answerWrong, err := usecase.UpdateUser(user)
 
-	mockRepo.On("GetUserByID", userID.String()).Return(&user, nil)
-	mockRepo.On("UpdateUser", mock.Anything).Return(&newUser, nil)
-	answer, err := usecase.UpdateUser(user.ID.String(), "newPas", "oldPas", "newName",
-		"newSurname", "newEmail", "new", "new")
-
-
-	assert.Nil(t, err)
+	assert.Nil(t, errNil)
 	assert.Equal(t, *answer, newUser)
+	assert.Error(t, err)
+	assert.Nil(t, answerWrong)
 }
 
 func TestUserLogin(t *testing.T) {
@@ -154,7 +152,7 @@ func TestUserGetCandidateByID(t *testing.T) {
 	mockRepo, usecase := beforeTest(t)
 	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
 	user := models.Candidate{
-		UserID:    userID,
+		UserID: userID,
 	}
 	mockRepo.On("GetCandidateByID", userID.String()).Return(&user, nil)
 	answer, err := usecase.GetCandidateByID(userID.String())
