@@ -20,10 +20,10 @@ func (u User) TableName() string {
 }
 
 type Employer struct {
-	ID        uuid.UUID           `gorm:"column:empl_id;default:uuid_generate_v4()" json:"empl_id"`
+	ID        uuid.UUID           `gorm:"column:empl_id;primaryKey;default:uuid_generate_v4()" json:"empl_id"`
 	UserID    uuid.UUID           `gorm:"column:user_id;foreignKey:user_id" json:"user_id"`
 	CompanyID uuid.UUID           `gorm:"column:comp_id;foreignKey:comp_id" json:"comp_id"`
-	Favorites []*FavoritesForEmpl `gorm:"foreignKey:favorite_id"`
+	Favorites []FavoritesForEmpl  `gorm:"foreignKey:EmplID"`
 }
 
 func (e Employer) TableName() string {
@@ -31,9 +31,9 @@ func (e Employer) TableName() string {
 }
 
 type Candidate struct {
-	ID     uuid.UUID `gorm:"column:cand_id;default:uuid_generate_v4()" json:"cand_id"`
+	ID     uuid.UUID `gorm:"primaryKey;column:cand_id;default:uuid_generate_v4()" json:"cand_id"`
 	UserID uuid.UUID `gorm:"column:user_id;type:uuid" json:"user_id"`
-	User   *User     `gorm:"foreignKey:user_id"`
+	User   User
 }
 
 func (c Candidate) TableName() string {

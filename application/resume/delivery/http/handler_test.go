@@ -171,10 +171,10 @@ func TestGetResumeByID(t *testing.T) {
 
 	ID := uuid.New()
 	user := models.User{ID: ID}
-	cand := models.Candidate{User: &user}
+	cand := models.Candidate{User: user}
 	res := models.Resume{
 		ResumeID:  ID,
-		Candidate: &cand,
+		Candidate: cand,
 	}
 
 	favorite := models.FavoritesForEmpl{ FavoriteID: ID }
@@ -188,12 +188,12 @@ func TestGetResumeByID(t *testing.T) {
 
 	res2 := res
 	resp := resume.Response{
-		User:             *res2.Candidate.User,
+		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
 		IsFavorite:       &favorite.FavoriteID,
 	}
-	res2.Candidate = nil
+	//res2.Candidate = nil
 	resp.Resume = res2
 
 	testUrls := []string{
@@ -257,11 +257,11 @@ func TestCreateResume(t *testing.T) {
 
 	ID := uuid.New()
 	user := models.User{ID: ID}
-	cand := models.Candidate{User: &user}
+	cand := models.Candidate{User: user}
 	res := models.Resume{
 		ResumeID:  ID,
 		CandID: ID,
-		Candidate: &cand,
+		Candidate: cand,
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
@@ -271,12 +271,12 @@ func TestCreateResume(t *testing.T) {
 
 	res2 := res
 	resp := resume.Response{
-		User:             *res2.Candidate.User,
+		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
 		IsFavorite:       nil,
 	}
-	res2.Candidate = nil
+	//res2.Candidate = nil
 	resp.Resume = res2
 
 	testUrls := []string{
@@ -305,11 +305,11 @@ func TestUpdateResume(t *testing.T) {
 
 	ID := uuid.New()
 	user := models.User{ID: ID}
-	cand := models.Candidate{User: &user}
+	cand := models.Candidate{User: user}
 	res := models.Resume{
 		ResumeID:  ID,
 		CandID: ID,
-		Candidate: &cand,
+		Candidate: cand,
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
@@ -319,12 +319,12 @@ func TestUpdateResume(t *testing.T) {
 
 	res2 := res
 	resp := resume.Response{
-		User:             *res2.Candidate.User,
+		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
 		IsFavorite:       nil,
 	}
-	res2.Candidate = nil
+	//res2.Candidate = nil
 	resp.Resume = res2
 
 	testUrls := []string{

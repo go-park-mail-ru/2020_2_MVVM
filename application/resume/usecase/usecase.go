@@ -56,11 +56,7 @@ func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 
 func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, result models.Resume) error {
 	// create experience
-	var err error
 	for i := range template.ExperienceCustomComp {
-		if template.ExperienceCustomComp[i] == nil {
-			continue
-		}
 		if *(template.ExperienceCustomComp[i].ContinueToToday){
 			dateFinish := time.Now()
 			template.ExperienceCustomComp[i].Finish = &dateFinish
@@ -68,23 +64,22 @@ func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, re
 		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
 		template.ExperienceCustomComp[i].CandID = result.CandID
 
-		template.ExperienceCustomComp[i], err = u.customExpUseCase.Create(*template.ExperienceCustomComp[i])
+		exp, err := u.customExpUseCase.Create(template.ExperienceCustomComp[i])
 		if err != nil {
 			return err
 		}
+		template.ExperienceCustomComp[i] = *exp
 
 	}
 	// create education
 	for i := range template.Education {
-		if template.Education[i] == nil {
-			continue
-		}
 		template.Education[i].ResumeId = result.ResumeID
 		template.Education[i].CandID = result.CandID
-		template.Education[i], err = u.educationUseCase.Create(*template.Education[i])
+		edu, err := u.educationUseCase.Create(template.Education[i])
 		if err != nil {
 			return err
 		}
+		template.Education[i] = *edu
 	}
 	return nil
 }

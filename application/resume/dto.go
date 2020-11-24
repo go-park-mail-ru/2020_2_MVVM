@@ -19,7 +19,7 @@ type SearchParams struct {
 type Response struct {
 	Resume           models.Resume                  `json:"resume"`
 	User             models.User                    `json:"user"`
-	Educations       []*models.Education            `json:"education"`
-	CustomExperience []*models.ExperienceCustomComp `json:"custom_experience"`
+	Educations       []models.Education            `json:"education"`
+	CustomExperience []models.ExperienceCustomComp `json:"custom_experience"`
 	IsFavorite       *uuid.UUID                     `json:"is_favorite"`
 }

@@ -8,20 +8,20 @@ import (
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	/*CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
+	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
 	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
-	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"*/
+	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
 	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
 	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
-	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	/*ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
+	ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
 	RepositoryResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/repository"
 	ResponseUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/usecase"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
-	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"*/
+	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
@@ -124,7 +124,7 @@ func NewApp(config Config) *App {
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
 	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
 
-	/*resumeRep := ResumeRepository.NewPgRepository(db)
+	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
@@ -134,17 +134,9 @@ func NewApp(config Config) *App {
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, common.AuthRequired())
 
-	companyRep := RepositoryCompany.NewPgRepository(db)
-	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
-
-	vacancyRep := RepositoryVacancy.NewPgRepository(db)
-	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
-
 	responseRep := RepositoryResponse.NewPgRepository(db)
 	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
-	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, common.AuthRequired())*/
+	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, common.AuthRequired())
 
 	app := App{
 		config:   config,

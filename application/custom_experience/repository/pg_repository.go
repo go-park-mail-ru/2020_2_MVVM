@@ -1,28 +1,28 @@
 package repository
 
 import (
-	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type pgRepository struct {
-	db *pg.DB
+	db *gorm.DB
 }
 
-func NewPgRepository(db *pg.DB) custom_experience.CustomExperienceRepository{
+func NewPgRepository(db *gorm.DB) custom_experience.CustomExperienceRepository{
 	return &pgRepository{db: db}
 }
 
 func (p *pgRepository) Create(experience models.ExperienceCustomComp) (*models.ExperienceCustomComp, error) {
-	_, err := p.db.Model(&experience).Returning("*").Insert()
-	if err != nil {
-		err = fmt.Errorf("error in inserting custom experience with title: error: %w", err)
-		return nil, err
-	}
-	return &experience, nil
+	//_, err := p.db.Model(&experience).Returning("*").Insert()
+	//if err != nil {
+	//	err = fmt.Errorf("error in inserting custom experience with title: error: %w", err)
+	//	return nil, err
+	//}
+	//return &experience, nil
+	return nil, nil
 }
 
 //func (p *pgRepository) GetById(id string) (*models.ExperienceCustomComp, error) {
@@ -46,7 +46,8 @@ func (p *pgRepository) Create(experience models.ExperienceCustomComp) (*models.E
 
 
 func (p *pgRepository) DropAllFromResume(resumeID uuid.UUID) error {
-	var experience models.ExperienceCustomComp
-	_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
-	return err
+	//var experience models.ExperienceCustomComp
+	//_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
+	//return err
+	return nil
 }

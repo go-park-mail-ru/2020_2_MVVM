@@ -5,10 +5,14 @@ import (
 )
 
 type FavoritesForEmpl struct {
-	FavoriteID uuid.UUID `gorm:"column:favorite_id" json:"favorite_id"`
+	FavoriteID uuid.UUID `gorm:"column:favorite_id; primaryKey; default:uuid_generate_v4()" json:"favorite_id"`
 	EmplID     uuid.UUID `gorm:"column:empl_id" json:"empl_id"`
 	ResumeID   uuid.UUID `gorm:"column:resume_id" json:"resume_id"`
-	//Resume     *Resume   `gorm:"foreignKey:resume_id;references:main.resume"`
+	Resume     Resume    `gorm:"foreignKey:ResumeID"`
+}
+
+func (r FavoritesForEmpl) TableName() string {
+	return "main.favorite_for_empl"
 }
 
 type FavoritesForCand struct {

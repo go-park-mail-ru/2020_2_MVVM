@@ -6,9 +6,9 @@ import (
 )
 
 type Response struct {
-	ID         uuid.UUID `gorm:"column:response_id;default:uuid_generate_v4()" json:"response_id"`
-	ResumeID   uuid.UUID `gorm:"column:resume_id; fk; type:uuid" json:"resume_id"`
-	VacancyID  uuid.UUID `gorm:"column:vacancy_id; fk; type:uuid" json:"vacancy_id"`
+	ID         uuid.UUID `gorm:"column:response_id;primaryKey;default:uuid_generate_v4()" json:"response_id"`
+	ResumeID   uuid.UUID `gorm:"column:resume_id; type:uuid" json:"resume_id"`
+	VacancyID  uuid.UUID `gorm:"column:vacancy_id; type:uuid" json:"vacancy_id"`
 	Initial    string    `gorm:"column:initial" json:"initial"`
 	Status     string    `gorm:"column:status" json:"status"`
 	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`

@@ -110,13 +110,13 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 
 	resp := resume.Response{
-		User:             *result.Candidate.User,
+		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
 		IsFavorite:       nil,
 	}
 
-	result.Candidate = nil
+	//result.Candidate = nil
 	result.Education = nil
 	result.ExperienceCustomComp = nil
 	resp.Resume = *result
@@ -167,13 +167,13 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 	}
 
 	resp := resume.Response{
-		User:             *result.Candidate.User,
+		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
 		IsFavorite:       isFavorite,
 	}
 
-	result.Candidate = nil
+	//result.Candidate = nil
 	result.Education = nil
 	result.ExperienceCustomComp = nil
 	resp.Resume = *result
@@ -245,13 +245,13 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	resp := resume.Response{
-		User:             *result.Candidate.User,
+		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
 		IsFavorite:       nil,
 	}
 
-	result.Candidate = nil
+	//result.Candidate = nil
 	result.Education = nil
 	result.ExperienceCustomComp = nil
 	resp.Resume = *result
