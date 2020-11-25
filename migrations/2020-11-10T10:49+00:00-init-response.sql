@@ -1,6 +1,6 @@
 -- +migrate Up
 set search_path to main;
-create type status_response as enum ('sent', 'accepted', 'refusal');
+create type status_response as enum ('sent', 'accepted', 'refusal', 'delete');
 
 create table response
 (
@@ -12,6 +12,7 @@ create table response
         references resume(resume_id) ON DELETE CASCADE,
     initial users_types not null,
     status status_response default 'sent',
+    unread bool default true,
     date_create date not null,
     constraint response_unique unique (vacancy_id, resume_id)
 

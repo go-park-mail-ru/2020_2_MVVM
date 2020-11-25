@@ -8,15 +8,38 @@ import (
 	"gorm.io/gorm"
 )
 
-type pgReopository struct {
+type pgRepository struct {
 	db *gorm.DB
 }
 
-func NewPgRepository(db *gorm.DB) response.ResponseRepository {
-	return &pgReopository{db: db}
+func (p pgRepository) GetRespNotifications(respIds map[uuid.UUID]bool) ([]models.Response, error) {
+	var (
+		responses  []models.Response
+		wasReadIds []uuid.UUID
+	)
+	for key, isActive := range respIds {
+		if !isActive {
+			wasReadIds = append(wasReadIds, key)
+		}
+	}
+	err := p.db.Table("main.response").Where("response_id IN ?", wasReadIds).UpdateColumn("unread", false).Error
+	if err != nil {
+		err = fmt.Errorf("error in get list responses: %w", err)
+		return nil, err
+	}
+	err = p.db.Where("unread = ?", true).Find(&responses).Error
+	if err != nil {
+		err = fmt.Errorf("error in get list responses: %w", err)
+		return nil, err
+	}
+	return responses, nil
 }
 
-func (p *pgReopository) Create(response models.Response) (*models.Response, error) {
+func NewPgRepository(db *gorm.DB) response.ResponseRepository {
+	return &pgRepository{db: db}
+}
+
+func (p *pgRepository) Create(response models.Response) (*models.Response, error) {
 	err := p.db.Create(&response).Error
 	//_, err := p.db.Model(&response).Returning("*").Insert()
 	if err != nil {
@@ -26,7 +49,7 @@ func (p *pgReopository) Create(response models.Response) (*models.Response, erro
 	return &response, nil
 }
 
-func (p *pgReopository) GetByID(responseID uuid.UUID) (*models.Response, error) {
+func (p *pgRepository) GetByID(responseID uuid.UUID) (*models.Response, error) {
 	response := new(models.Response)
 	err := p.db.First(&response, responseID).Error
 	//err := p.db.Model(&response).Where("response_id = ?", responseID).Select()
@@ -36,7 +59,7 @@ func (p *pgReopository) GetByID(responseID uuid.UUID) (*models.Response, error) 
 	return response, nil
 }
 
-func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response, error) {
+func (p *pgRepository) UpdateStatus(response models.Response) (*models.Response, error) {
 	err := p.db.Model(&response).Update("status", response.Status).Error
 	if err != nil {
 		err = fmt.Errorf("error in updating response with id %s, : %w", response.ID.String(), err)
@@ -45,9 +68,9 @@ func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response
 	return &response, nil
 }
 
-func (p *pgReopository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
+func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Where("resume_id = ?", resumeID).Find(&responses).Error
+	err := p.db.Find(&responses, "resume_id = ?", resumeID).Error
 	//err := p.db.Model(&responses).Where("resume_id = ?", resumeID).Select()
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
@@ -56,9 +79,9 @@ func (p *pgReopository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Respo
 	return responses, nil
 }
 
-func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
+func (p *pgRepository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Find(&responses, vacancyID).Error
+	err := p.db.Find(&responses, "vacancy_id = ?", vacancyID).Error
 	//err := p.db.Model(&responses).Where("vacancy_id = ?", vacancyID).Select()
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
@@ -67,7 +90,7 @@ func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Res
 	return responses, nil
 }
 
-func (p *pgReopository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
+func (p *pgRepository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
 	var resume []models.Resume
 	//query := fmt.Sprintf(`select resume.*
 	//		from resume
@@ -88,7 +111,7 @@ func (p *pgReopository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID 
 	return resume, nil
 }
 
-func (p *pgReopository) GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error) {
+func (p *pgRepository) GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
 	err := p.db.Raw(`select main.vacancy.*
 			from main.vacancy
