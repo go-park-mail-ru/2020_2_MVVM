@@ -42,6 +42,10 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
+func (u *UseCaseResponse) GetRecommendedVacancies(start uint, end uint, emplId uuid.UUID) ([]models.Vacancy, error) {
+	return u.vacancyUsecase.GetVacancyList(start, end, emplId, vacancy.ByEmpId)
+}
+
 func (u *UseCaseResponse) Create(response models.Response) (*models.Response, error) {
 	if response.Initial == common.Candidate {
 		r, err := u.resumeUsecase.GetById(response.ResumeID)

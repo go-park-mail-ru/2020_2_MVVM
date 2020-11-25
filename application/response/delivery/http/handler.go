@@ -196,7 +196,7 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 	return userID, entityID, nil
 }
 
-func getResponses(r *ResponseHandler, session sessions.Session, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, int, error) {
+func getNewResponses(r *ResponseHandler, session sessions.Session, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, int, error) {
 	emplID, err := common.GetCurrentUserId(session, common.EmplID)
 	candID, err := common.GetCurrentUserId(session, common.CandID)
 
@@ -230,7 +230,6 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	)
 
 	session := r.SessionBuilder.Build(ctx)
-
 	if err = ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
@@ -245,12 +244,17 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		// достаем все вакансии или резюме, подобранные для пользователя
 	}*/
 	if req.NewRespNotifications != nil {
-		responses, status, err = getResponses(r, session, req.NewRespNotifications)
+		responses, status, err = getNewResponses(r, session, req.NewRespNotifications)
 	} else {
-		responses, status, err = getResponses(r, session, nil)
+		responses, status, err = getNewResponses(r, session, nil)
 	}
 	if err != nil {
 		ctx.JSON(status, common.RespError{Err: err.Error()})
 	}
-	ctx.JSON(http.StatusOK, RespNotifications{UnreadResponses: responses})
+	emplID, err := common.GetCurrentUserId(session, common.EmplID)
+	vacList, err := r.UsecaseResponse.GetRecommendedVacancies(0,10, emplID)
+	if err != nil {
+		ctx.JSON(status, common.RespError{Err: err.Error()})
+	}
+	ctx.JSON(http.StatusOK, RespNotifications{UnreadResponses: responses, RecommendedVacancies: vacList})
 }
