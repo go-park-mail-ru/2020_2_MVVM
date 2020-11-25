@@ -5,7 +5,7 @@ import (
 )
 
 type Vacancy struct {
-	ID              uuid.UUID `gorm:"column:vac_id;default:uuid_generate_v4()" json:"vac_id"`
+	ID              uuid.UUID `gorm:"column:vac_id; primaryKey;default:uuid_generate_v4()" json:"vac_id"`
 	EmpID           uuid.UUID `gorm:"column:empl_id;type:uuid" json:"empl_id"`
 	CompID          uuid.UUID `gorm:"column:comp_id;type:uuid" json:"comp_id"`
 	Title           string    `gorm:"column:title;notnull" json:"title"`

@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"strconv"
 	"time"
 )
 
@@ -28,7 +29,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		return nil, err
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
-		vac.ID = uuid.New()
+		//vac.ID = uuid.New()
 		vac.DateCreate = time.Now().Format("2006-01-02")
 		vac.CompID = compId
 		company.ID = compId
@@ -145,4 +146,88 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		return nil, nil
 	}
 	return vacList, nil
+}
+
+func (p *pgRepository) AddRecommendation(userID uuid.UUID, sphere int) error {
+	nameSphere := "sphere" + strconv.Itoa(sphere)
+	query := fmt.Sprintf(`insert into main.recommendation (user_id, %s) values (?, 1) ON CONFLICT (user_id) DO UPDATE SET %s = main.recommendation.%s + 1`, nameSphere, nameSphere, nameSphere)
+
+	rec := new(models.Recommendation)
+
+	err := p.db.Raw(query, userID).
+		Scan(&rec).Error
+
+	if err != nil {
+		return fmt.Errorf("error in add recommendation: %w", err)
+	}
+	return nil
+}
+
+func (p *pgRepository) GetRecommendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
+	rec := new(models.Recommendation)
+	err := p.db.Take(rec, "user_id = ?", userID).Error
+	if err != nil {
+		return nil, fmt.Errorf("error in get for user recommendation: %w", err)
+	}
+	spheres := []int{rec.Sphere0, rec.Sphere1, rec.Sphere2, rec.Sphere3, rec.Sphere4, rec.Sphere5,
+		rec.Sphere6, rec.Sphere7, rec.Sphere8, rec.Sphere9, rec.Sphere10, rec.Sphere11, rec.Sphere12,
+		rec.Sphere13, rec.Sphere14, rec.Sphere15, rec.Sphere16, rec.Sphere17, rec.Sphere18, rec.Sphere19,
+		rec.Sphere20, rec.Sphere21, rec.Sphere22, rec.Sphere23, rec.Sphere24, rec.Sphere25, rec.Sphere26,
+		rec.Sphere27, rec.Sphere28, rec.Sphere29,
+	}
+	recSphere := IndexesWithMax(spheres)
+
+	type Pr struct{
+		avg int
+	}
+	var pr Pr
+
+	var preferredSalary *float64
+	err = p.db.Raw(`select avg(main.resume.salary_max - main.resume.salary_min)
+		from main.resume
+		join main.candidates on resume.cand_id = candidates.cand_id
+		where user_id = ? and salary_min>0 and salary_max>0`, userID).
+		Scan(&pr).Error
+	if err != nil {
+		return nil, fmt.Errorf("error in add recommendation: %w", err)
+	}
+
+	/*найти вакансии с этими сферами*/
+	var vacList []models.Vacancy
+
+	err = p.db.Table("main.vacancy").Scopes(func(q *gorm.DB) *gorm.DB {
+		if preferredSalary != nil {
+			q = q.Where("salary_min >= salary_min - (?)", *preferredSalary/5).
+				Where("salary_max <= salary_max + (?)", *preferredSalary/5).
+				Where("salary_min = 0 and salary_max = 0")
+		}
+			return q
+		}).Where("sphere IN (?)", recSphere).
+		Limit(limit).
+		Offset(start).
+		Order("date_create").
+		Find(&vacList).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("error in add recommendation: %w", err)
+	}
+	return vacList, nil
+}
+
+
+func IndexesWithMax(array []int) []int {
+	var index = 0
+	var max = array[index]
+	var indexes []int
+	for i, value := range array {
+		if max < value {
+			indexes = nil
+			max = value
+			indexes = append(indexes, i)
+		}
+		if max == value {
+			indexes = append(indexes, i)
+		}
+	}
+	return indexes
 }

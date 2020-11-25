@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -11,7 +10,8 @@ import (
 )
 
 type VacancyHandler struct {
-	VacUseCase vacancy.IUseCaseVacancy
+	VacUseCase     vacancy.IUseCaseVacancy
+	SessionBuilder common.SessionBuilder
 }
 
 type Resp struct {
@@ -33,7 +33,7 @@ type vacRequest struct {
 	Requirements    string `json:"requirements" valid:"-"`
 	Duties          string `json:"duties" valid:"-"`
 	Skills          string `json:"skills" valid:"-"`
-	Sphere          int    `json:"sphere" valid:"numeric~сфера деятельности должна содержать только код"`
+	Sphere          *int   `json:"sphere" valid:"numeric~сфера деятельности должна содержать только код"`
 	Employment      string `json:"employment" valid:"-"`
 	ExperienceMonth int    `json:"experience_month" valid:"-"`
 	Location        string `json:"location" valid:"stringlength(4|512)~длина адреса от 4 до 512 смиволов"`
@@ -56,8 +56,14 @@ const (
 	vacPath   = "vacancy/"
 )
 
-func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy, AuthRequired gin.HandlerFunc) *VacancyHandler {
-	rest := &VacancyHandler{VacUseCase: useCase}
+func NewRest(router *gin.RouterGroup,
+	useCase vacancy.IUseCaseVacancy,
+	sessionBuilder common.SessionBuilder,
+	AuthRequired gin.HandlerFunc) *VacancyHandler {
+	rest := &VacancyHandler{
+		VacUseCase:     useCase,
+		SessionBuilder: sessionBuilder,
+	}
 	rest.routes(router, AuthRequired)
 	return rest
 }
@@ -72,6 +78,7 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 		router.GET("/mine", v.GetUserVacancyListHandler)
 		router.PUT("/", v.UpdateVacancyHandler)
 		router.POST("/", v.CreateVacancyHandler)
+		router.GET("/recommendation", v.GetRecommendationUserVacancy)
 	}
 }
 
@@ -89,6 +96,17 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
+	}
+
+	session := v.SessionBuilder.Build(ctx)
+	candID, err := common.GetCurrentUserId(session, common.CandID)
+	userID, err := common.GetCurrentUserId(session, common.UserID)
+
+	if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
+		err := v.VacUseCase.AddRecomendation(userID, vac.Sphere)
+		if err != nil {
+			ctx.Error(err)
+		}
 	}
 
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
@@ -114,6 +132,38 @@ func (v *VacancyHandler) GetCompVacancyListHandler(ctx *gin.Context) {
 	vacListHandlerCommon(v, ctx, vacancy.ByCompId)
 }
 
+func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
+	var (
+		req     vacListRequest
+		err     error
+		vacList []models.Vacancy
+	)
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		return
+	}
+	session := v.SessionBuilder.Build(ctx)
+	candID, err := common.GetCurrentUserId(session, common.CandID)
+	userID, err := common.GetCurrentUserId(session, common.UserID)
+
+	if err == nil && candID != uuid.Nil {
+		vacList, err = v.VacUseCase.GetRecomendation(userID, int(req.Start), int(req.Limit))
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		return
+	}
+	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
+
+}
+
 func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
@@ -132,6 +182,7 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
+
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
@@ -155,17 +206,23 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
 		return
 	}
+	if req.Sphere == nil {
+		noSphere := -1
+		req.Sphere = &noSphere
+	}
 	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax, AreaSearch: req.AreaSearch,
-		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: req.Sphere,
+		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: *req.Sphere,
 		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
 		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
 	if treatmentType == vacCreate {
-		session := sessions.Default(ctx).Get("empl_id")
+		session := v.SessionBuilder.Build(ctx)
+		emplID := session.Get(common.EmplID)
+		//session := sessions.Default(ctx).Get("empl_id")
 		if session == nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
 		}
-		empId, errSession := uuid.Parse(session.(string))
+		empId, errSession := uuid.Parse(emplID.(string))
 		if errSession != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
@@ -177,6 +234,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.DataBaseErr})
 		return
 	}
@@ -201,8 +259,9 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		return
 	}
 	if entityType == vacancy.ByEmpId {
-		session := sessions.Default(ctx).Get("empl_id")
-		if id, err = uuid.Parse(session.(string)); err != nil {
+		session := v.SessionBuilder.Build(ctx)
+		emplID := session.Get(common.EmplID)
+		if id, err = uuid.Parse(emplID.(string)); err != nil {
 			ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
 			return
 		}

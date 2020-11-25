@@ -118,7 +118,7 @@ func NewApp(config Config) *App {
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, common.AuthRequired())
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, &sessionBuilder, common.AuthRequired())
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
