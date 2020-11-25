@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -9,6 +10,11 @@ import (
 	"github.com/google/uuid"
 	"net/http"
 )
+
+type RespNotifications struct {
+	UnreadResponses      []models.ResponseWithTitle `json:"unread_responses"`
+	RecommendedVacancies []models.Vacancy           `json:"new_vacancies"`
+}
 
 type ResponseHandler struct {
 	UsecaseResponse response.IUseCaseResponse
@@ -30,6 +36,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.Use(AuthRequired)
 	{
+		router.POST("/notify", r.handlerGetAllNotifications)
 		router.POST("/", r.CreateResponse)
 		router.POST("/update", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
@@ -112,14 +119,14 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 
 	var responses []models.ResponseWithTitle
 	if candID != uuid.Nil && emplID == uuid.Nil {
-		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID)
+		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, nil)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
-		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID)
+		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID, nil)
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -187,4 +194,63 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 	}
 
 	return userID, entityID, nil
+}
+
+func getResponses(r *ResponseHandler, session sessions.Session, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, int, error) {
+	emplID, err := common.GetCurrentUserId(session, common.EmplID)
+	candID, err := common.GetCurrentUserId(session, common.CandID)
+
+	var responses []models.ResponseWithTitle
+	if candID != uuid.Nil && emplID == uuid.Nil {
+		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, respIds)
+		if err != nil {
+			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
+		}
+	} else if candID == uuid.Nil && emplID != uuid.Nil {
+		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID, respIds)
+		if err != nil {
+			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
+		}
+	} else {
+		return nil, http.StatusMethodNotAllowed, errors.New("this user cannot have responses")
+	}
+	return responses, http.StatusOK, nil
+}
+
+func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
+	var (
+		responses     []models.ResponseWithTitle
+		err           error
+		status        int
+		req           struct {
+			NewVacNotifications  map[uuid.UUID]bool     `json:"new_vacancies"` // notifications about new vacancies, nil means all
+			NewRespNotifications map[uuid.UUID]bool     `json:"unread_responses"`
+			Chat                 map[uuid.UUID][]string `json:"unread_messages"`
+		}
+	)
+
+	session := r.SessionBuilder.Build(ctx)
+
+	if err = ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		return
+	}
+	/*if req.NewVacNotifications != nil {
+		for key, isActive := range req.NewVacNotifications {
+			if !isActive {
+				delete(req.NewVacNotifications, key)
+			}
+		}
+	} else {
+		// достаем все вакансии или резюме, подобранные для пользователя
+	}*/
+	if req.NewRespNotifications != nil {
+		responses, status, err = getResponses(r, session, req.NewRespNotifications)
+	} else {
+		responses, status, err = getResponses(r, session, nil)
+	}
+	if err != nil {
+		ctx.JSON(status, common.RespError{Err: err.Error()})
+	}
+	ctx.JSON(http.StatusOK, RespNotifications{UnreadResponses: responses})
 }
