@@ -2,27 +2,90 @@ package repository
 
 import (
 	"fmt"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type pgRepository struct {
-	db *gorm.DB
+	db            *gorm.DB
+	vacRepository vacancy.RepositoryVacancy
 }
 
-func (p pgRepository) GetRespNotifications(respIds map[uuid.UUID]bool) ([]models.Response, error) {
+func (p pgRepository) GetRecommendedVacCnt(emplId uuid.UUID, startDate string) (uint, error) {
 	var (
-		responses  []models.Response
-		wasReadIds []uuid.UUID
+		cnt  uint = 0
+		temp uint = 0
 	)
-	for key, isActive := range respIds {
-		if !isActive {
-			wasReadIds = append(wasReadIds, key)
-		}
+	step := 2
+	curSphere := 0
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(emplId)
+	if err != nil {
+		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
+		return 0, err
 	}
-	err := p.db.Table("main.response").Where("response_id IN ?", wasReadIds).UpdateColumn("unread", false).Error
+	for curSphere < vacancy.CoutShheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+		err = p.db.Raw("select count(*) from main.vacancy where date_create >= ? and sphere in ?", startDate, arr).Scan(&temp).Error
+		cnt += temp
+		if err != nil {
+			err = fmt.Errorf("error in getRecommended vacancies: %w", err)
+			return 0, err
+		}
+		curSphere += step
+	}
+	return cnt, nil
+}
+
+func (p pgRepository) GetRecommendedVacancies(emplId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error) {
+	step := 2
+	curSphere := 0
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(emplId)
+	if err != nil {
+		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
+		return nil, err
+	}
+	var (
+		vacList []models.Vacancy
+		list []models.Vacancy
+	)
+	for len(vacList) < limit && curSphere < vacancy.CoutShheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+		err := p.db.Table("main.vacancy").Where("date_create >= ? and sphere in ?", startDate, arr).
+			Limit(limit).Offset(start).Find(&list).Error
+		vacList = append(vacList, list...)
+		if err != nil {
+			err = fmt.Errorf("error in GetRecommendation: %w", err)
+			return nil, err
+		}
+		curSphere += step
+	}
+	return vacList[0:limit], err
+}
+
+func (p pgRepository) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	var (
+		err error
+		cnt uint
+	)
+	if userType == common.Candidate {
+		err = p.db.Raw("select count(*) from main.resume "+
+			"join main.response using(resume_id)"+
+			"where resume.cand_id = ?", userId).Scan(&cnt).Error
+	} else {
+		err = p.db.Raw("select count(*) from main.vacancy "+
+			"join main.response on vacancy_id=vac_id "+
+			"where vacancy.empl_id = ?", userId).Scan(&cnt).Error
+	}
+	return cnt, err
+}
+
+func (p pgRepository) GetRespNotifications(respIds []uuid.UUID) ([]models.Response, error) {
+	var responses []models.Response
+	err := p.db.Table("main.response").Where("response_id IN ?", respIds).UpdateColumn("unread", false).Error
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err

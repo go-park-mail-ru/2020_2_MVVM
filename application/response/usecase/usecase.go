@@ -42,10 +42,6 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u *UseCaseResponse) GetRecommendedVacancies(start uint, end uint, emplId uuid.UUID) ([]models.Vacancy, error) {
-	return u.vacancyUsecase.GetVacancyList(start, end, emplId, vacancy.ByEmpId)
-}
-
 func (u *UseCaseResponse) Create(response models.Response) (*models.Response, error) {
 	if response.Initial == common.Candidate {
 		r, err := u.resumeUsecase.GetById(response.ResumeID)
@@ -92,7 +88,7 @@ func (u *UseCaseResponse) UpdateStatus(response models.Response, userUpdate stri
 	return u.strg.UpdateStatus(response)
 }
 
-func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, error) {
+func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
 	var (
 		responses []models.ResponseWithTitle
 		resp      []models.Response
@@ -142,7 +138,7 @@ func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds map
 	return responses, nil
 }
 
-func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, error) {
+func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
 	var (
 		responses []models.ResponseWithTitle
 		resp      []models.Response
@@ -187,6 +183,28 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds map[
 		responses[i].CandSurname = res.Candidate.User.Surname
 	}
 	return responses, nil
+}
+
+func (u *UseCaseResponse) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	cnt, err := u.strg.GetResponsesCnt(userId, userType)
+	return cnt, err
+}
+
+func (u *UseCaseResponse) GetRecommendedVacCnt(userId uuid.UUID, daysFromNow int) (uint, error) {
+	startDate := ""
+	if daysFromNow > 0 {
+		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
+	}
+	cnt, err := u.strg.GetRecommendedVacCnt(userId, startDate)
+	return cnt, err
+}
+
+func (u *UseCaseResponse) GetRecommendedVacancies(emplId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error) {
+	startDate := ""
+	if daysFromNow > 0 {
+		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
+	}
+	return u.strg.GetRecommendedVacancies(emplId, start, limit, startDate)
 }
 
 func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error) {

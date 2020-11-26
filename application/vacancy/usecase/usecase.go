@@ -119,7 +119,5 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 		}
 		curSphere += step
 	}
-
-
 	return vacList[0:limit], err
 }
