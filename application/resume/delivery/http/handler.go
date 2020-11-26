@@ -9,7 +9,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
 	"net/http"
-	"os"
 	"path"
 )
 
@@ -100,8 +99,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 	avatarName := resumePath+template.ResumeID.String()
 	if file != nil {
-		fileDir, _ := os.Getwd()
-		template.Avatar = path.Join(fileDir, common.ImgDir, avatarName)
+		template.Avatar = path.Join(common.DOMAIN, common.ImgDir, avatarName)
 	}
 	result, err := r.UseCaseResume.Create(template)
 	if err != nil {
