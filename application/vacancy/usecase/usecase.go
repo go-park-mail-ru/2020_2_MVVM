@@ -94,5 +94,32 @@ func (v VacancyUseCase) AddRecomendation(userID uuid.UUID, sphere int) error {
 }
 
 func (v VacancyUseCase) GetRecomendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
-	return v.repos.GetRecommendation(userID, start, limit)
+	preferredSphere, err := v.repos.GetPreferredSpheres(userID)
+	if err != nil {
+		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
+		return nil, err
+	}
+	step := 2
+	curSphere := 0
+	preferredSalary, err := v.repos.GetPreferredSalary(userID)
+	if err != nil {
+		err = fmt.Errorf("error in GetPreferredSalary: %w", err)
+		return nil, err
+	}
+
+	var vacList []models.Vacancy
+
+	for len(vacList) < limit || curSphere < vacancy.CoutShheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+
+		vacList, err = v.repos.GetRecommendation(start, limit, preferredSalary, arr)
+		if err != nil {
+			err = fmt.Errorf("error in GetRecommendation: %w", err)
+			return nil, err
+		}
+		curSphere += step
+	}
+
+
+	return vacList, err
 }

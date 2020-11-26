@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -163,46 +164,63 @@ func (p *pgRepository) AddRecommendation(userID uuid.UUID, sphere int) error {
 	return nil
 }
 
-func (p *pgRepository) GetRecommendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
+func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, error) {
 	rec := new(models.Recommendation)
 	err := p.db.Take(rec, "user_id = ?", userID).Error
 	if err != nil {
-		return nil, fmt.Errorf("error in get for user recommendation: %w", err)
+		return nil, fmt.Errorf("error in get for user recommendation spheres: %w", err)
 	}
-	spheres := []int{rec.Sphere0, rec.Sphere1, rec.Sphere2, rec.Sphere3, rec.Sphere4, rec.Sphere5,
-		rec.Sphere6, rec.Sphere7, rec.Sphere8, rec.Sphere9, rec.Sphere10, rec.Sphere11, rec.Sphere12,
-		rec.Sphere13, rec.Sphere14, rec.Sphere15, rec.Sphere16, rec.Sphere17, rec.Sphere18, rec.Sphere19,
-		rec.Sphere20, rec.Sphere21, rec.Sphere22, rec.Sphere23, rec.Sphere24, rec.Sphere25, rec.Sphere26,
-		rec.Sphere27, rec.Sphere28, rec.Sphere29,
-	}
-	recSphere := IndexesWithMax(spheres)
 
+
+	spheres := []vacancy.Pair{{0, rec.Sphere0}, {1, rec.Sphere1},
+	{2, rec.Sphere2}, {3, rec.Sphere3}, {4, rec.Sphere4},
+	{5, rec.Sphere5}, {6, rec.Sphere6}, {7, rec.Sphere7},
+	{8, rec.Sphere8}, {9, rec.Sphere9}, {10, rec.Sphere10}}
+	//{11, rec.Sphere11}, {12, rec.Sphere12}, {13, rec.Sphere13},}
+	//{14, rec.Sphere14}, {15, rec.Sphere15}, {16, rec.Sphere16},}
+
+	sort.Slice(spheres, func(i, j int) bool {
+		return spheres[i].Score < spheres[j].Score
+	})
+
+
+	//spheres := map[int]int{0:rec.Sphere0, 1:rec.Sphere1, 2:rec.Sphere2, 3:rec.Sphere3, 4:rec.Sphere4, 5:rec.Sphere5,
+	//	6:rec.Sphere6, 7:rec.Sphere7, 8:rec.Sphere8, 9:rec.Sphere9, 10:rec.Sphere10, 11:rec.Sphere11, 12:rec.Sphere12,
+	//	13:rec.Sphere13, 14:rec.Sphere14, 15:rec.Sphere15, 16:rec.Sphere16, 17:rec.Sphere17, 18:rec.Sphere18, 19:rec.Sphere19,
+	//	20:rec.Sphere20, 21:rec.Sphere21, 22:rec.Sphere22, 23:rec.Sphere23, 24:rec.Sphere24, 25:rec.Sphere25, 26:rec.Sphere26,
+	//	27:rec.Sphere27, 28:rec.Sphere28, 29:rec.Sphere29,
+	//}
+	return spheres, nil
+}
+
+func (p *pgRepository) GetPreferredSalary(userID uuid.UUID) (*int, error) {
 	type Pr struct{
 		avg int
 	}
 	var pr Pr
 
-	var preferredSalary *float64
-	err = p.db.Raw(`select avg(main.resume.salary_max - main.resume.salary_min)
+	//var preferredSalary *float64
+	err := p.db.Raw(`select avg(main.resume.salary_max - main.resume.salary_min)
 		from main.resume
 		join main.candidates on resume.cand_id = candidates.cand_id
 		where user_id = ? and salary_min>0 and salary_max>0`, userID).
 		Scan(&pr).Error
 	if err != nil {
-		return nil, fmt.Errorf("error in add recommendation: %w", err)
+		return nil, fmt.Errorf("error in get for user recommendation salary: %w", err)
 	}
+	return &pr.avg, nil
+}
 
-	/*найти вакансии с этими сферами*/
+func (p *pgRepository) GetRecommendation(start int, limit int, salary *int, spheres []int) ([]models.Vacancy, error) {
 	var vacList []models.Vacancy
-
-	err = p.db.Table("main.vacancy").Scopes(func(q *gorm.DB) *gorm.DB {
-		if preferredSalary != nil {
-			q = q.Where("salary_min >= salary_min - (?)", *preferredSalary/5).
-				Where("salary_max <= salary_max + (?)", *preferredSalary/5).
+	err := p.db.Table("main.vacancy").Scopes(func(q *gorm.DB) *gorm.DB {
+		if salary != nil {
+			q = q.Where("salary_min >= salary_min - (?)", *salary/5).
+				Where("salary_max <= salary_max + (?)", *salary/5).
 				Where("salary_min = 0 and salary_max = 0")
 		}
 			return q
-		}).Where("sphere IN (?)", recSphere).
+		}).Where("sphere IN (?)", spheres).
 		Limit(limit).
 		Offset(start).
 		Order("date_create").
@@ -215,19 +233,54 @@ func (p *pgRepository) GetRecommendation(userID uuid.UUID, start int, limit int)
 }
 
 
-func IndexesWithMax(array []int) []int {
-	var index = 0
-	var max = array[index]
-	var indexes []int
-	for i, value := range array {
-		if max < value {
-			indexes = nil
-			max = value
-			indexes = append(indexes, i)
-		}
-		if max == value {
-			indexes = append(indexes, i)
-		}
+func IndexesWithMax(array map[int]int) map[int]int {
+/*
+	names := make([]string, 0, len(scores))
+       for name := range scores {
+           names = append(names, name)
+       }
+
+       sort.Slice(names, func(i, j int) bool {
+           return scores[names[i]] > scores[names[j]]
+       })
+       fmt.Println(names)
+       fmt.Println()
+
+       for _, name := range names {
+           fmt.Printf("%-7v %v\n", name, scores[name])
+       }
+     }
+	*/
+
+	//мапка индекс-количество, отсортированная по количеству
+	keys := []int{}
+	for key := range array {
+		keys = append(keys, key)
 	}
-	return indexes
+
+	sort.Slice(keys, func(i, j int) bool {
+		return array[keys[i]] > array[keys[j]]
+	})
+
+	sortMap := make(map[int]int)
+	for _, val := range keys {
+		sortMap[val] = array[val]
+	}
+	//
+	//
+	//var index = 0
+	//var max = array[index]
+	//
+	//var indexes []int
+	//for i, value := range array {
+	//	if max < value {
+	//		indexes = nil
+	//		max = value
+	//		indexes = append(indexes, i)
+	//	}
+	//	if max == value {
+	//		indexes = append(indexes, i)
+	//	}
+	//}
+	return sortMap
 }

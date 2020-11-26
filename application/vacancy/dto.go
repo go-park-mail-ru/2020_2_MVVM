@@ -32,3 +32,10 @@ var Spheres = []string{
 	"Электроника, приборостроение, бытовая техника, компьютеры и оргтехника",
 	"Энергетика",
 }
+
+var CoutShheres = 29
+
+type Pair struct {
+	SphereInd int
+	Score     int
+}

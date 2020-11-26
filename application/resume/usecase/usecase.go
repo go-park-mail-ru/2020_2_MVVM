@@ -42,15 +42,24 @@ func NewUseCase(infoLogger *logger.Logger,
 func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	// create resume
 	template.DateCreate = time.Now()
+	for i := range template.ExperienceCustomComp {
+		if *(template.ExperienceCustomComp[i].ContinueToToday){
+			dateFinish := time.Now()
+			template.ExperienceCustomComp[i].Finish = &dateFinish
+		}
+		template.ExperienceCustomComp[i].ResumeID = template.ResumeID
+		template.ExperienceCustomComp[i].CandID = template.CandID
+
+	}
 	result, err := u.strg.Create(template)
 	if err != nil {
 		return nil, err
 	}
 
-	err = u.createExperienceAndEducation(template, *result)
-	if err != nil {
-		return nil, err
-	}
+	//err = u.createExperienceAndEducation(template, *result)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return result, nil
 }
 
