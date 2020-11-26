@@ -103,7 +103,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	userID, err := common.GetCurrentUserId(session, common.UserID)
 
 	if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
-		err := v.VacUseCase.AddRecomendation(userID, vac.Sphere)
+		err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
 		if err != nil {
 			ctx.Error(err)
 		}
@@ -148,7 +148,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 	userID, err := common.GetCurrentUserId(session, common.UserID)
 
 	if err == nil && candID != uuid.Nil {
-		vacList, err = v.VacUseCase.GetRecomendation(userID, int(req.Start), int(req.Limit))
+		vacList, err = v.VacUseCase.GetRecommendation(userID, int(req.Start), int(req.Limit))
 		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)

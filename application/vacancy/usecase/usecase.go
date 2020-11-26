@@ -89,11 +89,11 @@ func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]mo
 	return vacList, nil
 }
 
-func (v VacancyUseCase) AddRecomendation(userID uuid.UUID, sphere int) error {
+func (v VacancyUseCase) AddRecommendation(userID uuid.UUID, sphere int) error {
 	return v.repos.AddRecommendation(userID, sphere)
 }
 
-func (v VacancyUseCase) GetRecomendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
+func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
 	preferredSphere, err := v.repos.GetPreferredSpheres(userID)
 	if err != nil {
 		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)

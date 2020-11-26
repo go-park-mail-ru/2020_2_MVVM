@@ -26,6 +26,7 @@ type Vacancy struct {
 	DateCreate      string    `gorm:"column:date_create" json:"date_create"`
 	EmpEmail        string    `gorm:"column:empl_email" json:"email"`
 	EmpPhone        string    `gorm:"column:empl_phone" json:"phone"`
+	Avatar          string    `gorm:"column:path_to_avatar" json:"avatar"`
 }
 
 type VacancySearchParams struct {

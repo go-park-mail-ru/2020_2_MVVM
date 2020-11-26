@@ -3,10 +3,12 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"path"
 	"sort"
 	"strconv"
 	"time"
@@ -22,15 +24,15 @@ func NewPgRepository(db *gorm.DB) vacancy.RepositoryVacancy {
 
 func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error) {
 	employer := new(models.Employer)
-	company  := new(models.OfficialCompany)
+	company := new(models.OfficialCompany)
 
-	err := p.db.Take(employer,"empl_id = ?", vac.EmpID).Error
+	err := p.db.Take(employer, "empl_id = ?", vac.EmpID).Error
 	if err != nil {
 		err = fmt.Errorf("error in FK search for vacancy creation for user with id: %s : error: %w", vac.EmpID, err)
 		return nil, err
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
-		//vac.ID = uuid.New()
+		vac.Avatar = path.Join(common.DOMAIN, common.ImgDir, "company", compId.String())
 		vac.DateCreate = time.Now().Format("2006-01-02")
 		vac.CompID = compId
 		company.ID = compId
@@ -50,7 +52,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 }
 
 func (p *pgRepository) GetVacancyById(id uuid.UUID) (*models.Vacancy, error) {
-	vac :=  new(models.Vacancy)
+	vac := new(models.Vacancy)
 	if id == uuid.Nil {
 		return nil, nil
 	}
@@ -172,16 +174,16 @@ func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, er
 	}
 
 	spheres := []vacancy.Pair{{0, rec.Sphere0}, {1, rec.Sphere1},
-	{2, rec.Sphere2}, {3, rec.Sphere3}, {4, rec.Sphere4},
-	{5, rec.Sphere5}, {6, rec.Sphere6}, {7, rec.Sphere7},
-	{8, rec.Sphere8}, {9, rec.Sphere9}, {10, rec.Sphere10},
-	{11, rec.Sphere11}, {12, rec.Sphere12}, {13, rec.Sphere13},
-	{14, rec.Sphere14}, {15, rec.Sphere15}, {16, rec.Sphere16},
-	{17, rec.Sphere17}, {18, rec.Sphere18}, {19, rec.Sphere19},
-	{20, rec.Sphere20}, {21, rec.Sphere21}, {22, rec.Sphere22},
-	{23, rec.Sphere23}, {24, rec.Sphere24}, {25, rec.Sphere25},
-	{26, rec.Sphere26}, {27, rec.Sphere27}, {28, rec.Sphere28},
-	{29, rec.Sphere29}}
+		{2, rec.Sphere2}, {3, rec.Sphere3}, {4, rec.Sphere4},
+		{5, rec.Sphere5}, {6, rec.Sphere6}, {7, rec.Sphere7},
+		{8, rec.Sphere8}, {9, rec.Sphere9}, {10, rec.Sphere10},
+		{11, rec.Sphere11}, {12, rec.Sphere12}, {13, rec.Sphere13},
+		{14, rec.Sphere14}, {15, rec.Sphere15}, {16, rec.Sphere16},
+		{17, rec.Sphere17}, {18, rec.Sphere18}, {19, rec.Sphere19},
+		{20, rec.Sphere20}, {21, rec.Sphere21}, {22, rec.Sphere22},
+		{23, rec.Sphere23}, {24, rec.Sphere24}, {25, rec.Sphere25},
+		{26, rec.Sphere26}, {27, rec.Sphere27}, {28, rec.Sphere28},
+		{29, rec.Sphere29}}
 
 	sort.Slice(spheres, func(i, j int) bool {
 		return spheres[i].Score >= spheres[j].Score
