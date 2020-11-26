@@ -114,7 +114,6 @@ func (p *pgRepository) CreateOfficialCompany(comp models.OfficialCompany, empId 
 	if err != nil || employer.CompanyID != uuid.Nil {
 		return nil, errors.New(common.EmpHaveComp)
 	}
-	comp.ID = uuid.New()
 	err = p.db.Table("main.official_companies").Create(&comp).Error
 	if err != nil {
 		return nil, fmt.Errorf("error in inserting official company: error: %w", err)

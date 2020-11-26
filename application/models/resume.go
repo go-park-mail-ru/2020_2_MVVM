@@ -25,7 +25,7 @@ type Resume struct {
 	DateCreate           time.Time              `gorm:"column:date_create" json:"date_create" form:"date_create" valid:"-"`
 	Education            []Education            `gorm:"-;" json:"education" valid:"-"`
 	ExperienceCustomComp []ExperienceCustomComp `gorm:"foreignKey:ResumeID" json:"custom_experience" valid:"-"`
-	Avatar               string                 `gorm:"-" json:"avatar" valid:"-"`
+	Avatar               string                 `gorm:"column:path_to_avatar" json:"avatar" valid:"-"`
 }
 
 func (r Resume) TableName() string {

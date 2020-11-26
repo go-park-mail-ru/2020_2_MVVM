@@ -9,6 +9,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
 	"net/http"
+	"os"
+	"path"
 )
 
 type ResumeHandler struct {
@@ -89,13 +91,18 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		return
 	}
 	template.CandID = candID
+	template.ResumeID = uuid.New()
 
 	file, errImg := common.GetImageFromBase64(template.Avatar)
 	if errImg != nil {
 		ctx.JSON(http.StatusBadRequest, errImg)
 		return
 	}
-
+	avatarName := resumePath+template.ResumeID.String()
+	if file != nil {
+		fileDir, _ := os.Getwd()
+		template.Avatar = path.Join(fileDir, common.ImgDir, avatarName)
+	}
 	result, err := r.UseCaseResume.Create(template)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
@@ -104,7 +111,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 
 	if file != nil {
-		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
+		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
