@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"net/http"
+	"os"
+	"path"
 )
 
 type CompanyHandler struct {
@@ -147,15 +149,16 @@ func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
 func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	var (
 		req struct {
-			Name        string `json:"name" binding:"required" valid:"stringlength(4|15)~название компании должно быть от 4 до 15 символов."`
+			Name        string `json:"name" binding:"required" valid:"stringlength(4|30)~название компании должно быть от 4 до 30 символов."`
 			Description string `json:"description" binding:"required" valid:"-"`
 			Spheres     []int  `json:"spheres" valid:"-"`
-			AreaSearch  string `json:"area_search" valid:"utfletter~неверный регион,stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
+			AreaSearch  string `json:"area_search" valid:"stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
 			Link        string `json:"link" valid:"url~неверный формат ссылки"`
 			Avatar      string `json:"avatar" valid:"-"`
 		}
-		compNew *models.OfficialCompany
-		err     error
+		compNew    *models.OfficialCompany
+		err        error
+		avatarPath string
 	)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
@@ -180,11 +183,17 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 		return
 	}
+	compId := uuid.New()
+	avatarName := compPath + compId.String()
+	if file != nil {
+		fileDir, _ := os.Getwd()
+		avatarPath = path.Join(fileDir, common.ImgDir, avatarName)
+	}
 	if treatmentType == compCreate {
-		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
-			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
+		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{ID: compId, Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
+			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description, Avatar: avatarPath}, empId)
 	} else {
-		compNew, err = c.CompUseCase.UpdateOfficialCompany(models.OfficialCompany{Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
+		compNew, err = c.CompUseCase.UpdateOfficialCompany(models.OfficialCompany{ID: compId, Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
 			AreaSearch: req.AreaSearch, Link: req.Link, Description: req.Description}, empId)
 	}
 	if err != nil {
@@ -196,7 +205,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		return
 	}
 	if file != nil {
-		if err := common.AddOrUpdateUserFile(file, compPath+compNew.ID.String()); err != nil {
+		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}

@@ -13,8 +13,8 @@ type OfficialCompany struct {
 	AreaSearch  string        `gorm:"column:area_search" json:"area_search"`
 	Link        string        `gorm:"column:link" json:"link"`
 	VacCount    int           `gorm:"column:count_vacancy" json:"vac_count"`
+	Avatar      string        `gorm:"column:path_to_avatar" json:"avatar"`
 }
-
 
 func (c OfficialCompany) TableName() string {
 	return "main.official_companies"
