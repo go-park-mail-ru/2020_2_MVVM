@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
@@ -96,6 +97,10 @@ func (v VacancyUseCase) AddRecomendation(userID uuid.UUID, sphere int) error {
 func (v VacancyUseCase) GetRecomendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
 	preferredSphere, err := v.repos.GetPreferredSpheres(userID)
 	if err != nil {
+		if err.Error() == "error in get for user recommendation spheres: record not found" {
+			err = fmt.Errorf(common.NoRecommendation)
+			return nil, err
+		}
 		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
 		return nil, err
 	}

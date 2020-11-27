@@ -141,6 +141,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	session := v.SessionBuilder.Build(ctx)
@@ -150,6 +151,10 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 	if err == nil && candID != uuid.Nil {
 		vacList, err = v.VacUseCase.GetRecomendation(userID, int(req.Start), int(req.Limit))
 		if err != nil {
+			if err.Error() == common.NoRecommendation {
+				ctx.JSON(http.StatusOK, common.RespError{Err: common.NoRecommendation})
+				return
+			}
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -158,6 +163,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
