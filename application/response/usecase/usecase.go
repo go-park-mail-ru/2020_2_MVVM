@@ -204,7 +204,7 @@ func (u *UseCaseResponse) GetRecommendedVacancies(emplId uuid.UUID, start uint, 
 	if daysFromNow > 0 {
 		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
 	}
-	return u.strg.GetRecommendedVacancies(emplId, start, limit, startDate)
+	return u.strg.GetRecommendedVacancies(emplId, int(start), int(limit), startDate)
 }
 
 func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error) {
