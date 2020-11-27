@@ -9,9 +9,12 @@ type ResponseRepository interface {
 	GetByID(responseID uuid.UUID) (*models.Response, error)
 	Create(models.Response) (*models.Response, error)
 	UpdateStatus(models.Response) (*models.Response, error)
-	GetRespNotifications(respIds map[uuid.UUID]bool) ([]models.Response, error)
+	GetRespNotifications(respIds []uuid.UUID) ([]models.Response, error)
 	GetResumeAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetVacancyAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error)
 	GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error)
+	GetResponsesCnt(userId uuid.UUID, userType string) (uint, error)
+	GetRecommendedVacCnt(emplId uuid.UUID, startDate string) (uint, error)
+	GetRecommendedVacancies(emplId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error)
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"net/http"
-	"os"
 	"path"
 )
 
@@ -186,8 +185,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	compId := uuid.New()
 	avatarName := compPath + compId.String()
 	if file != nil {
-		fileDir, _ := os.Getwd()
-		avatarPath = path.Join(fileDir, common.ImgDir, avatarName)
+		avatarPath = path.Join(common.DOMAIN, common.ImgDir, avatarName)
 	}
 	if treatmentType == compCreate {
 		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{ID: compId, Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),

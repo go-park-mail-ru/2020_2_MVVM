@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
@@ -12,8 +11,10 @@ import (
 )
 
 type RespNotifications struct {
-	UnreadResponses      []models.ResponseWithTitle `json:"unread_responses"`
-	RecommendedVacancies []models.Vacancy           `json:"new_vacancies"`
+	UnreadResp        []models.ResponseWithTitle `json:"unread_resp"`
+	UnreadRespCnt     uint                       `json:"unread_resp_cnt"`
+	RecommendedVac    []models.Vacancy           `json:"new_vac"`
+	RecommendedVacCnt uint                       `json:"new_vac_cnt"`
 }
 
 type ResponseHandler struct {
@@ -34,9 +35,10 @@ func NewRest(router *gin.RouterGroup,
 }
 
 func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.POST("/notify", r.handlerGetAllNotifications)
 	router.Use(AuthRequired)
 	{
-		router.POST("/notify", r.handlerGetAllNotifications)
+		//router.POST("/notify", r.handlerGetAllNotifications)
 		router.POST("/", r.CreateResponse)
 		router.POST("/update", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
@@ -196,18 +198,18 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 	return userID, entityID, nil
 }
 
-func getNewResponses(r *ResponseHandler, session sessions.Session, respIds map[uuid.UUID]bool) ([]models.ResponseWithTitle, int, error) {
-	emplID, err := common.GetCurrentUserId(session, common.EmplID)
-	candID, err := common.GetCurrentUserId(session, common.CandID)
-
-	var responses []models.ResponseWithTitle
-	if candID != uuid.Nil && emplID == uuid.Nil {
-		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, respIds)
+func getNewResponses(r *ResponseHandler, unId uuid.UUID, userType string, respIds []uuid.UUID) ([]models.ResponseWithTitle, int, error) {
+	var (
+		responses []models.ResponseWithTitle
+		err       error
+	)
+	if userType == common.Candidate {
+		responses, err = r.UsecaseResponse.GetAllCandidateResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
-	} else if candID == uuid.Nil && emplID != uuid.Nil {
-		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID, respIds)
+	} else if userType == common.Employer {
+		responses, err = r.UsecaseResponse.GetAllEmployerResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
@@ -219,42 +221,42 @@ func getNewResponses(r *ResponseHandler, session sessions.Session, respIds map[u
 
 func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	var (
-		responses     []models.ResponseWithTitle
+		notifications RespNotifications
 		err           error
 		status        int
+		daysFromNow   int
 		req           struct {
-			NewVacNotifications  map[uuid.UUID]bool     `json:"new_vacancies"` // notifications about new vacancies, nil means all
-			NewRespNotifications map[uuid.UUID]bool     `json:"unread_responses"`
-			Chat                 map[uuid.UUID][]string `json:"unread_messages"`
+			VacInLastNDays       *int       `json:"vac_in_last_n_days"` // notifications about recommended new vacancies, nil means from last 7 days max - month
+			OnlyVacCnt           bool        `json:"only_new_vac_cnt"`   // if true -> get only count of recommended vacancies
+			NewRespNotifications []uuid.UUID `json:"watched_responses"`  // nil - all responses, for useless resp deleting put uuid in list
+			OnlyRespCnt          bool        `json:"only_new_resp_cnt"`  // if true -> get only count of responses notifications
+			//Chat                 map[uuid.UUID][]string `json:"unread_messages"`
 		}
 	)
 
 	session := r.SessionBuilder.Build(ctx)
+	unId, userType, err := common.GetUser(session)
+
 	if err = ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
-	/*if req.NewVacNotifications != nil {
-		for key, isActive := range req.NewVacNotifications {
-			if !isActive {
-				delete(req.NewVacNotifications, key)
-			}
-		}
+	if req.VacInLastNDays != nil {
+		daysFromNow = *req.VacInLastNDays
+	}
+	if req.OnlyRespCnt {
+		notifications.UnreadRespCnt, err = r.UsecaseResponse.GetResponsesCnt(unId, userType)
 	} else {
-		// достаем все вакансии или резюме, подобранные для пользователя
-	}*/
-	if req.NewRespNotifications != nil {
-		responses, status, err = getNewResponses(r, session, req.NewRespNotifications)
+		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
+	}
+	if req.OnlyVacCnt {
+		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
 	} else {
-		responses, status, err = getNewResponses(r, session, nil)
+		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, 0, 10, daysFromNow)
 	}
 	if err != nil {
-		ctx.JSON(status, common.RespError{Err: err.Error()})
+		ctx.JSON(status, common.RespError{Err: common.DataBaseErr})
 	}
-	emplID, err := common.GetCurrentUserId(session, common.EmplID)
-	vacList, err := r.UsecaseResponse.GetRecommendedVacancies(0,10, emplID)
-	if err != nil {
-		ctx.JSON(status, common.RespError{Err: err.Error()})
-	}
-	ctx.JSON(http.StatusOK, RespNotifications{UnreadResponses: responses, RecommendedVacancies: vacList})
+
+	ctx.JSON(http.StatusOK, notifications)
 }

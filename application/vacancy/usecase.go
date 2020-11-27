@@ -18,6 +18,6 @@ type IUseCaseVacancy interface {
 	GetVacancy(uuid.UUID) (*models.Vacancy, error)
 	GetVacancyList(uint, uint, uuid.UUID, int) ([]models.Vacancy, error)
 	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
-	AddRecomendation(uuid.UUID, int) error
-	GetRecomendation(uuid.UUID, int, int) ([]models.Vacancy, error)
+	AddRecommendation(uuid.UUID, int) error
+	GetRecommendation(uuid.UUID, int, int) ([]models.Vacancy, error)
 }

@@ -48,11 +48,13 @@ func (r *Resume) Brief() (*BriefResumeInfo, error) {
 		Name:        r.Candidate.User.Name,
 		Surname:     r.Candidate.User.Surname,
 		Email:       r.Candidate.User.Email,
+		Avatar:      r.Avatar,
 	}, nil
 }
 
 // TODO ВСЕГДА ИСПОЛЬЗОВАТЬ ТОЛЬКО ОДИН ID
 type BriefResumeInfo struct {
+	Avatar      string    `json:"avatar"`
 	ResumeID    uuid.UUID `json:"resume_id"`
 	CandID      uuid.UUID `json:"cand_id"`
 	UserID      uuid.UUID `json:"user_id"`

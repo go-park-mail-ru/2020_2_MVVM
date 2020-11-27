@@ -25,6 +25,7 @@ create table vacancy (
     experience_month int null,
     empl_email  citext not null,
     empl_phone  varchar(18) not null,
+    path_to_avatar varchar(256),
     date_create date default current_date
 );
 
