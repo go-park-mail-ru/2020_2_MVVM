@@ -54,7 +54,7 @@ func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit
 	}
 	var (
 		vacList []models.Vacancy
-		list []models.Vacancy
+		list    []models.Vacancy
 	)
 	for len(vacList) < limit && curSphere < vacancy.CoutShheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
@@ -91,14 +91,25 @@ func (p pgRepository) GetResponsesCnt(userId uuid.UUID, userType string) (uint, 
 	return cnt, err
 }
 
-func (p pgRepository) GetRespNotifications(respIds []uuid.UUID) ([]models.Response, error) {
-	var responses []models.Response
-	err := p.db.Table("main.response").Where("response_id IN ?", respIds).UpdateColumn("unread", false).Error
+func (p pgRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UUID, entityType int) ([]models.Response, error) {
+	var (
+		responses []models.Response
+		err       error
+	)
+	if entityType == common.Resume {
+		err = p.db.Table("main.response").Where("resume_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
+	} else {
+		err = p.db.Table("main.response").Where("vacancy_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
+	}
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
 	}
-	err = p.db.Where("unread = ?", true).Find(&responses).Error
+	if entityType == common.Vacancy {
+		err = p.db.Where("vacancy_id = ? and unread = ?", entityId, true).Find(&responses).Error
+	} else {
+		err = p.db.Where("resume_id = ? and unread = ?", entityId, true).Find(&responses).Error
+	}
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err

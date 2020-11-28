@@ -9,7 +9,7 @@ type ResponseRepository interface {
 	GetByID(responseID uuid.UUID) (*models.Response, error)
 	Create(models.Response) (*models.Response, error)
 	UpdateStatus(models.Response) (*models.Response, error)
-	GetRespNotifications(respIds []uuid.UUID) ([]models.Response, error)
+	GetRespNotifications(respIds []uuid.UUID, entityId uuid.UUID, entityType int) ([]models.Response, error)
 	GetResumeAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetVacancyAllResponse(uuid uuid.UUID) ([]models.Response, error)
 	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error)

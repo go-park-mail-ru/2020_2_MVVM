@@ -100,7 +100,7 @@ func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds []u
 	}
 	for i := range resumes {
 		if respIds != nil {
-			resp, err = u.strg.GetRespNotifications(respIds)
+			resp, err = u.strg.GetRespNotifications(respIds, resumes[i].ResumeID, common.Resume)
 		} else {
 			resp, err = u.strg.GetResumeAllResponse(resumes[i].ResumeID)
 		}
@@ -151,7 +151,7 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds []uu
 	for i := range vacancyList {
 		comp, err := u.companyUsecase.GetOfficialCompany(vacancyList[i].CompID)
 		if respIds != nil {
-			resp, err = u.strg.GetRespNotifications(respIds)
+			resp, err = u.strg.GetRespNotifications(respIds, vacancyList[i].ID, common.Vacancy)
 		} else {
 			resp, err = u.strg.GetVacancyAllResponse(vacancyList[i].ID)
 		}

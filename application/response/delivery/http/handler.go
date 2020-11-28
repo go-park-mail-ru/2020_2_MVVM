@@ -260,6 +260,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.UnreadRespCnt, err = r.UsecaseResponse.GetResponsesCnt(unId, userType)
 	} else {
 		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
+		notifications.UnreadRespCnt = uint(len(notifications.UnreadResp))
 	}
 	unId, _ = common.GetCurrentUserId(session, common.UserID)
 	if req.OnlyVacCnt {

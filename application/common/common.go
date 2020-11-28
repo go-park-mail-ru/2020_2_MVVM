@@ -7,6 +7,8 @@ const (
 	User      = "user"
 	Candidate = "candidate"
 	Employer  = "employer"
+	Vacancy   = 0
+	Resume    = 1
 	DOMAIN    = "https://studhunt.ru"
 	Month     = 30
 	Week      = 7
