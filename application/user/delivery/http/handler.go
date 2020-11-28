@@ -2,9 +2,11 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/client"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
@@ -14,6 +16,7 @@ import (
 
 type UserHandler struct {
 	UserUseCase    user.UseCase
+	rpcAuth        client.IAuthClient
 	SessionBuilder common.SessionBuilder
 }
 
@@ -21,8 +24,12 @@ type Resp struct {
 	User *models.User `json:"user"`
 }
 
-func NewRest(router *gin.RouterGroup, useCase user.UseCase, sessionBuilder common.SessionBuilder, AuthRequired gin.HandlerFunc) *UserHandler {
-	rest := &UserHandler{UserUseCase: useCase, SessionBuilder: sessionBuilder}
+func NewRest(router *gin.RouterGroup,
+	useCase user.UseCase,
+	sessionBuilder common.SessionBuilder,
+	AuthRequired gin.HandlerFunc,
+	rpcAuth client.IAuthClient) *UserHandler {
+	rest := &UserHandler{UserUseCase: useCase, SessionBuilder: sessionBuilder, rpcAuth: rpcAuth}
 	rest.routes(router, AuthRequired)
 	return rest
 }
@@ -125,6 +132,9 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
 	}
+
+	userID, _ := u.rpcAuth.Login(reqUser.Email, reqUser.Password)
+	fmt.Printf("MICROSERVICES: %s", userID)
 
 	user, status, err := u.register(ctx, reqUser)
 	if err != nil {

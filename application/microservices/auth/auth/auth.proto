@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package auth;
+//import "google/protobuf/timestamp.proto";
+
+option go_package = "auth;auth";
+
+message UserId {
+  uint64 userId = 1;
+}
+
+message UserLogin {
+  string login = 1;
+  string password = 2;
+}
+
+message Empty {
+}
+
+service Auth {
+  rpc Login(UserLogin) returns (UserId) {}
+//  rpc Check(SessionId) returns (UserId) {}
+  rpc Logout(UserId) returns (Empty) {}
+}

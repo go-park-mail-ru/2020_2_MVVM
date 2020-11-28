@@ -110,7 +110,6 @@ func RequestLogger(log *logger.Logger) gin.HandlerFunc {
 		}
 
 		log.Debugf("\tRequest body: %s\tResponse body: %s", ellipsis(string(body), ellipsisLength), ellipsis(blw.body.String(), ellipsisLength))
-
 	}
 }
 
