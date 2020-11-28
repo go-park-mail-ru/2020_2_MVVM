@@ -15,25 +15,14 @@ import (
 	"time"
 )
 
-type dbConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Name     string `yaml:"name"`
-}
-
-type Config struct {
-	Listen  string    `yaml:"listen"`
-	Db      *dbConfig `yaml:"db"`
-	DocPath string    `yaml:"docPath"`
-	Redis   string    `yaml:"redis_address"`
-}
-
 type Logger struct {
 	InfoLogger  *logger.Logger
 	ErrorLogger *logger.Logger
 }
+
+const (
+	Port1 = ":8081"
+)
 
 func main() {
 	infoLogger, err := logger.New("Info logger", 1, os.Stdout)
@@ -69,7 +58,7 @@ func main() {
 		//SameSite: http.SameSiteStrictMode, // prevent csrf attack
 	})
 
-	srv1 := auth.NewServer(":8081", db, store)
+	srv1 := auth.NewServer(Port1, db, store)
 	if err = srv1.ListenAndServe(); err != nil {
 		log.ErrorLogger.FatalF("error in listening auth server: %s", err)
 	}

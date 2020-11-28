@@ -17,7 +17,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthClient interface {
-	Login(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*UserId, error)
+	Login(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*User, error)
 	//  rpc Check(SessionId) returns (UserId) {}
 	Logout(ctx context.Context, in *UserId, opts ...grpc.CallOption) (*Empty, error)
 }
@@ -30,8 +30,8 @@ func NewAuthClient(cc grpc.ClientConnInterface) AuthClient {
 	return &authClient{cc}
 }
 
-func (c *authClient) Login(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*UserId, error) {
-	out := new(UserId)
+func (c *authClient) Login(ctx context.Context, in *UserLogin, opts ...grpc.CallOption) (*User, error) {
+	out := new(User)
 	err := c.cc.Invoke(ctx, "/auth.Auth/Login", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (c *authClient) Logout(ctx context.Context, in *UserId, opts ...grpc.CallOp
 // All implementations must embed UnimplementedAuthServer
 // for forward compatibility
 type AuthServer interface {
-	Login(context.Context, *UserLogin) (*UserId, error)
+	Login(context.Context, *UserLogin) (*User, error)
 	//  rpc Check(SessionId) returns (UserId) {}
 	Logout(context.Context, *UserId) (*Empty, error)
 	mustEmbedUnimplementedAuthServer()
@@ -62,7 +62,7 @@ type AuthServer interface {
 type UnimplementedAuthServer struct {
 }
 
-func (UnimplementedAuthServer) Login(context.Context, *UserLogin) (*UserId, error) {
+func (UnimplementedAuthServer) Login(context.Context, *UserLogin) (*User, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
 func (UnimplementedAuthServer) Logout(context.Context, *UserId) (*Empty, error) {
@@ -131,5 +131,5 @@ var _Auth_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/auth.proto",
+	Metadata: "auth/auth.proto",
 }

@@ -22,11 +22,7 @@ func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID, 
 	if userIDStr == nil {
 		return uuid.Nil, nil
 	}
-	userID, err := uuid.Parse(userIDStr.(string))
-
-	if err != nil {
-		return uuid.Nil, err
-	}
+	userID, _ := uuid.Parse(userIDStr.(string))
 	return userID, nil
 }
 

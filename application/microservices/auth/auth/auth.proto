@@ -6,7 +6,7 @@ package auth;
 option go_package = "auth;auth";
 
 message UserId {
-  uint64 userId = 1;
+  string userId = 1;
 }
 
 message UserLogin {
@@ -17,8 +17,18 @@ message UserLogin {
 message Empty {
 }
 
+message User {
+  string ID = 1;
+  string UserType = 2;
+  string Name = 3;
+  string Surname = 4;
+  string Email = 5;
+  string Phone = 6;
+  string SocialNetwork = 7;
+}
+
 service Auth {
-  rpc Login(UserLogin) returns (UserId) {}
-//  rpc Check(SessionId) returns (UserId) {}
+  rpc Login(UserLogin) returns (User) {}
+  //  rpc Check(SessionId) returns (UserId) {}
   rpc Logout(UserId) returns (Empty) {}
 }

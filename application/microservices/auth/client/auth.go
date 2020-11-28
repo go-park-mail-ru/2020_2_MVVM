@@ -1,12 +1,17 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/auth"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"os"
 )
+
+//Вызывается в хендлерах и в местном сервере!
 
 type AuthClient struct {
 	client auth.AuthClient
@@ -40,19 +45,32 @@ func NewAuthClient(host, port string) (*AuthClient, error) {
 	return &AuthClient{client: auth.NewAuthClient(gConn), gConn: gConn, logger: log}, nil
 }
 
-func (a *AuthClient) Login(login string, password string) (userID string, err error) {
+func (a *AuthClient) Login(login string, password string) (*models.User, error) {
 	usr := &auth.UserLogin{
 		Login:    login,
 		Password: password,
 	}
 	fmt.Println(usr.Login)
 	//
-	//session, err := a.client.Login(context.Background(), usr)
-	//if err != nil {
-	//	return "", "", err
-	//}
-
-	return "1", nil
+	answer, err := a.client.Login(context.Background(), usr)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := uuid.Parse(answer.ID)
+	if err != nil {
+		return nil, err
+	}
+	user := models.User{
+		ID:            userID,
+		UserType:      answer.UserType,
+		Name:          answer.Name,
+		Surname:       answer.Surname,
+		Email:         answer.Email,
+		PasswordHash:  nil,
+		Phone:         &answer.Phone,
+		SocialNetwork: &answer.SocialNetwork,
+	}
+	return &user, nil
 }
 
 //func (a *AuthClient) Check(sessionId string) (userId uint, err error) {
@@ -66,14 +84,12 @@ func (a *AuthClient) Login(login string, password string) (userID string, err er
 //	return uint(uid.UserId), err
 //}
 
-func (a *AuthClient) Logout(sessionId string) error {
-	//sid := &api.UserId{UserId: 1}
-
-	//_, err := a.client.Logout(context.Background(), sid)
-	//if err != nil {
-	//	return err
-	//}
-
+func (a *AuthClient) Logout(userID uuid.UUID) error {
+	userIDStruct := &auth.UserId{UserId: userID.String()}
+	_, err := a.client.Logout(context.Background(), userIDStruct)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
