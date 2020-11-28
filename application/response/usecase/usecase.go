@@ -100,7 +100,7 @@ func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds []u
 	}
 	for i := range resumes {
 		if respIds != nil {
-			resp, err = u.strg.GetRespNotifications(respIds)
+			resp, err = u.strg.GetRespNotifications(respIds, resumes[i].ResumeID, common.Resume)
 		} else {
 			resp, err = u.strg.GetResumeAllResponse(resumes[i].ResumeID)
 		}
@@ -151,7 +151,7 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds []uu
 	for i := range vacancyList {
 		comp, err := u.companyUsecase.GetOfficialCompany(vacancyList[i].CompID)
 		if respIds != nil {
-			resp, err = u.strg.GetRespNotifications(respIds)
+			resp, err = u.strg.GetRespNotifications(respIds, vacancyList[i].ID, common.Vacancy)
 		} else {
 			resp, err = u.strg.GetVacancyAllResponse(vacancyList[i].ID)
 		}
@@ -190,21 +190,21 @@ func (u *UseCaseResponse) GetResponsesCnt(userId uuid.UUID, userType string) (ui
 	return cnt, err
 }
 
-func (u *UseCaseResponse) GetRecommendedVacCnt(userId uuid.UUID, daysFromNow int) (uint, error) {
+func (u *UseCaseResponse) GetRecommendedVacCnt(candId uuid.UUID, daysFromNow int) (uint, error) {
 	startDate := ""
 	if daysFromNow > 0 {
 		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
 	}
-	cnt, err := u.strg.GetRecommendedVacCnt(userId, startDate)
+	cnt, err := u.strg.GetRecommendedVacCnt(candId, startDate)
 	return cnt, err
 }
 
-func (u *UseCaseResponse) GetRecommendedVacancies(emplId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error) {
+func (u *UseCaseResponse) GetRecommendedVacancies(candId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error) {
 	startDate := ""
 	if daysFromNow > 0 {
 		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
 	}
-	return u.strg.GetRecommendedVacancies(emplId, int(start), int(limit), startDate)
+	return u.strg.GetRecommendedVacancies(candId, int(start), int(limit), startDate)
 }
 
 func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error) {

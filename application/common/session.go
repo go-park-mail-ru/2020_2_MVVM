@@ -11,9 +11,9 @@ type SessionBuilder interface {
 	Build(ctx *gin.Context) sessions.Session
 }
 
-type NewSessionBuilder struct {}
+type NewSessionBuilder struct{}
 
-func (sb *NewSessionBuilder) Build (ctx *gin.Context) sessions.Session {
+func (sb *NewSessionBuilder) Build(ctx *gin.Context) sessions.Session {
 	return sessions.Default(ctx)
 }
 
@@ -26,17 +26,17 @@ func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID, 
 	return userID, nil
 }
 
-func GetUser(session sessions.Session) (uuid.UUID, string, error) {   // <3
+func GetCandidateOrEmployer(session sessions.Session) (uuid.UUID, string, error) {
 	var id uuid.UUID
-	if userId := session.Get(UserID); userId != nil {
-		id, _ = uuid.Parse(userId.(string))
-		return id, User, nil
+	if session == nil {
+		return uuid.Nil, "", errors.New(AuthRequiredErr)
+	}
+	if candId := session.Get(CandID); candId != nil {
+		id, _ = uuid.Parse(candId.(string))
+		return id, Candidate, nil
 	} else if emplId := session.Get(EmplID); emplId != nil {
 		id, _ = uuid.Parse(emplId.(string))
 		return id, Employer, nil
-	} else if candId := session.Get(CandID); candId != nil {
-		id, _ = uuid.Parse(candId.(string))
-		return id, Candidate, nil
 	}
 	return uuid.Nil, "", errors.New(AuthRequiredErr)
 }

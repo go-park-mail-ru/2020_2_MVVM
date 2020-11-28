@@ -13,6 +13,6 @@ type IUseCaseResponse interface {
 	GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error)
 	GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error)
 	GetResponsesCnt(userId uuid.UUID, userType string) (uint, error)
-	GetRecommendedVacCnt(userId uuid.UUID, daysFromNow int) (uint, error)
-	GetRecommendedVacancies(emplId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error)
+	GetRecommendedVacCnt(candId uuid.UUID, daysFromNow int) (uint, error)
+	GetRecommendedVacancies(candId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error)
 }

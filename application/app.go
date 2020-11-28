@@ -140,7 +140,7 @@ func NewApp(config Config) *App {
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, common.AuthRequired())
 
-	responseRep := RepositoryResponse.NewPgRepository(db)
+	responseRep := RepositoryResponse.NewPgRepository(db, vacancyRep)
 	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
 	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, common.AuthRequired())
 

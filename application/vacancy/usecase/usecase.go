@@ -97,19 +97,16 @@ func (v VacancyUseCase) AddRecommendation(userID uuid.UUID, sphere int) error {
 func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
 	preferredSphere, err := v.repos.GetPreferredSpheres(userID)
 	if err != nil {
-		if err.Error() == "error in get for user recommendation spheres: record not found" {
-			err = fmt.Errorf(common.NoRecommendation)
+		if err.Error() == common.NoRecommendation {
 			return nil, err
 		}
-		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("error in GetUserRecommendations: %w", err)
 	}
 	step := 2
 	curSphere := 0
 	preferredSalary, err := v.repos.GetPreferredSalary(userID)
 	if err != nil {
-		err = fmt.Errorf("error in GetPreferredSalary: %w", err)
-		return nil, err
+		return nil, fmt.Errorf("error in GetPreferredSalary: %w", err)
 	}
 
 	var vacList []models.Vacancy

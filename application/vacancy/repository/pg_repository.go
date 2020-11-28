@@ -170,7 +170,11 @@ func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, er
 	rec := new(models.Recommendation)
 	err := p.db.Take(rec, "user_id = ?", userID).Error
 	if err != nil {
-		return nil, fmt.Errorf("error in get for user recommendation spheres: %w", err)
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New(common.NoRecommendation)
+		}
+		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
+		return nil, err
 	}
 
 	spheres := []vacancy.Pair{{0, rec.Sphere0}, {1, rec.Sphere1},
