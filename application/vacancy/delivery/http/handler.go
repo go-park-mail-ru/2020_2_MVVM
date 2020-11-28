@@ -70,7 +70,7 @@ func NewRest(router *gin.RouterGroup,
 
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
-	router.GET("/page/comp", v.GetCompVacancyListHandler)
+	router.GET("/comp", v.GetCompVacancyListHandler)
 	router.GET("/page", v.GetVacancyListHandler)
 	router.POST("/search", v.SearchVacanciesHandler)
 	router.Use(AuthRequired)
