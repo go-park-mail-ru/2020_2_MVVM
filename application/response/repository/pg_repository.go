@@ -15,17 +15,19 @@ type pgRepository struct {
 	vacRepository vacancy.RepositoryVacancy
 }
 
-func (p pgRepository) GetRecommendedVacCnt(emplId uuid.UUID, startDate string) (uint, error) {
+func (p pgRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (uint, error) {
 	var (
 		cnt  uint = 0
 		temp uint = 0
 	)
 	step := 2
 	curSphere := 0
-	preferredSphere, err := p.vacRepository.GetPreferredSpheres(emplId)
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(candId)
 	if err != nil {
-		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
-		return 0, err
+		if err.Error() == common.NoRecommendation {
+			return 0, err
+		}
+		return 0, fmt.Errorf("error in GetRecommended vacancy cnt: %w", err)
 	}
 	for curSphere < vacancy.CoutShheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
@@ -40,13 +42,15 @@ func (p pgRepository) GetRecommendedVacCnt(emplId uuid.UUID, startDate string) (
 	return cnt, nil
 }
 
-func (p pgRepository) GetRecommendedVacancies(emplId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error) {
+func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error) {
 	step := 2
 	curSphere := 0
-	preferredSphere, err := p.vacRepository.GetPreferredSpheres(emplId)
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(candId)
 	if err != nil {
-		err = fmt.Errorf("error in GetPreferredSpheres: %w", err)
-		return nil, err
+		if err.Error() == common.NoRecommendation {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error in GetRecommended vacancies: %w", err)
 	}
 	var (
 		vacList []models.Vacancy
@@ -63,7 +67,11 @@ func (p pgRepository) GetRecommendedVacancies(emplId uuid.UUID, start int, limit
 		}
 		curSphere += step
 	}
-	return vacList[0:limit], err
+	end := limit
+	if limit > len(vacList) {
+		end = len(vacList)
+	}
+	return vacList[0:end], err
 }
 
 func (p pgRepository) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
@@ -98,8 +106,8 @@ func (p pgRepository) GetRespNotifications(respIds []uuid.UUID) ([]models.Respon
 	return responses, nil
 }
 
-func NewPgRepository(db *gorm.DB) response.ResponseRepository {
-	return &pgRepository{db: db}
+func NewPgRepository(db *gorm.DB, vacRepository vacancy.RepositoryVacancy) response.ResponseRepository {
+	return &pgRepository{db: db, vacRepository: vacRepository}
 }
 
 func (p *pgRepository) Create(response models.Response) (*models.Response, error) {

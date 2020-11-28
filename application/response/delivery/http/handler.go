@@ -13,8 +13,8 @@ import (
 type RespNotifications struct {
 	UnreadResp        []models.ResponseWithTitle `json:"unread_resp"`
 	UnreadRespCnt     uint                       `json:"unread_resp_cnt"`
-	RecommendedVac    []models.Vacancy           `json:"new_vac"`
-	RecommendedVacCnt uint                       `json:"new_vac_cnt"`
+	RecommendedVac    []models.Vacancy           `json:"recommended_vac"`
+	RecommendedVacCnt uint                       `json:"recommended_vac_cnt"`
 }
 
 type ResponseHandler struct {
@@ -35,10 +35,9 @@ func NewRest(router *gin.RouterGroup,
 }
 
 func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
-	router.POST("/notify", r.handlerGetAllNotifications)
 	router.Use(AuthRequired)
 	{
-		//router.POST("/notify", r.handlerGetAllNotifications)
+		router.POST("/notify", r.handlerGetAllNotifications)
 		router.POST("/", r.CreateResponse)
 		router.POST("/update", r.UpdateStatus)
 		router.GET("/my", r.handlerGetAllResponses)
@@ -226,37 +225,52 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		status        int
 		daysFromNow   int
 		req           struct {
-			VacInLastNDays       *int       `json:"vac_in_last_n_days"` // notifications about recommended new vacancies, nil means from last 7 days max - month
+			VacInLastNDays       *int        `json:"vac_in_last_n_days"` // notifications about recommended new vacancies, nil means from last 7 days max - month
 			OnlyVacCnt           bool        `json:"only_new_vac_cnt"`   // if true -> get only count of recommended vacancies
-			NewRespNotifications []uuid.UUID `json:"watched_responses"`  // nil - all responses, for useless resp deleting put uuid in list
-			OnlyRespCnt          bool        `json:"only_new_resp_cnt"`  // if true -> get only count of responses notifications
+			ListStart            uint        `json:"vac_list_start"`
+			ListEnd              uint        `json:"vac_list_limit"`
+			NewRespNotifications []uuid.UUID `json:"watched_responses"` // nil - all responses, for useless resp deleting put uuid in list
+			OnlyRespCnt          bool        `json:"only_new_resp_cnt"` // if true -> get only count of responses notifications
 			//Chat                 map[uuid.UUID][]string `json:"unread_messages"`
 		}
 	)
 
 	session := r.SessionBuilder.Build(ctx)
-	unId, userType, err := common.GetUser(session)
-
+	unId, userType, err := common.GetCandidateOrEmployer(session)
+	if err != nil {
+		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
+		return
+	}
 	if err = ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
+	if !req.OnlyVacCnt && req.ListEnd <= req.ListStart {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
+		return
+	}
 	if req.VacInLastNDays != nil {
-		daysFromNow = *req.VacInLastNDays
+		if daysFromNow = *req.VacInLastNDays; daysFromNow <= 0 {
+			daysFromNow = common.Month
+		}
+	} else {
+		daysFromNow = common.Week
 	}
 	if req.OnlyRespCnt {
 		notifications.UnreadRespCnt, err = r.UsecaseResponse.GetResponsesCnt(unId, userType)
 	} else {
 		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
 	}
+	unId, _ = common.GetCurrentUserId(session, common.UserID)
 	if req.OnlyVacCnt {
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
 	} else {
-		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, 0, 10, daysFromNow)
+		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, req.ListStart, req.ListEnd, daysFromNow)
+		notifications.RecommendedVacCnt = uint(len(notifications.RecommendedVac))
 	}
-	if err != nil {
+	if err != nil && err.Error() != common.NoRecommendation {
 		ctx.JSON(status, common.RespError{Err: common.DataBaseErr})
+		return
 	}
-
 	ctx.JSON(http.StatusOK, notifications)
 }
