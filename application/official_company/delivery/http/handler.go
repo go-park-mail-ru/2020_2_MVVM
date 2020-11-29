@@ -160,7 +160,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
-		return
+		//return
 	}
 	if err := common.ReqValidation(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
@@ -184,7 +184,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	compId := uuid.New()
 	avatarName := compPath + compId.String()
 	if file != nil {
-		avatarPath = path.Join(common.DOMAIN, common.ImgDir, avatarName)
+		avatarPath = common.DOMAIN + path.Join(common.ImgDir, avatarName)
 	}
 	if treatmentType == compCreate {
 		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{ID: compId, Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
