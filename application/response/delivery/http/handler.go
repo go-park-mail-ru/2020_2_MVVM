@@ -245,16 +245,14 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		return
 	}
-	if !req.OnlyVacCnt && req.ListEnd <= req.ListStart {
+	if req.VacInLastNDays != nil && !req.OnlyVacCnt && req.ListEnd <= req.ListStart {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
 		return
 	}
 	if req.VacInLastNDays != nil {
-		if daysFromNow = *req.VacInLastNDays; daysFromNow <= 0 {
-			daysFromNow = common.Month
+		if daysFromNow = *req.VacInLastNDays; daysFromNow == 0 {
+			daysFromNow = common.Week
 		}
-	} else {
-		daysFromNow = common.Week
 	}
 	if req.OnlyRespCnt {
 		notifications.UnreadRespCnt, err = r.UsecaseResponse.GetResponsesCnt(unId, userType)
@@ -265,7 +263,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	unId, _ = common.GetCurrentUserId(session, common.UserID)
 	if req.OnlyVacCnt {
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
-	} else {
+	} else if daysFromNow > 0 {
 		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, req.ListStart, req.ListEnd, daysFromNow)
 		notifications.RecommendedVacCnt = uint(len(notifications.RecommendedVac))
 	}
