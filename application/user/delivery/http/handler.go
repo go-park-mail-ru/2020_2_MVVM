@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -27,9 +26,8 @@ type Resp struct {
 func NewRest(router *gin.RouterGroup,
 	useCase user.UseCase,
 	sessionBuilder common.SessionBuilder,
-	AuthRequired gin.HandlerFunc,
-	rpcAuth client.IAuthClient) *UserHandler {
-	rest := &UserHandler{UserUseCase: useCase, SessionBuilder: sessionBuilder, rpcAuth: rpcAuth}
+	AuthRequired gin.HandlerFunc) *UserHandler {
+	rest := &UserHandler{UserUseCase: useCase, SessionBuilder: sessionBuilder}
 	rest.routes(router, AuthRequired)
 	return rest
 }
@@ -133,10 +131,10 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		return
 	}
 
-	userID, _ := u.rpcAuth.Login(reqUser.Email, reqUser.Password)
-	fmt.Printf("MICROSERVICES: %s", userID)
+	//userID, _ := u.rpcAuth.Login(reqUser.Email, reqUser.Password)
+	//fmt.Printf("MICROSERVICES: %s", userID)
 
-	user, status, err := u.register(ctx, reqUser)
+	user, status, err := u.setCookie(ctx, reqUser)
 	if err != nil {
 		ctx.JSON(status, common.RespError{Err: err.Error()})
 	} else {
@@ -144,7 +142,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	}
 }
 
-func (u *UserHandler) register(ctx *gin.Context, reqUser models.UserLogin) (*models.User, int, error) {
+func (u *UserHandler) setCookie(ctx *gin.Context, reqUser models.UserLogin) (*models.User, int, error) {
 	user, err := u.UserUseCase.Login(reqUser)
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.AuthErr {
@@ -237,7 +235,7 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		Email:    userNew.Email,
 		Password: req.Password,
 	}
-	u.register(ctx, reqUser)
+	u.setCookie(ctx, reqUser)
 
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }

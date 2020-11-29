@@ -13,7 +13,6 @@ import (
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
 	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
 	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/client"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
 	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
 	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
@@ -110,17 +109,17 @@ func NewApp(config Config) *App {
 
 	api := r.Group("/api/v1")
 
-	rpcAuth, err := client.NewAuthClient("http://127.0.0.1", config.Listen)
-	if err != nil {
-		log.ErrorLogger.Fatal("connection to client microservice auth failed...")
-	}
+	//rpcAuth, err := client.NewAuthClient("http://127.0.0.1", config.Listen)
+	//if err != nil {
+	//	log.ErrorLogger.Fatal("connection to client microservice auth failed...")
+	//}
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
 
 	sessionBuilder := SessionBuilder.NewSessionBuilder{}
 
-	UserHandler.NewRest(api.Group("/users"), userCase, &sessionBuilder, common.AuthRequired(), rpcAuth)
+	UserHandler.NewRest(api.Group("/users"), userCase, &sessionBuilder, common.AuthRequired())
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)

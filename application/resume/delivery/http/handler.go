@@ -8,6 +8,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"net/http"
 	"path"
 )
@@ -79,12 +80,20 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		return
 	}
 
-	var template models.Resume
-	if err := ctx.ShouldBindJSON(&template); err != nil {
+	template := new(models.Resume)
+
+
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, template); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+
+	//if err := ctx.ShouldBindJSON(&template); err != nil {
+	//	ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+	//	ctx.AbortWithError(http.StatusBadRequest, err)
+	//	return
+	//}
 	if err := common.ReqValidation(template); err != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
 		return
@@ -101,7 +110,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	if file != nil {
 		template.Avatar = path.Join(common.DOMAIN, common.ImgDir, avatarName)
 	}
-	result, err := r.UseCaseResume.Create(template)
+	result, err := r.UseCaseResume.Create(&template)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err:  common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)

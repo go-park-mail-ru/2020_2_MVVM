@@ -159,10 +159,10 @@ func Cors() gin.HandlerFunc {
 
 func Sessions(store sessions.Store) gin.HandlerFunc {
 	store.Options(sessions.Options{
-		Domain: "studhunt.ru",
+		//Domain: "studhunt.ru",
 		//Domain:   "localhost", // for postman
 		MaxAge:   int((48 * time.Hour).Seconds()),
-		Secure:   true,
+		Secure:   false,
 		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
