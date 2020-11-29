@@ -262,6 +262,9 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	}
 	unId, _ = common.GetCurrentUserId(session, common.UserID)
 	if req.OnlyVacCnt {
+		if daysFromNow == 0 {
+			daysFromNow = common.Week
+		}
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
 	} else if daysFromNow > 0 {
 		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, req.ListStart, req.ListEnd, daysFromNow)
