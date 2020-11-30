@@ -17,13 +17,13 @@ func (sb *NewSessionBuilder) Build(ctx *gin.Context) sessions.Session {
 	return sessions.Default(ctx)
 }
 
-func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID, err error) {
+func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID) {
 	userIDStr := session.Get(userType)
 	if userIDStr == nil {
-		return uuid.Nil, nil
+		return uuid.Nil
 	}
 	userID, _ := uuid.Parse(userIDStr.(string))
-	return userID, nil
+	return userID
 }
 
 func GetCandidateOrEmployer(session sessions.Session) (uuid.UUID, string, error) {

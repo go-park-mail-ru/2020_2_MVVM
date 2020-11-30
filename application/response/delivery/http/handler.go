@@ -49,7 +49,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -63,7 +63,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 		userType = "employer"
 	} else {
 		err := errors.New("this user cannot respond")
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: common.AuthRequiredErr})
+		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: common.AuthRequiredErr})
 		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
@@ -71,7 +71,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	response.Initial = userType
 	pResponse, err := r.UsecaseResponse.Create(response)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -82,7 +82,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	var response models.Response
 	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -96,7 +96,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 		userType = common.Employer
 	} else {
 		err := errors.New("this user cannot respond")
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: common.AuthRequiredErr})
+		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: common.AuthRequiredErr})
 		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
@@ -105,7 +105,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 	pResponse, err := r.UsecaseResponse.UpdateStatus(response, userType)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -115,27 +115,28 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, common.EmplID)
-	candID, err := common.GetCurrentUserId(session, common.CandID)
+	emplID := common.GetCurrentUserId(session, common.EmplID)
+	candID := common.GetCurrentUserId(session, common.CandID)
 
+	var err error
 	var responses []models.ResponseWithTitle
 	if candID != uuid.Nil && emplID == uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, nil)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID, nil)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else {
 		err := errors.New("this user cannot have responses")
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: err.Error()})
 		return
 	}
 
@@ -145,14 +146,14 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 	candID, vacancyID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.CandID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	resumes, err := r.UsecaseResponse.GetAllResumeWithoutResponse(candID, vacancyID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -162,13 +163,13 @@ func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 func (r *ResponseHandler) handlerGetAllVacancyWithoutResponse(ctx *gin.Context) {
 	emplID, resumeID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.EmplID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	vacancies, err := r.UsecaseResponse.GetAllVacancyWithoutResponse(emplID, resumeID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -189,10 +190,7 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 	}
 
 	session := r.SessionBuilder.Build(ctx)
-	userID, err := common.GetCurrentUserId(session, userType)
-	if err != nil {
-		return uuid.Nil, uuid.Nil, err
-	}
+	userID := common.GetCurrentUserId(session, userType)
 
 	return userID, entityID, nil
 }
@@ -238,15 +236,15 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
 	unId, userType, err := common.GetCandidateOrEmployer(session)
 	if err != nil {
-		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: err.Error()})
 		return
 	}
 	if err = ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if !req.OnlyVacCnt && req.ListEnd <= req.ListStart {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
 		return
 	}
 	if req.VacInLastNDays != nil {
@@ -262,7 +260,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
 		notifications.UnreadRespCnt = uint(len(notifications.UnreadResp))
 	}
-	unId, _ = common.GetCurrentUserId(session, common.UserID)
+	unId = common.GetCurrentUserId(session, common.UserID)
 	if req.OnlyVacCnt {
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
 	} else {
@@ -270,7 +268,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.RecommendedVacCnt = uint(len(notifications.RecommendedVac))
 	}
 	if err != nil && err.Error() != common.NoRecommendation {
-		ctx.JSON(status, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(status, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, notifications)

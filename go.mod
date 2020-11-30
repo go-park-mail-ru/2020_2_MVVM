@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/lib/pq v1.3.0
+	github.com/mailru/easyjson v0.7.6
 	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect

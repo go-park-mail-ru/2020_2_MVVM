@@ -56,13 +56,13 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compUuid, _ := uuid.Parse(req.CompanyID)
 	comp, err := c.CompUseCase.GetOfficialCompany(compUuid)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -73,12 +73,12 @@ func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.SessionErr})
 		return
 	}
 	comp, err := c.CompUseCase.GetMineCompany(empId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -96,12 +96,12 @@ func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.Limit)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -112,12 +112,12 @@ func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
 	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	compList, err := c.CompUseCase.SearchCompanies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Companies: compList})
@@ -137,7 +137,7 @@ func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
 	empId, err := uuid.Parse("92f68cc8-45e7-41a6-966e-6599d7142ea8")
 	err = c.CompUseCase.DeleteOfficialCompany(uuid.Nil, empId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 
@@ -159,26 +159,26 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		avatarPath string
 	)
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: errImg.Error()})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: errImg.Error()})
 		return
 	}
 	session := sessions.Default(ctx).Get("empl_id")
 	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
 	}
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
 	}
 	compId := uuid.New()
@@ -195,9 +195,9 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	}
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.EmpHaveComp {
-			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
 		} else {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		}
 		return
 	}

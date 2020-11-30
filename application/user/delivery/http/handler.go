@@ -52,7 +52,7 @@ func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 
 	userById, err := u.UserUseCase.GetUserByID(userID.(string))
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -66,14 +66,14 @@ func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetUserByID(req.UserID)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -87,13 +87,13 @@ func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetCandByID(req.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -106,13 +106,13 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetEmplByID(req.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
@@ -123,11 +123,11 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 
 	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&reqUser); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
 		return
 	}
 
@@ -136,7 +136,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 
 	user, status, err := u.setCookie(ctx, reqUser)
 	if err != nil {
-		ctx.JSON(status, common.RespError{Err: err.Error()})
+		ctx.JSON(status, models.RespError{Err: err.Error()})
 	} else {
 		ctx.JSON(status, Resp{User: user})
 	}
@@ -184,7 +184,7 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	session.Options(sessions.Options{MaxAge: -1})
 	err := session.Save()
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
 	}
 	ctx.JSON(http.StatusOK, nil)
@@ -201,16 +201,16 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
 		return
 	}
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 	userNew, err := u.UserUseCase.CreateUser(models.User{
@@ -224,9 +224,9 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.UserExistErr {
-			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
 		} else {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		}
 		return
 	}
@@ -251,32 +251,32 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 		SocialNetwork string `json:"social_network"`
 	}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.EmptyFieldErr})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: err.Error()})
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
 		return
 	}
 
 	session := u.SessionBuilder.Build(ctx)
 	userIDFromSession := session.Get("user_id")
 	if userIDFromSession == nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
 	}
 	userID, errSession := uuid.Parse(userIDFromSession.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
+		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
 	}
 	userUpdate, err := u.UserUseCase.UpdateUser(models.User{ID: userID, Name: req.Name, Surname: req.Surname,
 		Phone: &req.Phone, Email: req.Email, SocialNetwork: &req.SocialNetwork})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.WrongPasswd {
-			ctx.JSON(http.StatusConflict, common.RespError{Err: errMsg})
+			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
 		} else {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
+			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		}
 		return
 	}

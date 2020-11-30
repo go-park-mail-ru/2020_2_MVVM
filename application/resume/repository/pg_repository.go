@@ -106,8 +106,12 @@ func (p *PGRepository)Update(resume models.Resume) (*models.Resume, error) {
 		err = fmt.Errorf("error in FK search for resume creation for user with id: %s : error: %w", resume.CandID, err)
 		return nil, err
 	}
+
+	for i := range resume.ExperienceCustomComp {
+		resume.ExperienceCustomComp[i].CandID = candidate.ID
+	}
 	if err := p.db.Model(&resume).Where("resume_id = ?", resume.ResumeID).Updates(resume).Error; err != nil {
-		return nil, fmt.Errorf("can't update resume with id:%s", resume.ResumeID)
+		return nil, fmt.Errorf("can't update resume with id:%s, %s", resume.ResumeID, err)
 	}
 
 	resume.Candidate = *candidate
@@ -172,7 +176,7 @@ func (p *PGRepository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*mo
 
 func (p *PGRepository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	var favorite models.FavoritesForEmpl
-	err := p.db.Where("favorite_id = ?", favoriteForEmpl.String()).Delete(&favorite)
+	err := p.db.Where("favorite_id = ?", favoriteForEmpl.String()).Delete(&favorite).Error
 	//_, err := p.db.Model(&favorite).Where("favorite_id = ?", favoriteForEmpl).Delete()
 	if err != nil {
 		err := fmt.Errorf("error in delete favorite resume: %w", err)

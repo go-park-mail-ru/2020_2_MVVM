@@ -68,10 +68,10 @@ func getRespStruct(entity interface{}) interface{} {
 		return &vacancyList
 	case string:
 		err := entity.(string)
-		return common.RespError{Err: err}
+		return models.RespError{Err: err}
 	case error:
 		err := entity.(error)
-		return common.RespError{Err: err.Error()}
+		return models.RespError{Err: err.Error()}
 	}
 	return nil
 }

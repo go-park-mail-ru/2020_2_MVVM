@@ -115,7 +115,7 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	}
 
 	result, err := u.strg.Update(resume)
-	err = u.createExperienceAndEducation(resume, resume)
+	//err = u.createExperienceAndEducation(resume, resume)
 	return result, err
 }
 

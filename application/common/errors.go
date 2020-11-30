@@ -2,6 +2,10 @@ package common
 
 import (
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/mailru/easyjson"
+	"net/http"
 )
 
 const (
@@ -20,10 +24,6 @@ type Err struct {
 	code    int         `json:"code"`
 	message string      `json:"message"`
 	meta    interface{} `json:"meta"`
-}
-
-type RespError struct {
-	Err string `json:"error"`
 }
 
 func (e Err) Code() int         { return e.code }
@@ -53,9 +53,35 @@ func NewErr(code int, message string, meta interface{}) Err {
 		meta:    meta,
 	}
 }
-/*
-var ErrBadRequest = NewErr(400, "Неправильный запрос к серверу", nil)
-var ErrInternalServerError = NewErr(500, "Внутренняя ошибка сервера", nil)
 
-var ErrInvalidUpdatePassword = NewErr(1001, "неверный пароль", nil)
-*/
+func WriteOkResponse(ctx gin.Context, body interface{}) {
+	resp := models.RespOk{
+		Status: http.StatusOK,
+		Body:   body,
+	}
+
+	ctx.Status(http.StatusOK)
+
+	//Hits.WithLabelValues("200", ctx.Request().URL.String()).Inc()
+	//FooCount.Add(1)
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+	//if _, err := easyjson.MarshalToWriter(resp, ctx.Response().Writer); err != nil {
+	//	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	//}
+	//return nil
+}
+
+func WriteErrResponse(ctx *gin.Context, code int, message string) {
+	resp := models.RespError{
+		Code: code,
+		Err:   message,
+	}
+	ctx.Status(code)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
