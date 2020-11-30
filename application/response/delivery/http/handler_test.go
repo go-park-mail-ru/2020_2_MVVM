@@ -24,7 +24,6 @@ type TestData struct {
 	responseHandler *ResponseHandler
 	router          *gin.Engine
 	mockUseCase     *mResponse.IUseCaseResponse
-	mockAuth        *mocksCommon.AuthTest
 	mockSB          *mocksCommon.SessionBuilder
 	mockSession     *mocksCommon.Session
 	httpStatus      []int
@@ -87,21 +86,21 @@ func TestCreateResponse(t *testing.T) {
 		Initial:   common.Employer,
 	}
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.CandID).Return(nil).Once()
-	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetEmplID").Return(ID).Once()
 	td.mockUseCase.On("Create", response).Return(&response, nil).Once()
 
 	response2 := response
 	response2.Initial = common.Candidate
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 	td.mockUseCase.On("Create", response2).Return(&response2, nil).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(nil).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 	td.mockUseCase.On("Create", response2).Return(nil, assert.AnError).Once()
 
 	testUrls := []string{
@@ -146,21 +145,21 @@ func TestUpdateStatusResponse(t *testing.T) {
 		Initial:   common.Employer,
 	}
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.CandID).Return(nil).Once()
-	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetEmplID").Return(ID).Once()
 	td.mockUseCase.On("UpdateStatus", response, common.Employer).Return(&response, nil).Once()
 
 	response2 := response
 	response2.Initial = common.Candidate
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 	td.mockUseCase.On("UpdateStatus", response2, common.Candidate).Return(&response2, nil).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(nil).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 	td.mockUseCase.On("UpdateStatus", response2, common.Candidate).Return(nil, assert.AnError).Once()
 
 	testUrls := [5]string{
@@ -203,18 +202,18 @@ func TestGetAllResponses(t *testing.T) {
 	listResp := []models.ResponseWithTitle{response}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.CandID).Return(nil).Twice()
-	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Twice()
-	td.mockUseCase.On("GetAllEmployerResponses", ID).Return(listResp, nil).Once()
-	td.mockUseCase.On("GetAllEmployerResponses", ID).Return(nil, assert.AnError).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Twice()
+	td.mockSession.On("GetEmplID").Return(ID).Twice()
+	td.mockUseCase.On("GetAllEmployerResponses", ID, []uuid.UUID(nil)).Return(listResp, nil).Once()
+	td.mockUseCase.On("GetAllEmployerResponses", ID, []uuid.UUID(nil)).Return(nil, assert.AnError).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Twice()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Twice()
-	td.mockUseCase.On("GetAllCandidateResponses", ID).Return(listResp, nil).Once()
-	td.mockUseCase.On("GetAllCandidateResponses", ID).Return(nil, assert.AnError).Once()
+	td.mockSession.On("GetCandID").Return(ID).Twice()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Twice()
+	td.mockUseCase.On("GetAllCandidateResponses", ID, []uuid.UUID(nil)).Return(listResp, nil).Once()
+	td.mockUseCase.On("GetAllCandidateResponses", ID, []uuid.UUID(nil)).Return(nil, assert.AnError).Once()
 
-	td.mockSession.On("Get", common.CandID).Return(nil).Once()
-	td.mockSession.On("Get", common.EmplID).Return(nil).Once()
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%smy", responseUrlGroup),
@@ -230,7 +229,13 @@ func TestGetAllResponses(t *testing.T) {
 		http.StatusInternalServerError,
 		http.StatusMethodNotAllowed,
 	}
-	testExpectedBody := []interface{}{listResp, common.DataBaseErr, listResp, common.DataBaseErr, "this user cannot have responses"}
+	testExpectedBody := []interface{}{
+		listResp,
+		common.DataBaseErr,
+		listResp,
+		common.DataBaseErr,
+		"this user cannot have responses",
+	}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for create response handler", func(t *testing.T) {
@@ -257,28 +262,28 @@ func TestGetAllResumeWithoutResponse(t *testing.T) {
 	listResume := []models.BriefResumeInfo{resume}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockUseCase.On("GetAllResumeWithoutResponse", ID, ID).Return(listResume, nil).Once()
 
-	td.mockSession.On("Get", common.CandID).Return("invalidID").Once()
-
-	td.mockSession.On("Get", common.CandID).Return(ID.String()).Once()
-	td.mockUseCase.On("GetAllResumeWithoutResponse", ID, ID).Return(nil, assert.AnError).Once()
+	td.mockSession.On("GetCandID").Return(ID).Once()
+	td.mockUseCase.On("GetAllResumeWithoutResponse", ID, uuid.Nil).Return(nil, assert.AnError).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%sfree/resumes/%s", responseUrlGroup, ID),
+		fmt.Sprintf("%sfree/resumes/invalidid", responseUrlGroup),
 		fmt.Sprintf("%sfree/resumes/%s", responseUrlGroup, uuid.Nil),
-		fmt.Sprintf("%sfree/resumes/invalidID", responseUrlGroup),
-		fmt.Sprintf("%sfree/resumes/%s", responseUrlGroup, ID),
 	}
 	httpStatus := []int{
 		http.StatusOK,
 		http.StatusBadRequest,
-		http.StatusBadRequest,
 		http.StatusInternalServerError,
-		http.StatusMethodNotAllowed,
+		//http.StatusInternalServerError,
 	}
-	testExpectedBody := []interface{}{listResume, common.EmptyFieldErr, common.EmptyFieldErr, common.DataBaseErr}
+	testExpectedBody := []interface{}{
+		listResume,
+		common.EmptyFieldErr,
+		common.DataBaseErr,
+	}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for create response handler", func(t *testing.T) {
@@ -301,28 +306,28 @@ func TestGetAllVacancyWithoutResponse(t *testing.T) {
 	listVacancy := []models.Vacancy{vacancy}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Once()
+	td.mockSession.On("GetEmplID").Return(ID).Once()
 	td.mockUseCase.On("GetAllVacancyWithoutResponse", ID, ID).Return(listVacancy, nil).Once()
 
-	td.mockSession.On("Get", common.EmplID).Return("invalidID").Once()
-
-	td.mockSession.On("Get", common.EmplID).Return(ID.String()).Once()
+	td.mockSession.On("GetEmplID").Return(ID).Once()
 	td.mockUseCase.On("GetAllVacancyWithoutResponse", ID, ID).Return(nil, assert.AnError).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%sfree/vacancies/%s", responseUrlGroup, ID),
-		fmt.Sprintf("%sfree/vacancies/%s", responseUrlGroup, uuid.Nil),
 		fmt.Sprintf("%sfree/vacancies/invalidID", responseUrlGroup),
 		fmt.Sprintf("%sfree/vacancies/%s", responseUrlGroup, ID),
 	}
 	httpStatus := []int{
 		http.StatusOK,
 		http.StatusBadRequest,
-		http.StatusBadRequest,
 		http.StatusInternalServerError,
-		http.StatusMethodNotAllowed,
+		//http.StatusMethodNotAllowed,
 	}
-	testExpectedBody := []interface{}{listVacancy, common.EmptyFieldErr, common.EmptyFieldErr, common.DataBaseErr}
+	testExpectedBody := []interface{}{
+		listVacancy,
+		common.EmptyFieldErr,
+		common.DataBaseErr,
+	}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for create response handler", func(t *testing.T) {

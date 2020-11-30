@@ -8,6 +8,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
+	mocksAuth "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/microservices/auth/authmicro"
 	mUser "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -25,9 +26,10 @@ type TestData struct {
 	userHandler *UserHandler
 	router      *gin.Engine
 	mockUseCase *mUser.UseCase
-	mockAuth    *mocksCommon.AuthTest
 	mockSB      *mocksCommon.SessionBuilder
 	mockSession *mocksCommon.Session
+	mockAuth    *mocksAuth.AuthClient
+	sessionInfo common.BasicSession
 	httpStatus  []int
 }
 
@@ -47,9 +49,11 @@ func beforeTest() TestData {
 	testData.mockUseCase = new(mUser.UseCase)
 	testData.mockSB = new(mocksCommon.SessionBuilder)
 	testData.mockSession = new(mocksCommon.Session)
+	testData.mockAuth = new(mocksAuth.AuthClient)
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	testData.userHandler = NewRest(api.Group("/users"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {})
+	testData.userHandler = NewRest(api.Group("/users"), testData.mockUseCase, testData.mockAuth,
+		common.AuthCookieConfig{}, testData.mockSB, func(context *gin.Context) {})
 	return testData
 }
 
@@ -165,7 +169,15 @@ func TestGetEmplByIdHandler(t *testing.T) {
 func TestCreateUserHandler(t *testing.T) {
 	td := beforeTest()
 	td.router.POST("/", td.userHandler.CreateUserHandler)
-	req := userReq{UserType: common.Candidate, Password: "password", Name: "name", Surname: "surname", Email: "email@email.ru", Phone: "", SocialNetwork: ""}
+	req := userReq{
+		UserType: common.Candidate,
+		Password: "password",
+		Name: "name",
+		Surname: "surname",
+		Email: "email@email.ru",
+		Phone: "",
+		SocialNetwork: "",
+	}
 
 	IDCand := uuid.New()
 	userCand := models.User{
@@ -179,20 +191,20 @@ func TestCreateUserHandler(t *testing.T) {
 		SocialNetwork: nil,
 	}
 
+	td.mockAuth.On("Login", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&td.sessionInfo, nil)
 	td.mockUseCase.On("CreateUser", mock.Anything).Return(&userCand, nil).Once()
 	td.mockUseCase.On("CreateUser", mock.Anything).Return(nil, assert.AnError)
 
-	reqUser := models.UserLogin{
-		Email:    "email@email.ru",
-		Password: "password",
-	}
+	//reqUser := models.UserLogin{
+	//	Email:    "email@email.ru",
+	//	Password: "password",
+	//}
 
 	userEmpl := userCand
 	IDEmpl := uuid.New()
 	userEmpl.ID = IDEmpl
 	userEmpl.UserType = common.Employer
 
-	td.mockUseCase.On("Login", reqUser).Return(&userCand, nil)
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	cand := models.Candidate{
 		ID:     IDCand,
@@ -227,8 +239,8 @@ func TestGetCurrentUserHandler(t *testing.T) {
 	user := models.User{ID: userID}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.UserID).Return(userID.String()).Once()
-	td.mockSession.On("Get", common.UserID).Return(uuid.Nil.String())
+	td.mockSession.On("GetUserID").Return(userID).Once()
+	td.mockSession.On("GetUserID").Return(uuid.Nil)
 
 	td.mockUseCase.On("GetUserByID", userID.String()).Return(&user, nil).Once()
 	td.mockUseCase.On("GetUserByID", uuid.Nil.String()).Return(nil, assert.AnError)
@@ -254,18 +266,20 @@ func TestGetCurrentUserHandler(t *testing.T) {
 
 func TestLogoutHandler(t *testing.T) {
 	td := beforeTest()
+	sessionID := uuid.New()
+
 	td.router.POST("/logout", td.userHandler.LogoutHandler)
-
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Clear")
-	td.mockSession.On("Options", mock.Anything)
-	td.mockSession.On("Save").Return(nil).Once()
-	td.mockSession.On("Save").Return(assert.AnError).Once()
+	td.mockSession.On("GetSessionID").Return(sessionID.String())
+	td.mockAuth.On("Logout", sessionID.String()).Return(nil)
 
-	testExpectedBody := []interface{}{nil, common.SessionErr}
+	testExpectedBody := []interface{}{
+		nil,
+		//common.SessionErr,
+	}
 	testStatuses := []int{
 		http.StatusOK,
-		http.StatusInternalServerError,
+		//http.StatusInternalServerError,
 	}
 
 	for i := range testExpectedBody {
@@ -284,14 +298,12 @@ func TestLogoutHandler(t *testing.T) {
 func TestUpdateUserHandler(t *testing.T) {
 	td := beforeTest()
 	td.router.PUT("/", td.userHandler.UpdateUserHandler)
-	uidNil := uuid.Nil
 	id := uuid.New()
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("Get", common.UserID).Return(uidNil.String()).Once()
-	td.mockSession.On("Get", common.UserID).Return(nil).Once()
-	td.mockSession.On("Get", common.UserID).Return("wrong").Once()
-	td.mockSession.On("Get", common.UserID).Return(id.String())
+	td.mockSession.On("GetUserID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetUserID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetUserID").Return(id).Once()
 
 	req := userReq{Name: "name", Surname: "surname", Email: "email@mail.ru"}
 
@@ -302,19 +314,23 @@ func TestUpdateUserHandler(t *testing.T) {
 	}
 	td.mockUseCase.On("UpdateUser", mock.Anything).Return(nil, assert.AnError).Once()
 	td.mockUseCase.On("UpdateUser", mock.Anything).Return(nil, errors.New(common.WrongPasswd)).Once()
-	td.mockUseCase.On("UpdateUser", mock.Anything).Return(&userNew, nil)
+	td.mockUseCase.On("UpdateUser", mock.Anything).Return(&userNew, nil).Once()
 
 	testStatuses := []int{
 		http.StatusBadRequest,
 		http.StatusBadRequest,
 		http.StatusInternalServerError,
-		http.StatusInternalServerError,
-		http.StatusInternalServerError,
 		http.StatusConflict,
 		http.StatusOK,
 	}
-	testExpectedBody := []interface{}{common.EmptyFieldErr, errors.New("Неправильные значения полей: имя должно содержать только буквы"), common.DataBaseErr, common.SessionErr, common.SessionErr, common.WrongPasswd, userNew}
-	testParamsForPost := []interface{}{nil, userReq{Name: ")"}, req, req, req, req, req}
+	testExpectedBody := []interface{}{
+		common.EmptyFieldErr,
+		errors.New("Неправильные значения полей: имя должно содержать только буквы"),
+		common.DataBaseErr,
+		common.WrongPasswd,
+		userNew,
+	}
+	testParamsForPost := []interface{}{nil, userReq{Name: ")"}, req, req, req}
 	for i := range testStatuses {
 		t.Run("test responses on different urls for UpdateUser handler", func(t *testing.T) {
 			w, err := general.PerformRequest(td.router, http.MethodPut, userUrlGroup, testParamsForPost[i])
@@ -358,33 +374,34 @@ func TestRegister(t *testing.T) {
 		UserID: ID,
 	}
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockUseCase.On("Login", reqUser).Return(&userCand, nil).Once()
-	td.mockUseCase.On("Login", reqUser).Return(nil, assert.AnError).Once()
-	td.mockUseCase.On("GetCandidateByID", ID.String()).Return(&cand, nil).Once()
-	td.mockSession.On("Set", common.CandID, ID.String())
-	td.mockSession.On("Set", common.EmplID, nil)
-	td.mockSession.On("Set", common.UserID, ID.String())
+	td.mockAuth.On("Login", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&td.sessionInfo, nil)
+
+	td.mockUseCase.On("GetCandidateByID", ID).Return(&cand, nil).Once()
 
 	empl := models.Employer{
 		ID:     ID,
 		UserID: ID,
 	}
-	td.mockUseCase.On("Login", reqEmpl).Return(&userEmpl, nil).Once()
 	td.mockUseCase.On("GetEmployerByID", ID.String()).Return(&empl, nil).Once()
-	td.mockSession.On("Set", common.CandID, nil)
-	td.mockSession.On("Set", common.EmplID, ID.String())
-	td.mockSession.On("Set", common.UserID, ID.String())
-	td.mockSession.On("Save").Return(nil)
 
 	testStatuses := []int{
 		http.StatusOK,
 		http.StatusOK,
-		http.StatusInternalServerError,
 		http.StatusBadRequest,
 		http.StatusBadRequest,
 	}
-	testExpectedBody := []interface{}{userCand, userEmpl, common.DataBaseErr, common.EmptyFieldErr, errors.New("Неправильные значения полей: длина пароля должна быть от 5 до 25 символов.")}
-	testParamsForPost := []interface{}{reqUser, reqEmpl, reqUser, nil, models.UserLogin{Email: "e@e.ru", Password: "err"}}
+	testExpectedBody := []interface{}{
+		nil,//userCand,
+		nil,//userEmpl,
+		common.EmptyFieldErr,
+		errors.New("Неправильные значения полей: длина пароля должна быть от 5 до 25 символов."),
+	}
+	testParamsForPost := []interface{}{
+		reqUser,
+		reqEmpl,
+		nil,
+		models.UserLogin{Email: "e@e.ru", Password: "err"},
+	}
 
 	for i := range testStatuses {
 		t.Run("test responses on different urls for register func", func(t *testing.T) {

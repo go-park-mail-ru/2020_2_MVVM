@@ -3,63 +3,72 @@ package main
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
-	api "github.com/go-park-mail-ru/2020_2_MVVM.git/application"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/server"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
+	server "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/server"
+	sessionrepo "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session/repository"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
+	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
+	"github.com/go-redis/redis/v8"
 	yconfig "github.com/rowdyroad/go-yaml-config"
+	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"net/http"
+	"net"
 	"os"
-	"time"
 )
 
-type Logger struct {
-	InfoLogger  *logger.Logger
-	ErrorLogger *logger.Logger
+type RedisConfig struct {
+	Address  string `yaml:"address"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"DB"`
 }
 
-const (
-	Port1 = ":8081"
-)
+type Config struct {
+	Listen string          `yaml:"listen"`
+	Redis  RedisConfig     `yaml:"redis"`
+	DB     common.DBConfig `yaml:"db"`
+}
 
 func main() {
 	infoLogger, err := logger.New("Info logger", 1, os.Stdout)
 	errorLogger, err := logger.New("Error logger", 2, os.Stderr)
 
-	log := &Logger{
-		InfoLogger:  infoLogger,
-		ErrorLogger: errorLogger,
+	log := common.Logger{
+		Info:  infoLogger,
+		Error: errorLogger,
 	}
 	infoLogger.SetLogLevel(logger.DebugLevel)
 
-	var config api.Config
-	yconfig.LoadConfig(&config, "configs/config.yaml", nil)
+	var config Config
+	yconfig.LoadConfig(&config, "configs/auth.yaml", nil)
 
-	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
-		config.Db.Password, config.Db.Name,
-		config.Db.Host, config.Db.Port)), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d",
+		config.DB.User, config.DB.Password, config.DB.Name,
+		config.DB.Host, config.DB.Port)), &gorm.Config{})
 	if err != nil {
-		log.ErrorLogger.Fatal("connection to postgres db failed...")
+		log.Error.Fatal("connection to postgres db failed...")
 	}
-	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
-	if err != nil {
-		log.ErrorLogger.Fatal("connection to redis db failed...")
-	}
-	store.Options(sessions.Options{
-		Domain: "studhunt.ru",
-		//Domain:   "localhost", // for postman
-		MaxAge:   int((12 * time.Hour).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-		//SameSite: http.SameSiteStrictMode, // prevent csrf attack
-	})
 
-	srv1 := auth.NewServer(Port1, db, store)
-	if err = srv1.ListenAndServe(); err != nil {
-		log.ErrorLogger.FatalF("error in listening auth server: %s", err)
+	listener, err := net.Listen("tcp", config.Listen)
+	if err != nil {
+		log.Error.Fatal(err.Error())
+	}
+
+	pg := repository.NewPgRepository(db)
+	ucase := UserUseCase.NewUserUseCase(log.Info, log.Error, pg)
+
+	redis := sessionrepo.NewRedisSessionRepository(redis.NewClient(&redis.Options{
+		Addr: config.Redis.Address,
+		Password: config.Redis.Password,
+		DB: config.Redis.DB,
+	}), log)
+	server := server.NewAuthServer(ucase, redis)
+
+	gServer := grpc.NewServer()
+	api.RegisterAuthServer(gServer, server)
+	err = gServer.Serve(listener)
+	if err != nil {
+		log.Error.Fatalf("error in listening api server: %s", err)
 	}
 }

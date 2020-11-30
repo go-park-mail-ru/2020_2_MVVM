@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	sessions "github.com/gin-contrib/sessions"
+	uuid "github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -12,86 +12,64 @@ type Session struct {
 	mock.Mock
 }
 
-// AddFlash provides a mock function with given fields: value, vars
-func (_m *Session) AddFlash(value interface{}, vars ...string) {
-	_va := make([]interface{}, len(vars))
-	for _i := range vars {
-		_va[_i] = vars[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, value)
-	_ca = append(_ca, _va...)
-	_m.Called(_ca...)
-}
-
-// Clear provides a mock function with given fields:
-func (_m *Session) Clear() {
-	_m.Called()
-}
-
-// Delete provides a mock function with given fields: key
-func (_m *Session) Delete(key interface{}) {
-	_m.Called(key)
-}
-
-// Flashes provides a mock function with given fields: vars
-func (_m *Session) Flashes(vars ...string) []interface{} {
-	_va := make([]interface{}, len(vars))
-	for _i := range vars {
-		_va[_i] = vars[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 []interface{}
-	if rf, ok := ret.Get(0).(func(...string) []interface{}); ok {
-		r0 = rf(vars...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]interface{})
-		}
-	}
-
-	return r0
-}
-
-// Get provides a mock function with given fields: key
-func (_m *Session) Get(key interface{}) interface{} {
-	ret := _m.Called(key)
-
-	var r0 interface{}
-	if rf, ok := ret.Get(0).(func(interface{}) interface{}); ok {
-		r0 = rf(key)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
-		}
-	}
-
-	return r0
-}
-
-// Options provides a mock function with given fields: _a0
-func (_m *Session) Options(_a0 sessions.Options) {
-	_m.Called(_a0)
-}
-
-// Save provides a mock function with given fields:
-func (_m *Session) Save() error {
+// GetCandID provides a mock function with given fields:
+func (_m *Session) GetCandID() uuid.UUID {
 	ret := _m.Called()
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func() error); ok {
+	var r0 uuid.UUID
+	if rf, ok := ret.Get(0).(func() uuid.UUID); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
 	}
 
 	return r0
 }
 
-// Set provides a mock function with given fields: key, val
-func (_m *Session) Set(key interface{}, val interface{}) {
-	_m.Called(key, val)
+// GetEmplID provides a mock function with given fields:
+func (_m *Session) GetEmplID() uuid.UUID {
+	ret := _m.Called()
+
+	var r0 uuid.UUID
+	if rf, ok := ret.Get(0).(func() uuid.UUID); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	return r0
+}
+
+// GetSessionID provides a mock function with given fields:
+func (_m *Session) GetSessionID() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// GetUserID provides a mock function with given fields:
+func (_m *Session) GetUserID() uuid.UUID {
+	ret := _m.Called()
+
+	var r0 uuid.UUID
+	if rf, ok := ret.Get(0).(func() uuid.UUID); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	return r0
 }

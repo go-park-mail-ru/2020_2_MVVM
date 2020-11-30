@@ -1,42 +1,47 @@
 package common
 
 import (
-	"errors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+type Session interface {
+	GetSessionID() string
+	GetUserID() uuid.UUID
+	GetEmplID() uuid.UUID
+	GetCandID() uuid.UUID
+}
+
 type SessionBuilder interface {
-	Build(ctx *gin.Context) sessions.Session
+	Build(ctx *gin.Context) Session
 }
 
 type NewSessionBuilder struct{}
 
-func (sb *NewSessionBuilder) Build(ctx *gin.Context) sessions.Session {
-	return sessions.Default(ctx)
+func (sb *NewSessionBuilder) Build(ctx *gin.Context) Session {
+	session, _ := ctx.Get("session")
+	return session.(Session)
 }
 
-func GetCurrentUserId(session sessions.Session, userType string) (id uuid.UUID) {
-	userIDStr := session.Get(userType)
-	if userIDStr == nil {
-		return uuid.Nil
-	}
-	userID, _ := uuid.Parse(userIDStr.(string))
-	return userID
+type BasicSession struct {
+	SessionID string
+	UserID    uuid.UUID
+	EmplID    uuid.UUID
+	CandID    uuid.UUID
 }
 
-func GetCandidateOrEmployer(session sessions.Session) (uuid.UUID, string, error) {
-	var id uuid.UUID
-	if session == nil {
-		return uuid.Nil, "", errors.New(AuthRequiredErr)
-	}
-	if candId := session.Get(CandID); candId != nil {
-		id, _ = uuid.Parse(candId.(string))
-		return id, Candidate, nil
-	} else if emplId := session.Get(EmplID); emplId != nil {
-		id, _ = uuid.Parse(emplId.(string))
-		return id, Employer, nil
-	}
-	return uuid.Nil, "", errors.New(AuthRequiredErr)
+func (s *BasicSession) GetSessionID() string {
+	return s.SessionID
+}
+
+func (s *BasicSession) GetUserID() uuid.UUID {
+	return s.UserID
+}
+
+func (s *BasicSession) GetEmplID() uuid.UUID {
+	return s.EmplID
+}
+
+func (s *BasicSession) GetCandID() uuid.UUID {
+	return s.CandID
 }

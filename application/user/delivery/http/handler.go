@@ -1,21 +1,21 @@
 package http
 
 import (
-	"errors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/client"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"net/url"
 )
 
 type UserHandler struct {
 	UserUseCase    user.UseCase
-	rpcAuth        client.IAuthClient
+	authClient     authmicro.AuthClient
+	cookieConfig   common.AuthCookieConfig
 	SessionBuilder common.SessionBuilder
 }
 
@@ -25,9 +25,12 @@ type Resp struct {
 
 func NewRest(router *gin.RouterGroup,
 	useCase user.UseCase,
+	authClient authmicro.AuthClient,
+	authCookieConfig common.AuthCookieConfig,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *UserHandler {
-	rest := &UserHandler{UserUseCase: useCase, SessionBuilder: sessionBuilder}
+	rest := &UserHandler{UserUseCase: useCase, cookieConfig: authCookieConfig,
+		SessionBuilder: sessionBuilder, authClient: authClient}
 	rest.routes(router, AuthRequired)
 	return rest
 }
@@ -48,9 +51,9 @@ func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFu
 
 func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 	session := u.SessionBuilder.Build(ctx)
-	userID := session.Get(common.UserID)
+	userID := session.GetUserID()
 
-	userById, err := u.UserUseCase.GetUserByID(userID.(string))
+	userById, err := u.UserUseCase.GetUserByID(userID.String())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -119,6 +122,26 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Resp{User: user})
 }
 
+func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
+	session, err := u.authClient.Login(reqUser.Email, reqUser.Password)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		return
+	}
+
+	// Save session id to the cookie
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     u.cookieConfig.Key,
+		Value:    url.QueryEscape(session.GetSessionID()),
+		MaxAge:   u.cookieConfig.MaxAge,
+		Path:     u.cookieConfig.Path,
+		Domain:   u.cookieConfig.Domain,
+		SameSite: u.cookieConfig.SameSite,
+		Secure:   u.cookieConfig.Secure,
+		HttpOnly: u.cookieConfig.HttpOnly,
+	})
+}
+
 func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 
@@ -130,59 +153,25 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
 		return
 	}
-
-	//userID, _ := u.rpcAuth.Login(reqUser.Email, reqUser.Password)
-	//fmt.Printf("MICROSERVICES: %s", userID)
-
-	user, status, err := u.setCookie(ctx, reqUser)
-	if err != nil {
-		ctx.JSON(status, models.RespError{Err: err.Error()})
-	} else {
-		ctx.JSON(status, Resp{User: user})
-	}
-}
-
-func (u *UserHandler) setCookie(ctx *gin.Context, reqUser models.UserLogin) (*models.User, int, error) {
-	user, err := u.UserUseCase.Login(reqUser)
-	if err != nil {
-		if errMsg := err.Error(); errMsg == common.AuthErr {
-			return nil, http.StatusConflict, err
-		}
-		return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
-	}
-	session := u.SessionBuilder.Build(ctx)
-	if user.UserType == common.Candidate {
-		cand, err := u.UserUseCase.GetCandidateByID(user.ID.String())
-		if err != nil {
-			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
-		}
-		session.Set(common.CandID, cand.ID.String())
-		session.Set(common.EmplID, nil)
-
-	} else if user.UserType == common.Employer {
-		empl, err := u.UserUseCase.GetEmployerByID(user.ID.String())
-		if err != nil {
-			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
-		}
-		session.Set("empl_id", empl.ID.String())
-		session.Set("cand_id", nil)
-	} else {
-		return nil, http.StatusMethodNotAllowed, errors.New(common.AuthErr)
-	}
-
-	session.Set("user_id", user.ID.String())
-	err = session.Save()
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.New(common.SessionErr)
-	}
-	return user, http.StatusOK, nil
+	u.login(ctx, reqUser)
+	ctx.JSON(http.StatusOK, nil)
 }
 
 func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	session := u.SessionBuilder.Build(ctx)
-	session.Clear()
-	session.Options(sessions.Options{MaxAge: -1})
-	err := session.Save()
+
+	// clear cookie
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     u.cookieConfig.Key,
+		Value:    "",
+		MaxAge:   -1,
+		Path:     u.cookieConfig.Path,
+		Domain:   u.cookieConfig.Domain,
+		SameSite: u.cookieConfig.SameSite,
+		Secure:   u.cookieConfig.Secure,
+		HttpOnly: u.cookieConfig.HttpOnly,
+	})
+	err := u.authClient.Logout(session.GetSessionID())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return
@@ -235,8 +224,7 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		Email:    userNew.Email,
 		Password: req.Password,
 	}
-	u.setCookie(ctx, reqUser)
-
+	u.login(ctx, reqUser)
 	ctx.JSON(http.StatusOK, Resp{User: userNew})
 }
 
@@ -260,12 +248,8 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	}
 
 	session := u.SessionBuilder.Build(ctx)
-	userIDFromSession := session.Get("user_id")
-	if userIDFromSession == nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
-		return
-	}
-	userID, errSession := uuid.Parse(userIDFromSession.(string))
+	userIDFromSession := session.GetUserID()
+	userID, errSession := uuid.Parse(userIDFromSession.String())
 	if errSession != nil {
 		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 		return

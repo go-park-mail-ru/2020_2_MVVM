@@ -37,6 +37,20 @@ func (_m *IUseCaseOfficialCompany) CreateOfficialCompany(_a0 models.OfficialComp
 	return r0, r1
 }
 
+// DeleteOfficialCompany provides a mock function with given fields: _a0, _a1
+func (_m *IUseCaseOfficialCompany) DeleteOfficialCompany(_a0 uuid.UUID, _a1 uuid.UUID) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetCompaniesList provides a mock function with given fields: _a0, _a1
 func (_m *IUseCaseOfficialCompany) GetCompaniesList(_a0 uint, _a1 uint) ([]models.OfficialCompany, error) {
 	ret := _m.Called(_a0, _a1)
@@ -122,6 +136,29 @@ func (_m *IUseCaseOfficialCompany) SearchCompanies(_a0 models.CompanySearchParam
 	var r1 error
 	if rf, ok := ret.Get(1).(func(models.CompanySearchParams) error); ok {
 		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateOfficialCompany provides a mock function with given fields: _a0, _a1
+func (_m *IUseCaseOfficialCompany) UpdateOfficialCompany(_a0 models.OfficialCompany, _a1 uuid.UUID) (*models.OfficialCompany, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *models.OfficialCompany
+	if rf, ok := ret.Get(0).(func(models.OfficialCompany, uuid.UUID) *models.OfficialCompany); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.OfficialCompany)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(models.OfficialCompany, uuid.UUID) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}

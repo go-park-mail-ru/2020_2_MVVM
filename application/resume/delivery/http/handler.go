@@ -56,9 +56,10 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 
 func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID := common.GetCurrentUserId(session, "cand_id")
+	candID := session.GetCandID()
 	if candID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		//ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -76,7 +77,7 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID := common.GetCurrentUserId(session, "cand_id")
+	candID := session.GetCandID()
 	if candID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
 		return
@@ -100,7 +101,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.String())
 		return
 	}
-	avatarName := resumePath+template.ResumeID.String()
+	avatarName := resumePath + template.ResumeID.String()
 	if file != nil {
 		template.Avatar = path.Join(common.DOMAIN, common.ImgDir, avatarName)
 	}
@@ -155,7 +156,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 
 	var isFavorite *uuid.UUID = nil
 	session := r.SessionBuilder.Build(ctx)
-	emplID := common.GetCurrentUserId(session, "empl_id")
+	emplID := session.GetEmplID()
 
 	if emplID != uuid.Nil {
 		favorite, err := r.UseCaseResume.GetFavoriteByResume(emplID, result.ResumeID)
@@ -208,7 +209,7 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 
 func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID := common.GetCurrentUserId(session, "cand_id")
+	candID := session.GetCandID()
 	if candID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
 		return
@@ -295,7 +296,7 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 	resumeID, _ := uuid.Parse(request.ResumeID)
 
 	session := r.SessionBuilder.Build(ctx)
-	emplID := common.GetCurrentUserId(session, "empl_id")
+	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
 		return
@@ -331,8 +332,7 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 	favoriteID, _ := uuid.Parse(request.FavoriteID)
 
 	session := r.SessionBuilder.Build(ctx)
-	emplID := common.GetCurrentUserId(session, "empl_id")
-
+	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
 		return
@@ -353,9 +353,10 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 
 func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	emplID := common.GetCurrentUserId(session, "empl_id")
+	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		//ctx.AbortWithError(http.StatusBadRequest, errors.Errorf(common.AuthRequiredErr))
 		return
 	}
 

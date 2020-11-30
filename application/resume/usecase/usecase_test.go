@@ -9,6 +9,7 @@ import (
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
 	mUser "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"os"
@@ -27,12 +28,12 @@ var testUser = models.User{
 var candidate = models.Candidate{
 	ID:     ID,
 	UserID: ID,
-	User:   &testUser,
+	User:   testUser,
 }
 var testResume = models.Resume{
 	ResumeID:  ID,
 	CandID:    ID,
-	Candidate: &candidate,
+	Candidate: candidate,
 	Title:     "ID",
 }
 var educationTest = models.Education{
@@ -64,7 +65,7 @@ var favorite = models.FavoritesForEmpl{
 	FavoriteID: ID,
 	EmplID:     ID,
 	ResumeID:   ID,
-	Resume:     &testResume,
+	Resume:     testResume,
 }
 
 func beforeTest(t *testing.T) (*mResume.Repository, *mUser.UseCase, *mEducation.UseCase, *mExperience.UseCase, ResumeUseCase) {
@@ -102,8 +103,8 @@ func TestResumeGetById(t *testing.T) {
 func TestResumeCreateResume(t *testing.T) {
 	mockRepo, _, mockEducationUS, mockExperienceUS, usecase := beforeTest(t)
 
-	testResume.ExperienceCustomComp = []*models.ExperienceCustomComp{&experienceTest}
-	testResume.Education = []*models.Education{&educationTest}
+	testResume.ExperienceCustomComp = []models.ExperienceCustomComp{experienceTest}
+	testResume.Education = []models.Education{educationTest}
 	testResume.DateCreate = time.Now()
 	mockRepo.On("Create", mock.Anything).Return(&testResume, nil)
 	mockExperienceUS.On("Create", experienceTest).Return(&experienceTest, nil)
@@ -117,8 +118,8 @@ func TestResumeCreateResume(t *testing.T) {
 func TestResumeUpdateUser(t *testing.T) {
 	mockRepo, _, mockEducationUS, mockExperienceUS, usecase := beforeTest(t)
 
-	testResume.ExperienceCustomComp = []*models.ExperienceCustomComp{&experienceTest}
-	testResume.Education = []*models.Education{&educationTest}
+	testResume.ExperienceCustomComp = []models.ExperienceCustomComp{experienceTest}
+	testResume.Education = []models.Education{educationTest}
 	mockRepo.On("Update", testResume).Return(&testResume, nil)
 	mockRepo.On("GetById", ID).Return(&testResume, nil)
 	mockEducationUS.On("DropAllFromResume", ID).Return(nil)
@@ -164,24 +165,22 @@ func TestResumeSearch(t *testing.T) {
 	assert.Equal(t, answer, listBrief)
 }
 
-//List(start, limit uint) ([]models.BriefResumeInfo, error)
 func TestResumeList(t *testing.T) {
 	mockRepo, _, _, _, usecase := beforeTest(t)
 
 	var listResume = []models.Resume{testResume}
 	var listBrief = []models.BriefResumeInfo{briefResume}
-	mockRepo.On("List", uint(1), uint(1)).Return(listResume, nil)
+	mockRepo.On("List", uint(1), uint(1)).Return(listResume, nil).Once()
 	answer, err := usecase.List(uint(1), uint(1))
 	assert.Nil(t, err)
 	assert.Equal(t, answer, listBrief)
 
-	listResume[0].Candidate = nil
-	mockRepo.On("List", uint(1), uint(1)).Return(listResume, nil)
+	mockRepo.On("List", uint(1), uint(1)).Return(nil, errors.Errorf("")).Once()
 	answerWrong, errNotNil := usecase.List(uint(1), uint(1))
-	answerWrong2, errNotNil2 := usecase.List(uint(1), uint(1000))
-
 	assert.Nil(t, answerWrong)
 	assert.Error(t, errNotNil)
+
+	answerWrong2, errNotNil2 := usecase.List(uint(1), uint(1000))
 	assert.Nil(t, answerWrong2)
 	assert.Error(t, errNotNil2)
 }

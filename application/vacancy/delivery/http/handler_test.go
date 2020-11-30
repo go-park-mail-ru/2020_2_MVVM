@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
@@ -11,6 +12,7 @@ import (
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/vacancy"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
@@ -24,7 +26,9 @@ var testData struct {
 	vacHandler  *VacancyHandler
 	router      *gin.Engine
 	mockUseCase *mocks.IUseCaseVacancy
-	mockAuth    *mocks2.AuthTest
+	sessionInfo api.SessionInfo
+	mockSB      *mocks2.SessionBuilder
+	mockSession *mocks2.Session
 	httpStatus  []int
 	vacList     []models.Vacancy
 }
@@ -48,10 +52,10 @@ func setUp() {
 		{Title: "title3", Description: "description3", AreaSearch: "area3"}}
 	testData.mockUseCase = new(mocks.IUseCaseVacancy)
 	//testData.mockAuth = new(mocks2.AuthTest)
+	testData.mockSB = new(mocks2.SessionBuilder)
+	testData.mockSession = new(mocks2.Session)
 	testData.router = gin.Default()
-	api := testData.router.Group("api/v1")
-	//testData.mockAuth.On("AuthRequired").Return(nil)
-	testData.vacHandler = NewRest(api.Group("/vacancy"), testData.mockUseCase, nil)
+	testData.vacHandler = NewRest(testData.router.Group(vacUrlGroup), testData.mockUseCase, testData.mockSB, nil)
 }
 
 func getRespStruct(entity interface{}) interface{} {
@@ -73,12 +77,15 @@ func getRespStruct(entity interface{}) interface{} {
 }
 
 func TestGetVacancyByIdHandler(t *testing.T) {
-	v, r, mockUseCase := testData.vacHandler, testData.router, testData.mockUseCase
-	r.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
+	r, mockUseCase := testData.router, testData.mockUseCase
 	vacID := uuid.New()
 	vac := models.Vacancy{ID: vacID}
 	mockUseCase.On("GetVacancy", vacID).Return(&vac, nil)
 	mockUseCase.On("GetVacancy", uuid.Nil).Return(nil, assert.AnError)
+	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
+	testData.mockSession.On("GetCandID").Return(uuid.New())
+	testData.mockSession.On("GetUserID").Return(uuid.New())
+	testData.mockUseCase.On("AddRecommendation", mock.Anything, mock.Anything).Return(nil)
 
 	testUrls := []string{
 		fmt.Sprintf("%sby/id/%s", vacUrlGroup, vacID),
@@ -103,8 +110,7 @@ func TestGetVacancyByIdHandler(t *testing.T) {
 func TestGetVacancyListHandler(t *testing.T) {
 	var start uint = 0
 	var end uint = 3
-	v, r, mockUseCase := testData.vacHandler, testData.router, testData.mockUseCase
-	r.GET("/page", v.GetVacancyListHandler)
+	r, mockUseCase := testData.router, testData.mockUseCase
 
 	mockUseCase.On("GetVacancyList", start, end, uuid.Nil, vacancy.ByVacId).Return(testData.vacList, nil)
 	mockUseCase.On("GetVacancyList", end, end, uuid.Nil, vacancy.ByVacId).Return(nil, assert.AnError)
@@ -132,16 +138,15 @@ func TestGetVacancyListHandler(t *testing.T) {
 func TestGetCompVacancyListHandler(t *testing.T) {
 	var start uint = 0
 	var end uint = 3
-	v, r, mockUseCase := testData.vacHandler, testData.router, testData.mockUseCase
-	r.GET("/page/comp", v.GetCompVacancyListHandler)
+	r, mockUseCase :=testData.router, testData.mockUseCase
 	compID := uuid.New()
 	mockUseCase.On("GetVacancyList", start, end, compID, vacancy.ByCompId).Return(testData.vacList, nil)
 	mockUseCase.On("GetVacancyList", end, end, compID, vacancy.ByCompId).Return(nil, assert.AnError)
 
 	testUrls := []string{
-		fmt.Sprintf("%spage/comp?start=%d&limit=%d&comp_id=%s", vacUrlGroup, start, end, compID),
-		fmt.Sprintf("%spage/comp", vacUrlGroup),
-		fmt.Sprintf("%spage/comp?start=%d&limit=%d&comp_id=%s", vacUrlGroup, end, end, compID),
+		fmt.Sprintf("%scomp?start=%d&limit=%d&comp_id=%s", vacUrlGroup, start, end, compID),
+		fmt.Sprintf("%scomp", vacUrlGroup),
+		fmt.Sprintf("%scomp?start=%d&limit=%d&comp_id=%s", vacUrlGroup, end, end, compID),
 	}
 
 	testExpectedBody := []interface{}{testData.vacList, common.EmptyFieldErr, common.DataBaseErr}
@@ -159,8 +164,7 @@ func TestGetCompVacancyListHandler(t *testing.T) {
 }
 
 func TestSearchVacanciesHandler(t *testing.T) {
-	v, r, mockUseCase := testData.vacHandler, testData.router, testData.mockUseCase
-	r.POST("/search", v.SearchVacanciesHandler)
+	r, mockUseCase := testData.router, testData.mockUseCase
 
 	params := models.VacancySearchParams{
 		AreaSearch: []string{"area1", "area2"},
