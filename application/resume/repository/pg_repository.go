@@ -175,7 +175,7 @@ func (p *PGRepository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 	err := p.db.Where("favorite_id = ?", favoriteForEmpl.String()).Delete(&favorite)
 	//_, err := p.db.Model(&favorite).Where("favorite_id = ?", favoriteForEmpl).Delete()
 	if err != nil {
-		err := fmt.Errorf("error in delete favorite resume: %w", err)
+		err := fmt.Errorf("error in delete favorite resume: %w", err.Error)
 		return err
 	}
 	return nil

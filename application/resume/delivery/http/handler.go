@@ -8,6 +8,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"net/http"
 	"path"
 )
@@ -55,10 +56,10 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 
 func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID, err := common.GetCurrentUserId(session, "cand_id")
-	if err != nil {
+	candID := session.GetCandID()
+	if candID == uuid.Nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err:  common.AuthRequiredErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
@@ -73,9 +74,9 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID, err := common.GetCurrentUserId(session, "cand_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	candID := session.GetCandID()
+	if candID == uuid.Nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
@@ -97,7 +98,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errImg)
 		return
 	}
-	avatarName := resumePath+template.ResumeID.String()
+	avatarName := resumePath + template.ResumeID.String()
 	if file != nil {
 		template.Avatar = path.Join(common.DOMAIN, common.ImgDir, avatarName)
 	}
@@ -155,9 +156,9 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 
 	var isFavorite *uuid.UUID = nil
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, "empl_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	emplID := session.GetEmplID()
+	if emplID == uuid.Nil {
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 	if emplID != uuid.Nil {
@@ -208,13 +209,9 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 
 func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	candID, err := common.GetCurrentUserId(session, "cand_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	candID := session.GetCandID()
 	if candID == uuid.Nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
@@ -302,13 +299,9 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 	}
 
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, "empl_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
+		ctx.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
@@ -344,13 +337,9 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 	}
 
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, "empl_id")
-	if err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
+	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
-		ctx.AbortWithError(http.StatusForbidden, err)
+		ctx.AbortWithStatus(http.StatusForbidden)
 		return
 	}
 
@@ -367,10 +356,10 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 
 func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, "empl_id")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.AuthRequiredErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	emplID := session.GetEmplID()
+	if emplID == uuid.Nil {
+		ctx.JSON(http.StatusBadRequest, common.RespError{Err:  common.AuthRequiredErr})
+		ctx.AbortWithError(http.StatusBadRequest, errors.Errorf(common.AuthRequiredErr))
 		return
 	}
 

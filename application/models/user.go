@@ -15,6 +15,10 @@ type User struct {
 	SocialNetwork *string   `gorm:"column:social_network" json:"social_network"`
 }
 
+func (e Employer) TableName() string {
+	return "main.employers"
+}
+
 func (u User) TableName() string {
 	return "main.users"
 }
@@ -24,10 +28,6 @@ type Employer struct {
 	UserID    uuid.UUID           `gorm:"column:user_id;foreignKey:user_id" json:"user_id"`
 	CompanyID uuid.UUID           `gorm:"column:comp_id;foreignKey:comp_id" json:"comp_id"`
 	Favorites []FavoritesForEmpl  `gorm:"foreignKey:EmplID"`
-}
-
-func (e Employer) TableName() string {
-	return "main.employers"
 }
 
 type Candidate struct {

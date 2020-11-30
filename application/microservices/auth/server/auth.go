@@ -1,91 +1,107 @@
-package auth
+package api
 
 import (
 	"context"
-	"github.com/gin-contrib/sessions"
+	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/auth"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net/http"
 )
 
-//Дергает юзкейсы
-
-//Какие модели использовать и как матчить?
-//Что в хендлерах, что в сервисе?
-//ПОправить сессии
-
-type AuthServer struct {
+type authServer struct {
 	usecase user.UseCase
-	SessionBuilder common.SessionBuilder
-	auth.UnimplementedAuthServer
+	srepo   session.Repository
+	api.UnimplementedAuthServer
 }
 
-
-func NewAuthServer(usecase user.UseCase, sessionBuilder common.SessionBuilder) *AuthServer {
-	return &AuthServer{usecase: usecase, SessionBuilder: sessionBuilder}
+func convertSessionInfo(sessionID string, basic *common.BasicSession) *api.SessionInfo {
+	sinfo := api.SessionInfo{SessionID: sessionID, UserID: basic.UserID.String()}
+	if basic.EmplID != uuid.Nil {
+		str := basic.EmplID.String()
+		sinfo.EmplID = str
+	}
+	if basic.CandID != uuid.Nil {
+		str := basic.CandID.String()
+		sinfo.CandID = str
+	}
+	return &sinfo
 }
 
-func (a *AuthServer) Login(ctx context.Context, userLogin *auth.UserLogin) (*auth.User, error) {
-	userModel, err := a.usecase.Login(models.UserLogin{
-		Email:    userLogin.Login,
-		Password: userLogin.Password,
+func (a *authServer) Login(ctx context.Context, cred *api.Credentials) (*api.SessionInfo, error) {
+	fmt.Print("Login")
+	if cred == nil {
+		return nil, errors.Errorf("Incorrect credentials format")
+	}
+	user, err := a.usecase.Login(models.UserLogin{
+		Email:    cred.Login,
+		Password: cred.Password,
 	})
+
 	if err != nil {
-		if errMsg := err.Error(); errMsg == common.AuthErr {
+		if err.Error() == common.AuthErr {
 			return nil, status.Error(codes.AlreadyExists, err.Error())
 		}
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	//TODO
-	session := a.SessionBuilder.Build(ctx)
-	if userModel.UserType == common.Candidate {
-		cand, err := a.usecase.GetCandidateByID(userModel.ID.String())
-		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-		session.Set(common.CandID, cand.ID.String())
-		session.Set(common.EmplID, nil)
 
-	} else if userModel.UserType == common.Employer {
-		empl, err := a.usecase.GetEmployerByID(userModel.ID.String())
+	// gather session information
+	s := common.BasicSession{
+		UserID: user.ID, EmplID: uuid.Nil, CandID: uuid.Nil,
+	}
+	if user.UserType == common.Candidate {
+		cand, err := a.usecase.GetCandidateByID(user.ID.String())
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
+			return nil, status.Error(codes.Internal, err.Error())
 		}
-		session.Set("empl_id", empl.ID.String())
-		session.Set("cand_id", nil)
+		s.CandID = cand.ID
+	} else if user.UserType == common.Employer {
+		empl, err := a.usecase.GetEmployerByID(user.ID.String())
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		s.EmplID = empl.ID
 	} else {
-		return nil, status.Error(codes.InvalidArgument, common.AuthErr)
+		return nil, status.Error(codes.Internal, "Failed to determine user type")
 	}
 
-	session.Set("user_id", userModel.ID.String())
-	err = session.Save()
+	sessionID, err := uuid.NewRandom()
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return *userModel, nil
+	err = a.srepo.Add(sessionID.String(), s)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	fmt.Print("Login ok")
+
+	return convertSessionInfo(sessionID.String(), &s), nil
 }
 
-//func (a *AuthServer) Check(ctx context.Context, s *api.SessionId) (*api.UserId, error) {
-//	uid, err := a.usecase.Check(s.SessionId)
-//	if err != nil {
-//		return nil, status.Error(codes.InvalidArgument, err.Error())
-//	}
-//
-//	return &api.UserId{UserId: uint64(uid)}, nil
-//}
-
-func (a *AuthServer) Logout(ctx context.Context, sid *auth.UserId) (*auth.Empty, error) {
-	//TODO
-	session := a.SessionBuilder.Build(ctx)
-	session.Clear()
-	session.Options(sessions.Options{MaxAge: -1})
-	err := session.Save()
+func (a *authServer) Check(ctx context.Context, workload *api.SessionID) (*api.SessionInfo, error) {
+	if workload == nil {
+		return nil, errors.Errorf("Incorrect session id format")
+	}
+	sessionInfo, err := a.srepo.GetSession(workload.SessionID)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return &auth.Empty{}, nil
+	return convertSessionInfo(workload.SessionID, sessionInfo), nil
+}
+
+func (a *authServer) Logout(ctx context.Context, workload *api.SessionID) (*api.Empty, error) {
+	if workload == nil {
+		return nil, errors.Errorf("Incorrect session id format")
+	}
+	err := a.srepo.Delete(workload.SessionID)
+	return &api.Empty{}, err
+}
+
+func NewAuthServer(usecase user.UseCase, srepo session.Repository) api.AuthServer {
+	return &authServer{usecase: usecase, srepo: srepo}
 }

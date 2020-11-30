@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/asaskevich/govalidator"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
@@ -13,7 +12,8 @@ import (
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
 	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
 	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/client"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/middlewares"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
 	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
 	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
@@ -24,6 +24,7 @@ import (
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
+	//UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
@@ -38,29 +39,20 @@ import (
 	"time"
 )
 
-type dbConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Name     string `yaml:"name"`
+type Microservices struct {
+	Auth common.MicroserviceConfig `yaml:"auth"`
 }
 
 type Config struct {
-	Listen  string    `yaml:"listen"`
-	Db      *dbConfig `yaml:"db"`
-	DocPath string    `yaml:"docPath"`
-	Redis   string    `yaml:"redis_address"`
-}
-
-type Logger struct {
-	InfoLogger  *logger.Logger
-	ErrorLogger *logger.Logger
+	Listen  string           `yaml:"listen"`
+	Db      *common.DBConfig `yaml:"db"`
+	DocPath string           `yaml:"docPath"`
+	Micro   Microservices    `yaml:"microservices"`
 }
 
 type App struct {
 	config   Config
-	log      *Logger
+	log      common.Logger
 	doneChan chan bool
 	route    *gin.Engine
 	db       *gorm.DB
@@ -73,34 +65,29 @@ func NewApp(config Config) *App {
 	infoLogger, err := logger.New("Info logger", 1, os.Stdout)
 	errorLogger, err := logger.New("Error logger", 2, os.Stderr)
 
-	log := &Logger{
-		InfoLogger:  infoLogger,
-		ErrorLogger: errorLogger,
+	log := common.Logger{
+		Info:  infoLogger,
+		Error: errorLogger,
 	}
 	infoLogger.SetLogLevel(logger.DebugLevel)
 	if config.DocPath != "" {
 		r.Static("/doc/api", config.DocPath)
 	} else {
-		log.ErrorLogger.Warning("Document path is undefined")
+		log.Error.Warning("Document path is undefined")
 	}
 
 	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
 		config.Db.Password, config.Db.Name,
 		config.Db.Host, config.Db.Port)), &gorm.Config{})
 	if err != nil {
-		log.ErrorLogger.Fatal("connection to postgres db failed...")
-	}
-	store, err := redis.NewStore(10, "tcp", config.Redis, "", []byte("secret"))
-	if err != nil {
-		log.ErrorLogger.Fatal("connection to redis db failed...")
+		log.Error.Fatal("connection to postgres db failed...")
 	}
 
-	r.Use(common.RequestLogger(log.InfoLogger))
-	r.Use(common.ErrorLogger(log.ErrorLogger))
-	r.Use(common.ErrorMiddleware())
-	r.Use(common.Recovery(log.ErrorLogger))
-	r.Use(common.Cors())
-	r.Use(common.Sessions(store))
+	r.Use(middlewares.RequestLogger(log.Info))
+	r.Use(middlewares.ErrorLogger(log.Error))
+	r.Use(middlewares.ErrorMiddleware())
+	r.Use(middlewares.Recovery(log.Error))
+	r.Use(middlewares.Cors())
 	r.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 	})
@@ -110,39 +97,50 @@ func NewApp(config Config) *App {
 
 	api := r.Group("/api/v1")
 
-	rpcAuth, err := client.NewAuthClient("http://127.0.0.1", config.Listen)
+	authmicro, err := authmicro.NewAuthClient(config.Micro.Auth.Host, config.Micro.Auth.Port, log)
 	if err != nil {
-		log.ErrorLogger.Fatal("connection to client microservice auth failed...")
+		log.Error.Fatal("connection to the auth microservice failed...")
 	}
 
+	authCookieConfig := common.AuthCookieConfig{
+		Key:    "session",
+		Path:   "/",
+		Domain: "localhost", // for postman
+		//Domain:   "studhunt.ru",
+		MaxAge: int((time.Hour * 12).Seconds()),
+		//Secure:   true,
+		Secure:   false, // for postman
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}
+	authMiddleware := middlewares.AuthRequired(authCookieConfig, authmicro)
+
 	UserRep := UserRepository.NewPgRepository(db)
-	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-
+	userCase := UserUseCase.NewUserUseCase(log.Info, log.Error, UserRep)
 	sessionBuilder := SessionBuilder.NewSessionBuilder{}
-
-	UserHandler.NewRest(api.Group("/users"), userCase, &sessionBuilder, common.AuthRequired(), rpcAuth)
+	UserHandler.NewRest(api.Group("/users"), userCase, authmicro, authCookieConfig, &sessionBuilder, authMiddleware)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
-	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, &sessionBuilder, common.AuthRequired())
+	vacancy := VacancyUseCase.NewVacUseCase(log.Info, log.Error, vacancyRep)
+	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, &sessionBuilder, authMiddleware)
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
-	company := CompanyUseCase.NewCompUseCase(log.InfoLogger, log.ErrorLogger, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company, common.AuthRequired())
+	company := CompanyUseCase.NewCompUseCase(log.Info, log.Error, companyRep)
+	CompanyHandler.NewRest(api.Group("/company"), company, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	educationRep := EducationRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
-	education := EducationUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, educationRep)
-	customExperience := CustomExperienceUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, customExperienceRep)
-	resume := ResumeUsecase.NewUseCase(log.InfoLogger, log.ErrorLogger, userCase, education, customExperience, resumeRep)
+	education := EducationUsecase.NewUsecase(log.Info, log.Error, educationRep)
+	customExperience := CustomExperienceUsecase.NewUsecase(log.Info, log.Error, customExperienceRep)
+	resume := ResumeUsecase.NewUseCase(log.Info, log.Error, userCase, education, customExperience, resumeRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, common.AuthRequired())
+	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, authMiddleware)
 
 	responseRep := RepositoryResponse.NewPgRepository(db, vacancyRep)
-	response := ResponseUseCase.NewUsecase(log.InfoLogger, log.ErrorLogger, resume, *vacancy, company, responseRep)
-	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, common.AuthRequired())
+	response := ResponseUseCase.NewUsecase(log.Info, log.Error, resume, *vacancy, company, responseRep)
+	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, authMiddleware)
 
 	app := App{
 		config:   config,
@@ -166,9 +164,9 @@ func (a *App) Run() {
 	}
 
 	go func() {
-		a.log.InfoLogger.Infof("Start listening on %s", a.config.Listen)
+		a.log.Info.Infof("Start listening on %s", a.config.Listen)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			a.log.ErrorLogger.Fatalf("listen: %s\n", err)
+			a.log.Error.Fatalf("listen: %s\n", err)
 		}
 	}()
 
@@ -178,16 +176,16 @@ func (a *App) Run() {
 	case <-quit:
 	case <-a.doneChan:
 	}
-	a.log.InfoLogger.Info("Shutdown Server (timeout of 1 seconds) ...")
+	a.log.Info.Info("Shutdown Server (timeout of 1 seconds) ...")
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		mes := fmt.Sprint("Server Shutdown:", err)
-		a.log.ErrorLogger.Fatal(mes)
+		a.log.Error.Fatal(mes)
 	}
 
 	<-ctx.Done()
-	a.log.InfoLogger.Info("Server exiting")
+	a.log.Info.Info("Server exiting")
 }
 
 func (a *App) Close() {

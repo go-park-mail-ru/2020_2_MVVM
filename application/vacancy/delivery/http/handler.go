@@ -99,8 +99,8 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	}
 
 	session := v.SessionBuilder.Build(ctx)
-	candID, err := common.GetCurrentUserId(session, common.CandID)
-	userID, err := common.GetCurrentUserId(session, common.UserID)
+	candID := session.GetCandID()
+	userID := session.GetUserID()
 
 	if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
 		err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
@@ -145,8 +145,8 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 		return
 	}
 	session := v.SessionBuilder.Build(ctx)
-	candID, err := common.GetCurrentUserId(session, common.CandID)
-	userID, err := common.GetCurrentUserId(session, common.UserID)
+	candID := session.GetCandID()
+	userID := session.GetUserID()
 
 	if err == nil && candID != uuid.Nil {
 		vacList, err = v.VacUseCase.GetRecommendation(userID, int(req.Start), int(req.Limit))
@@ -222,18 +222,12 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
 	if treatmentType == vacCreate {
 		session := v.SessionBuilder.Build(ctx)
-		emplID := session.Get(common.EmplID)
-		//session := sessions.Default(ctx).Get("empl_id")
+		emplID := session.GetEmplID()
 		if session == nil {
 			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
 			return
 		}
-		empId, errSession := uuid.Parse(emplID.(string))
-		if errSession != nil {
-			ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.SessionErr})
-			return
-		}
-		vacNew.EmpID = empId
+		vacNew.EmpID = emplID
 		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
 	} else {
 		vacNew.ID, _ = uuid.Parse(req.Id)
@@ -266,8 +260,8 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	}
 	if entityType == vacancy.ByEmpId {
 		session := v.SessionBuilder.Build(ctx)
-		emplID := session.Get(common.EmplID)
-		if id, err = uuid.Parse(emplID.(string)); err != nil {
+		emplID := session.GetEmplID()
+		if id, err = uuid.Parse(emplID.String()); err != nil {
 			ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
 			return
 		}

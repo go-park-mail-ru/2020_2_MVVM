@@ -9,8 +9,8 @@ require (
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-pg/pg/v9 v9.1.5
+	github.com/go-redis/redis/v8 v8.4.0
 	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/lib/pq v1.3.0
@@ -19,9 +19,12 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
 	github.com/onsi/gomega v1.10.3 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880 // indirect
 	github.com/rowdyroad/go-yaml-config v0.0.0-20200117233205-1189970f36fb
+	github.com/rubenv/sql-migrate v0.0.0-20200616145509-8d140a17f351 // indirect
 	github.com/stretchr/testify v1.6.1
+	github.com/vektra/mockery/v2 v2.3.0 // indirect
 	gitlab.com/slax0rr/go-pg-wrapper v0.0.0-20200404125312-fa845276fc02
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect

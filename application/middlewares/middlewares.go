@@ -1,12 +1,14 @@
-package common
+package middlewares
 
 import (
 	"bytes"
 	"fmt"
 	logger "github.com/apsdehal/go-logger"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -66,10 +68,10 @@ func ErrorMiddleware() gin.HandlerFunc {
 			var ret []interface{}
 			for _, err := range c.Errors {
 				switch err.Err.(type) {
-				case Err:
+				case common.Err:
 					ret = append(ret, err.Err)
 				default:
-					ret = append(ret, NewErr(c.Writer.Status(), http.StatusText(c.Writer.Status()), nil))
+					ret = append(ret, common.NewErr(c.Writer.Status(), http.StatusText(c.Writer.Status()), nil))
 				}
 			}
 			c.JSON(0, ret)
@@ -127,15 +129,19 @@ func ErrorLogger(log *logger.Logger) gin.HandlerFunc {
 	}
 }
 
-func AuthRequired() gin.HandlerFunc {
+func AuthRequired(config common.AuthCookieConfig, client authmicro.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		if session.Get("user_id") == nil {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"message": "not authed",
-			})
-			c.Abort()
+		sessionID, err := c.Cookie(config.Key)
+		if err != nil {
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return
 		}
+		sessionInfo, err := client.Check(sessionID)
+		if err != nil {
+			c.AbortWithError(http.StatusUnauthorized, errors.Errorf("Failed to parse session id"))
+			return
+		}
+		c.Set("session", sessionInfo)
 	}
 }
 
@@ -155,19 +161,4 @@ func Cors() gin.HandlerFunc {
 		},
 		MaxAge: time.Hour,
 	})
-}
-
-func Sessions(store sessions.Store) gin.HandlerFunc {
-	store.Options(sessions.Options{
-		Domain: "studhunt.ru",
-		//Domain:   "localhost", // for postman
-		MaxAge:   int((48 * time.Hour).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		Path:     "/",
-		SameSite: http.SameSiteNoneMode,
-		//SameSite: http.SameSiteStrictMode, // prevent csrf attack
-	})
-
-	return sessions.Sessions("studhunt", store)
 }

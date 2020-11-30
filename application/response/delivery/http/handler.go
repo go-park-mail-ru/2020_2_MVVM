@@ -55,11 +55,11 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	}
 	session := r.SessionBuilder.Build(ctx)
 	var userType string
-	candIDStr := session.Get(common.CandID)
-	emplIDStr := session.Get(common.EmplID)
-	if candIDStr != nil && emplIDStr == nil {
+	candID := session.GetCandID()
+	emplID := session.GetEmplID()
+	if candID != uuid.Nil && emplID == uuid.Nil {
 		userType = "candidate"
-	} else if candIDStr == nil && emplIDStr != nil {
+	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		userType = "employer"
 	} else {
 		err := errors.New("this user cannot respond")
@@ -88,11 +88,11 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	}
 	session := r.SessionBuilder.Build(ctx)
 	var userType string
-	candIDStr := session.Get(common.CandID)
-	emplIDStr := session.Get(common.EmplID)
-	if candIDStr != nil && emplIDStr == nil {
+	candID := session.GetCandID()
+	emplID := session.GetEmplID()
+	if candID != uuid.Nil && emplID == uuid.Nil {
 		userType = common.Candidate
-	} else if candIDStr == nil && emplIDStr != nil {
+	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		userType = common.Employer
 	} else {
 		err := errors.New("this user cannot respond")
@@ -115,10 +115,11 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
-	emplID, err := common.GetCurrentUserId(session, common.EmplID)
-	candID, err := common.GetCurrentUserId(session, common.CandID)
+	emplID := session.GetEmplID()
+	candID := session.GetCandID()
 
 	var responses []models.ResponseWithTitle
+	var err error
 	if candID != uuid.Nil && emplID == uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, nil)
 		if err != nil {
@@ -189,7 +190,12 @@ func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, u
 	}
 
 	session := r.SessionBuilder.Build(ctx)
-	userID, err := common.GetCurrentUserId(session, userType)
+	var userID uuid.UUID
+	if userType == common.CandID {
+		userID = session.GetCandID()
+	} else if userType == common.EmplID {
+		userID = session.GetEmplID()
+	}
 	if err != nil {
 		return uuid.Nil, uuid.Nil, err
 	}
@@ -236,7 +242,17 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	)
 
 	session := r.SessionBuilder.Build(ctx)
-	unId, userType, err := common.GetCandidateOrEmployer(session)
+	var unId uuid.UUID
+	var userType string
+
+	candID := session.GetCandID()
+	emplID := session.GetEmplID()
+	if candID != uuid.Nil {
+		unId, userType = candID, common.CandID
+	} else {
+		unId, userType = emplID, common.EmplID
+	}
+
 	if err != nil {
 		ctx.JSON(http.StatusMethodNotAllowed, common.RespError{Err: err.Error()})
 		return
@@ -262,7 +278,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
 		notifications.UnreadRespCnt = uint(len(notifications.UnreadResp))
 	}
-	unId, _ = common.GetCurrentUserId(session, common.UserID)
+	unId = session.GetUserID()
 	if req.OnlyVacCnt {
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
 	} else {

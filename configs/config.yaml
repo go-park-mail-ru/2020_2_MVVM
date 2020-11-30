@@ -1,13 +1,12 @@
----
 listen: :8080
-
 docPath: /opt/doc
-
 db:
   host: localhost
   port: 5432
   user: postgres
   password: docker
   name: mvvm
-
-redis_address: localhost:7001
+microservices:
+  auth:
+    host: 127.0.0.1
+    port: 8081
