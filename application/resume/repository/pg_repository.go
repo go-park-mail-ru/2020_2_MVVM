@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
-	"github.com/go-pg/pg/v9"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -119,19 +118,19 @@ func (p *PGRepository) Search(searchParams *resume.SearchParams) ([]models.Resum
 	var brief []models.Resume
 	err := p.db.Table("main.resume").Scopes(func(q *gorm.DB) *gorm.DB {
 		if len(searchParams.AreaSearch) != 0 {
-			q = q.Where("area_search IN (?)", pg.In(searchParams.AreaSearch))
+			q = q.Where("area_search IN (?)", searchParams.AreaSearch)
 		}
 		if len(searchParams.Gender) != 0 {
-			q = q.Where("gender IN (?)", pg.In(searchParams.Gender))
+			q = q.Where("gender IN (?)", searchParams.Gender)
 		}
 		if len(searchParams.EducationLevel) != 0 {
-			q = q.Where("education_level IN (?)", pg.In(searchParams.EducationLevel))
+			q = q.Where("education_level IN (?)", searchParams.EducationLevel)
 		}
 		if len(searchParams.CareerLevel) != 0 {
-			q = q.Where("career_level IN (?)", pg.In(searchParams.CareerLevel))
+			q = q.Where("career_level IN (?)", searchParams.CareerLevel)
 		}
 		if len(searchParams.ExperienceMonth) != 0 {
-			q = q.Where("experience_month IN (?)", pg.In(searchParams.ExperienceMonth))
+			q = q.Where("experience_month IN (?)", searchParams.ExperienceMonth)
 		}
 		if searchParams.SalaryMin != nil {
 			q = q.Where("salary_min >= ?", searchParams.SalaryMin)
