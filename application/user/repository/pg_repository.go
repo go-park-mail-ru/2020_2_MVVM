@@ -112,10 +112,10 @@ func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
 }
 
 func (p *pgStorage) UpdateUser(userNew models.User) (*models.User, error) {
-	//_, err := p.db.Model(&userNew).WherePK().Returning("*").Update()
-	//if err != nil {
-	//	err = fmt.Errorf("error in updating user with id %s, : %w", userNew.ID.String(), err)
-	//	return nil, err
-	//}
+	err := p.db.Save(&userNew).Error
+	if err != nil {
+		err = fmt.Errorf("error in updating user with id %s, : %w", userNew.ID.String(), err)
+		return nil, err
+	}
 	return &userNew, nil
 }

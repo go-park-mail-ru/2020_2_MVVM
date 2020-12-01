@@ -79,7 +79,7 @@ func beforeTest(t *testing.T) (*mResume.Repository, *mUser.UseCase, *mEducation.
 		infoLogger:       infoLogger,
 		errorLogger:      errorLogger,
 		userUseCase:      mockUserUS,
-		educationUseCase: mockEducationUS,
+		//educationUseCase: mockEducationUS,
 		customExpUseCase: mockExperienceUS,
 		strg:             mockRepo,
 	}

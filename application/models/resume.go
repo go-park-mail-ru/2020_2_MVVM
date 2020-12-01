@@ -8,9 +8,8 @@ import (
 type Resume struct {
 	ResumeID uuid.UUID `gorm:"column:resume_id; primaryKey; default:uuid_generate_v4()" json:"id" form:"id" valid:"-"`
 
-	CandID    uuid.UUID `gorm:"column:cand_id" json:"cand_id" form:"cand_id" valid:"-"`
-	Candidate Candidate `gorm:"foreignKey:CandID" valid:"-"`
-
+	CandID               uuid.UUID              `gorm:"column:cand_id" json:"cand_id" form:"cand_id" valid:"-"`
+	Candidate            Candidate              `gorm:"foreignKey:CandID;save_associations:false" valid:"-"`
 	Title                string                 `gorm:"column:title; notnull" json:"title" binding:"required" valid:"required, stringlength(4|128)~название резюме должно быть от 4 до 128 символов в длину." `
 	SalaryMin            *int                   `gorm:"column:salary_min" json:"salary_min" valid:"-"`
 	SalaryMax            *int                   `gorm:"column:salary_max" json:"salary_max" valid:"-"`

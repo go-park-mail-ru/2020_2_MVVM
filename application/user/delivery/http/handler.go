@@ -154,7 +154,7 @@ func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
 func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &reqUser); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &reqUser); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
@@ -193,7 +193,7 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 
 func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	var req user.Register
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
@@ -237,8 +237,8 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	var req user.Update
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
-		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.EmptyFieldErr)
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {

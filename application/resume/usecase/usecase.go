@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
+	//"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
@@ -17,7 +17,7 @@ type ResumeUseCase struct {
 	infoLogger       *logger.Logger
 	errorLogger      *logger.Logger
 	userUseCase      user.UseCase
-	educationUseCase education.UseCase
+	//educationUseCase education.UseCase
 	customExpUseCase custom_experience.UseCase
 	strg             resume.Repository
 }
@@ -25,14 +25,14 @@ type ResumeUseCase struct {
 func NewUseCase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
 	userUseCase user.UseCase,
-	educationUseCase education.UseCase,
+	//educationUseCase education.UseCase,
 	customExpUseCase custom_experience.UseCase,
 	strg resume.Repository) resume.UseCase {
 	usecase := ResumeUseCase{
 		infoLogger:  infoLogger,
 		errorLogger: errorLogger,
 		userUseCase: userUseCase,
-		educationUseCase: educationUseCase,
+		//educationUseCase: educationUseCase,
 		customExpUseCase: customExpUseCase,
 		strg:        strg,
 	}
@@ -63,37 +63,6 @@ func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	return result, nil
 }
 
-func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, result models.Resume) error {
-	// create experience
-	for i := range template.ExperienceCustomComp {
-		if *(template.ExperienceCustomComp[i].ContinueToToday){
-			dateFinish := time.Now()
-			template.ExperienceCustomComp[i].Finish = &dateFinish
-		}
-		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
-		template.ExperienceCustomComp[i].CandID = result.CandID
-
-		exp, err := u.customExpUseCase.Create(template.ExperienceCustomComp[i])
-		if err != nil {
-			return err
-		}
-		template.ExperienceCustomComp[i] = *exp
-
-	}
-	// create education
-	for i := range template.Education {
-		template.Education[i].ResumeId = result.ResumeID
-		template.Education[i].CandID = result.CandID
-		edu, err := u.educationUseCase.Create(template.Education[i])
-		if err != nil {
-			return err
-		}
-		template.Education[i] = *edu
-	}
-	return nil
-}
-
-
 func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	oldResume, err := u.strg.GetById(resume.ResumeID)
 	if err != nil {
@@ -109,10 +78,10 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
-	if err != nil {
-		return nil, err
-	}
+	//err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	result, err := u.strg.Update(resume)
 	//err = u.createExperienceAndEducation(resume, resume)

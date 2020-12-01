@@ -142,7 +142,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &searchParams); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
@@ -168,7 +168,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		err error
 	)
 
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}

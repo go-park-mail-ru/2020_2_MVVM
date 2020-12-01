@@ -24,16 +24,16 @@ func (u User) TableName() string {
 }
 
 type Employer struct {
-	ID        uuid.UUID           `gorm:"column:empl_id;primaryKey;default:uuid_generate_v4()" json:"empl_id"`
-	UserID    uuid.UUID           `gorm:"column:user_id;foreignKey:user_id" json:"user_id"`
-	CompanyID uuid.UUID           `gorm:"column:comp_id;foreignKey:comp_id" json:"comp_id"`
-	Favorites []FavoritesForEmpl  `gorm:"foreignKey:EmplID"`
+	ID        uuid.UUID          `gorm:"column:empl_id;primaryKey;default:uuid_generate_v4()" json:"empl_id"`
+	UserID    uuid.UUID          `gorm:"column:user_id;foreignKey:user_id" json:"user_id"`
+	CompanyID uuid.UUID          `gorm:"column:comp_id;foreignKey:comp_id" json:"comp_id"`
+	Favorites []FavoritesForEmpl `gorm:"foreignKey:EmplID"`
 }
 
 type Candidate struct {
 	ID     uuid.UUID `gorm:"primaryKey;column:cand_id;default:uuid_generate_v4()" json:"cand_id"`
 	UserID uuid.UUID `gorm:"column:user_id;type:uuid" json:"user_id"`
-	User   User
+	User   User      `gorm:"save_associations:false"`
 }
 
 func (c Candidate) TableName() string {
@@ -48,4 +48,3 @@ type UserLogin struct {
 type RespUser struct {
 	User *User `json:"user"`
 }
-

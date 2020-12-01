@@ -15,6 +15,10 @@ type pgRepository struct {
 	vacRepository vacancy.RepositoryVacancy
 }
 
+func NewPgRepository(db *gorm.DB, vacRepository vacancy.RepositoryVacancy) response.ResponseRepository {
+	return &pgRepository{db: db, vacRepository: vacRepository}
+}
+
 func (p pgRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (uint, error) {
 	var (
 		cnt  uint = 0
@@ -97,7 +101,10 @@ func (p pgRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UU
 		err       error
 	)
 	if entityType == common.Resume {
-		err = p.db.Table("main.response").Where("resume_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
+		err = p.db.Table("main.response").
+			Where("resume_id = ? and response_id IN ?", entityId, respIds).
+			UpdateColumn("unread", false).
+			Error
 	} else {
 		err = p.db.Table("main.response").Where("vacancy_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
 	}
@@ -117,13 +124,8 @@ func (p pgRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UU
 	return responses, nil
 }
 
-func NewPgRepository(db *gorm.DB, vacRepository vacancy.RepositoryVacancy) response.ResponseRepository {
-	return &pgRepository{db: db, vacRepository: vacRepository}
-}
-
 func (p *pgRepository) Create(response models.Response) (*models.Response, error) {
 	err := p.db.Create(&response).Error
-	//_, err := p.db.Model(&response).Returning("*").Insert()
 	if err != nil {
 		err = fmt.Errorf("error in inserting response: %w", err)
 		return nil, err
@@ -134,7 +136,6 @@ func (p *pgRepository) Create(response models.Response) (*models.Response, error
 func (p *pgRepository) GetByID(responseID uuid.UUID) (*models.Response, error) {
 	response := new(models.Response)
 	err := p.db.First(&response, responseID).Error
-	//err := p.db.Model(&response).Where("response_id = ?", responseID).Select()
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,6 @@ func (p *pgRepository) UpdateStatus(response models.Response) (*models.Response,
 func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
 	err := p.db.Find(&responses, "resume_id = ?", resumeID).Error
-	//err := p.db.Model(&responses).Where("resume_id = ?", resumeID).Select()
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
@@ -164,7 +164,6 @@ func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Respon
 func (p *pgRepository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
 	err := p.db.Find(&responses, "vacancy_id = ?", vacancyID).Error
-	//err := p.db.Model(&responses).Where("vacancy_id = ?", vacancyID).Select()
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err

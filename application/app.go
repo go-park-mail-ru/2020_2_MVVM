@@ -10,8 +10,8 @@ import (
 	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
-	EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
-	EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
+	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
+	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/middlewares"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
@@ -76,9 +76,10 @@ func NewApp(config Config) *App {
 		log.Error.Warning("Document path is undefined")
 	}
 
-	db, err := gorm.Open(postgres.Open(fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
+	credentials := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
 		config.Db.Password, config.Db.Name,
-		config.Db.Host, config.Db.Port)), &gorm.Config{})
+		config.Db.Host, config.Db.Port)
+	db, err := gorm.Open(postgres.Open(credentials), &gorm.Config{})
 	if err != nil {
 		log.Error.Fatal("connection to postgres db failed...")
 	}
@@ -129,14 +130,14 @@ func NewApp(config Config) *App {
 	CompanyHandler.NewRest(api.Group("/company"), company, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
-	educationRep := EducationRepository.NewPgRepository(db)
+	//educationRep := EducationRepository.NewPgRepository(db)
 	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
 
-	education := EducationUsecase.NewUsecase(log.Info, log.Error, educationRep)
+	//education := EducationUsecase.NewUsecase(log.Info, log.Error, educationRep)
 	customExperience := CustomExperienceUsecase.NewUsecase(log.Info, log.Error, customExperienceRep)
-	resume := ResumeUsecase.NewUseCase(log.Info, log.Error, userCase, education, customExperience, resumeRep)
+	resume := ResumeUsecase.NewUseCase(log.Info, log.Error, userCase, customExperience, resumeRep)
 
-	ResumeHandler.NewRest(api.Group("/resume"), resume, education, customExperience, &sessionBuilder, authMiddleware)
+	ResumeHandler.NewRest(api.Group("/resume"), resume, customExperience, &sessionBuilder, authMiddleware)
 
 	responseRep := RepositoryResponse.NewPgRepository(db, vacancyRep)
 	response := ResponseUseCase.NewUsecase(log.Info, log.Error, resume, *vacancy, company, responseRep)

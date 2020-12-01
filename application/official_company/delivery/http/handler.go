@@ -110,7 +110,7 @@ func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &searchParams); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
@@ -154,7 +154,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		err        error
 		avatarPath string
 	)
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}

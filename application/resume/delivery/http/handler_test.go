@@ -65,7 +65,7 @@ func beforeTest() TestData {
 	testData.router = gin.Default()
 	api := testData.router.Group("/api/v1")
 	testData.resumeHandler = NewRest(api.Group("/resume"), testData.mockUseCase,
-		testData.mockUSEduc,
+		//testData.mockUSEduc,
 		testData.mockUSExp,
 		testData.mockSB,
 		func(context *gin.Context) {})
@@ -261,6 +261,10 @@ func TestCreateResume(t *testing.T) {
 		ResumeID:  ID,
 		CandID: ID,
 		Candidate: cand,
+		Gender: "male",
+		Skills: "asdasd ad asd ads",
+		Title: "!@#DSAD",
+		Description: "MYSUPERJOBFPREFSD!",
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
@@ -313,6 +317,10 @@ func TestUpdateResume(t *testing.T) {
 		ResumeID:  ID,
 		CandID: ID,
 		Candidate: cand,
+		Gender: "male",
+		Skills: "asdasd ad asd ads",
+		Title: "!@#DSAD",
+		Description: "MYSUPERJOBFPREFSD!",
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)

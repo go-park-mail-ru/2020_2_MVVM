@@ -13,7 +13,6 @@ type Repository interface {
 	GetById(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	List(start, limit uint) ([]models.Resume, error)
-	SelectCandidate (candID uuid.UUID) (*models.Candidate, error)
 
 	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favoriteForEmpl uuid.UUID) error

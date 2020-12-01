@@ -2,9 +2,11 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/mailru/easyjson"
+	"io"
 	"net/http"
 )
 
@@ -62,4 +64,11 @@ func WriteErrResponse(ctx *gin.Context, code int, message string) {
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
+}
+
+func UnmarshalFromReaderWithNilCheck(r io.Reader, v easyjson.Unmarshaler) error {
+	if r == nil {
+		return errors.New(EmptyFieldErr)
+	}
+	return easyjson.UnmarshalFromReader(r, v)
 }

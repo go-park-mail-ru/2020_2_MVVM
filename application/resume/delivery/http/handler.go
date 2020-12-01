@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
+	//"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 
 type ResumeHandler struct {
 	UseCaseResume           resume.UseCase
-	UseCaseEducation        education.UseCase
+	//UseCaseEducation        education.UseCase
 	UseCaseCustomExperience custom_experience.UseCase
 	SessionBuilder          common.SessionBuilder
 }
@@ -24,13 +24,13 @@ const resumePath = "resume/"
 
 func NewRest(router *gin.RouterGroup,
 	useCaseResume resume.UseCase,
-	useCaseEducation education.UseCase,
+	//useCaseEducation education.UseCase,
 	useCaseCustomExperience custom_experience.UseCase,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *ResumeHandler {
 	rest := &ResumeHandler{
 		UseCaseResume:           useCaseResume,
-		UseCaseEducation:        useCaseEducation,
+		//UseCaseEducation:        useCaseEducation,
 		UseCaseCustomExperience: useCaseCustomExperience,
 		SessionBuilder:          sessionBuilder,
 	}
@@ -58,7 +58,7 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
 	candID := session.GetCandID()
 	if candID == uuid.Nil {
-		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.AuthRequiredErr)
 		//ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -84,7 +84,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 
 	template := new(models.Resume)
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, template); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  template); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -216,7 +216,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	var template models.Resume
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &template); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &template); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -263,7 +263,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	var searchParams resume.SearchParams
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &searchParams); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -355,7 +355,7 @@ func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 	session := r.SessionBuilder.Build(ctx)
 	emplID := session.GetEmplID()
 	if emplID == uuid.Nil {
-		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.AuthRequiredErr)
 		//ctx.AbortWithError(http.StatusBadRequest, errors.Errorf(common.AuthRequiredErr))
 		return
 	}

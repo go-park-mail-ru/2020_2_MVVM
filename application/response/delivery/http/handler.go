@@ -42,7 +42,8 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 
 func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	response := new(models.Response)
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, response); err != nil {
+
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  response); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -56,7 +57,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		userType = "employer"
 	} else {
-		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.AuthRequiredErr)
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
 		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
@@ -76,7 +77,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 
 func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	response := new(models.Response)
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, response); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  response); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -250,7 +251,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, err.Error())
 		return
 	}
-	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}

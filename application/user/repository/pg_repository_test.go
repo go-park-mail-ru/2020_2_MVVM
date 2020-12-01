@@ -1,168 +1,346 @@
 package repository
-//
-//import (
-//	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-//	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-//	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
-//	"github.com/google/uuid"
-//	"golang.org/x/crypto/bcrypt"
-//	"testing"
-//
-//	"github.com/stretchr/testify/assert"
-//	"github.com/stretchr/testify/mock"
-//	"gitlab.com/slax0rr/go-pg-wrapper/mocks"
-//	ormmocks "gitlab.com/slax0rr/go-pg-wrapper/mocks/orm"
-//)
-//
-//var ID = uuid.New()
-//var passwordHash, _ = bcrypt.GenerateFromPassword([]byte("ID"), bcrypt.DefaultCost)
-//var testUser = models.User{
-//	ID:            ID,
-//	UserType:      "employer",
-//	Name:          "ID",
-//	Surname:       "ID",
-//	Email:         "ID",
-//	PasswordHash:  passwordHash,
-//	Phone:         nil,
-//	SocialNetwork: nil,
-//}
-//
-//var cand = models.Candidate{
-//	ID:     ID,
-//	UserID: ID,
-//}
-//
-//var empl = models.Employer{
-//	ID:        ID,
-//	UserID:    ID,
-//	CompanyID: ID,
-//}
-//
-//func mockDB() (*mocks.DB, pgStorage) {
-//	db := new(mocks.DB)
-//	r := pgStorage{db: db}
-//	return db, r
-//}
-//
-//func mockQueryUser(db *mocks.DB) *ormmocks.Query {
-//	query := new(ormmocks.Query)
-//	mockCall := db.On("Model", mock.AnythingOfType("*models.User")).Return(query)
-//	mockCall.RunFn = func(args mock.Arguments) {
-//		user := args[0].(*models.User)
-//		*user = testUser
-//	}
-//	return query
-//}
-//
-//func mockQueryCandidate(db *mocks.DB) *ormmocks.Query  {
-//	query := new(ormmocks.Query)
-//	mockCall := db.On("Model", mock.AnythingOfType("*models.Candidate")).Return(query)
-//	mockCall.RunFn = func(args mock.Arguments) {
-//		user := args[0].(*models.Candidate)
-//		*user = cand
-//	}
-//	return query
-//}
-//
-//func mockQueryEmployer(db *mocks.DB) *ormmocks.Query  {
-//	query := new(ormmocks.Query)
-//	mockCall := db.On("Model", mock.AnythingOfType("*models.Employer")).Return(query)
-//	mockCall.RunFn = func(args mock.Arguments) {
-//		user := args[0].(*models.Employer)
-//		*user = empl
-//	}
-//	return query
-//}
-//
-//func TestGetUserByID(t *testing.T) {
-//	db, r := mockDB()
-//	query := mockQueryUser(db)
-//
-//	query.On("Where", "user_id = ?", ID.String()).Return(query)
-//	query.On("Select").Return(nil)
-//
-//	answerCorrect, err := r.GetUserByID(ID.String())
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *answerCorrect)
-//}
-//
-//func TestLogin(t *testing.T) {
-//	db, r := mockDB()
-//	query := mockQueryUser(db)
-//
-//	var userLogin = models.UserLogin{
-//		Email:    "ID",
-//		Password: "ID",
-//	}
-//	query.On("Where", "email = ?", userLogin.Email).Return(query)
-//	query.On("Select").Return(nil)
-//
-//	foo, err := r.Login(userLogin)
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *foo)
-//}
-//
-//func TestUpdate(t *testing.T) {
-//	db, r := mockDB()
-//	query := mockQueryUser(db)
-//
-//	mockResult := general.MockResult{}
-//	query.On("WherePK").Return(query)
-//	query.On("Returning", "*").Return(query)
-//	query.On("Update").Return(mockResult, nil)
-//
-//	foo, err := r.UpdateUser(testUser)
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *foo)
-//}
-//
-//func TestGetCandidateByID(t *testing.T) {
-//	db, r := mockDB()
-//	query := mockQueryCandidate(db)
-//
-//	query.On("Where", "user_id = ?", ID.String()).Return(query)
-//	query.On("Select").Return(nil)
-//
-//	foo, err := r.GetCandidateByID(ID.String())
-//	assert.Nil(t, err)
-//	assert.Equal(t, cand, *foo)
-//}
-//
-//func TestGetEmployerByID(t *testing.T) {
-//	db, r := mockDB()
-//	query := mockQueryEmployer(db)
-//	query.On("Where", "user_id = ?", ID.String()).Return(query)
-//	query.On("Select").Return(nil)
-//
-//	foo, err := r.GetEmployerByID(ID.String())
-//	assert.Nil(t, err)
-//	assert.Equal(t, empl, *foo)
-//}
-//
-//func TestCreate(t *testing.T) {
-//	db, r := mockDB()
-//	queryUser := mockQueryUser(db)
-//	queryEmpl := mockQueryEmployer(db)
-//	queryCand := mockQueryCandidate(db)
-//	mockResult := general.MockResult{}
-//
-//	testUser.UserType = common.Employer
-//	queryUser.On("Returning", "*").Return(queryUser)
-//	queryUser.On("Insert").Return(mockResult, nil)
-//
-//	queryEmpl.On("Returning", "*").Return(queryEmpl)
-//	queryEmpl.On("Insert").Return(mockResult, nil)
-//	answerCorrect, err := r.CreateUser(testUser)
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *answerCorrect)
-//
-//	testUser.UserType = common.Candidate
-//	queryCand.On("Returning", "*").Return(queryEmpl)
-//	queryCand.On("Insert").Return(mockResult, nil)
-//	answerCorrect2, err := r.CreateUser(testUser)
-//	assert.Nil(t, err)
-//	assert.Equal(t, testUser, *answerCorrect2)
-//}
-//
-//
-//
+
+import (
+	"database/sql/driver"
+	"errors"
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+type Dummies struct {
+	User      models.User
+	Candidate models.Candidate
+	Employer  models.Employer
+}
+
+func makeUserRow(user models.User) ([]string, []driver.Value) {
+	columns := []string{"user_id", "user_type", "email", "password_hash",
+		"name", "surname", "phone", "social_network"}
+	values := []driver.Value{user.ID, user.UserType, user.Email, user.PasswordHash,
+		user.Name, user.Surname, user.Phone, user.SocialNetwork}
+	return columns, values
+}
+
+func makeCandRow(cand models.Candidate) ([]string, []driver.Value) {
+	columns := []string{"cand_id", "user_id"}
+	values := []driver.Value{cand.ID, cand.UserID}
+	return columns, values
+}
+
+func makeEmplRow(empl models.Employer) ([]string, []driver.Value) {
+	columns := []string{"empl_id", "user_id", "comp_id"}
+	values := []driver.Value{empl.ID, empl.UserID, empl.CompanyID}
+	return columns, values
+}
+
+func makeDummies() Dummies {
+	DummyUserID := uuid.New()
+	DummyUser := models.User{
+		ID:            DummyUserID,
+		UserType:      "employer",
+		Name:          "ID",
+		Surname:       "ID",
+		Email:         "ID",
+		PasswordHash:  []byte("ASD"),
+		Phone:         nil,
+		SocialNetwork: nil,
+	}
+
+	DummyCandidate := models.Candidate{
+		ID:     uuid.New(),
+		UserID: DummyUserID,
+	}
+	DummyEmployer := models.Employer{
+		ID:        uuid.New(),
+		UserID:    DummyUserID,
+		CompanyID: uuid.New(),
+	}
+	return Dummies{
+		User:      DummyUser,
+		Candidate: DummyCandidate,
+		Employer:  DummyEmployer,
+	}
+}
+
+func beforeTest(t *testing.T) (user.RepositoryUser, sqlmock.Sqlmock) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	pg := postgres.Dialector{Config: &postgres.Config{Conn: db}}
+
+	conn, err := gorm.Open(pg, &gorm.Config{})
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening gorm database", err)
+	}
+
+	return NewPgRepository(conn), mock
+}
+
+func TestGetUserByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	query := "SELECT \\* FROM (.*).\"users\" WHERE user_id = (.*) LIMIT 1"
+	cols, row := makeUserRow(dummies.User)
+	mock.ExpectQuery(query).
+		WithArgs(dummies.User.ID).
+		WillReturnRows(sqlmock.NewRows(cols).AddRow(row...))
+
+	fetchedUser, err := repo.GetUserByID(dummies.User.ID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedUser, dummies.User)
+
+	// Error flow
+	error := errors.New("test error")
+	mock.ExpectQuery(query).WithArgs(dummies.User.ID).WillReturnError(error)
+
+	fetchedUser, err = repo.GetUserByID(dummies.User.ID.String())
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+}
+
+func TestCreateUser(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	// 1 - insert user
+	query := "INSERT INTO (.*).\"users\" (.*) VALUES (.*) RETURNING \"user_id\""
+	duser := dummies.User
+	argsUser := []driver.Value{duser.UserType, duser.Name, duser.Surname, duser.Email, duser.PasswordHash, duser.Phone,
+		duser.SocialNetwork, duser.ID}
+	mock.ExpectQuery(query).
+		WithArgs(argsUser...).
+		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(duser.ID))
+
+	// 2 - insert candidate/employer
+	mock.ExpectQuery("INSERT INTO (.*).\"(candidates|employers)\" (.*)").
+		WithArgs(dummies.Candidate.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"empl_id"}).AddRow(dummies.Employer.ID))
+
+	user, err := repo.CreateUser(dummies.User)
+	assert.Nil(t, err)
+	assert.Equal(t, *user, dummies.User)
+
+	// Error flow
+	error := errors.New("test error")
+	mock.ExpectQuery(query).WithArgs(argsUser).WillReturnError(error)
+
+	user, err = repo.CreateUser(dummies.User)
+	assert.Nil(t, user)
+	assert.Error(t, err)
+}
+
+func TestUpdateUser(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	query := "UPDATE (.*).\"users\" SET (.*) WHERE \"user_id\" = (.*)"
+	duser := dummies.User
+	argsUser := []driver.Value{duser.UserType, duser.Name, duser.Surname, duser.Email, duser.PasswordHash, duser.Phone,
+		duser.SocialNetwork, duser.ID}
+	mock.ExpectExec(query).
+		WithArgs(argsUser...).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	user, err := repo.UpdateUser(dummies.User)
+	assert.Nil(t, err)
+	assert.Equal(t, *user, dummies.User)
+
+	// Error flow
+	error := errors.New("test error")
+	mock.ExpectExec(query).
+		WithArgs(argsUser...).
+		WillReturnError(error)
+
+	user, err = repo.UpdateUser(dummies.User)
+	assert.Nil(t, user)
+	assert.Error(t, err)
+}
+
+func TestLogin(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	credentials := models.UserLogin{
+		Email:    dummies.User.Email,
+		Password: "SUPERPASSWORD",
+	}
+	dummies.User.PasswordHash, _ = bcrypt.GenerateFromPassword([]byte(credentials.Password), bcrypt.DefaultCost)
+
+	query := "SELECT \\* FROM (.*).\"users\" WHERE email = (.*) LIMIT 1"
+	col, rows := makeUserRow(dummies.User)
+	mock.ExpectQuery(query).
+		WithArgs(dummies.User.Email).
+		WillReturnRows(sqlmock.NewRows(col).AddRow(rows...))
+
+	fetchedUser, err := repo.Login(credentials)
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedUser, dummies.User)
+
+	// Error flow = db error
+	mock.ExpectQuery(query).
+		WithArgs(dummies.User.Email).
+		WillReturnError(errors.New("TEST ERROR"))
+
+	fetchedUser, err = repo.Login(credentials)
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+
+	// Error flow = credentials error
+	credentials.Password = "FAKE PASSWORD"
+	mock.ExpectQuery(query).
+		WithArgs(dummies.User.Email).
+		WillReturnRows(sqlmock.NewRows(col).AddRow(rows...))
+
+	fetchedUser, err = repo.Login(credentials)
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+}
+
+func TestGetCandByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	candQuery := "SELECT \\* FROM (.*).\"candidates\" WHERE cand_id = (.*) LIMIT 1"
+	candCol, candRow := makeCandRow(dummies.Candidate)
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Candidate.ID).
+		WillReturnRows(sqlmock.NewRows(candCol).AddRow(candRow...))
+
+	userQuery := "SELECT \\* FROM (.*).\"users\" WHERE user_id = (.*) LIMIT 1"
+	userCol, userRow := makeUserRow(dummies.User)
+	mock.ExpectQuery(userQuery).
+		WithArgs(dummies.User.ID).
+		WillReturnRows(sqlmock.NewRows(userCol).AddRow(userRow...))
+
+	fetchedUser, err := repo.GetCandByID(dummies.Candidate.ID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedUser, dummies.User)
+
+	// Error flow = user is not a candidate
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Candidate.ID).
+		WillReturnError(errors.New("TEST ERROR"))
+	fetchedUser, err = repo.GetCandByID(dummies.Candidate.ID.String())
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+
+	// Error flow = user fetch error
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Candidate.ID).
+		WillReturnRows(sqlmock.NewRows(candCol).AddRow(candRow...))
+	mock.ExpectQuery(userQuery).
+		WithArgs(dummies.User.ID).
+		WillReturnError(errors.New("TEST ERROR"))
+	fetchedUser, err = repo.GetCandByID(dummies.Candidate.ID.String())
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+}
+
+func TestGetEmplByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	candQuery := "SELECT \\* FROM (.*).\"employers\" WHERE empl_id = (.*) LIMIT 1"
+	candCol, candRow := makeEmplRow(dummies.Employer)
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Employer.ID).
+		WillReturnRows(sqlmock.NewRows(candCol).AddRow(candRow...))
+
+	userQuery := "SELECT \\* FROM (.*).\"users\" WHERE user_id = (.*) LIMIT 1"
+	userCol, userRow := makeUserRow(dummies.User)
+	mock.ExpectQuery(userQuery).
+		WithArgs(dummies.User.ID).
+		WillReturnRows(sqlmock.NewRows(userCol).AddRow(userRow...))
+
+	fetchedUser, err := repo.GetEmplByID(dummies.Employer.ID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedUser, dummies.User)
+
+	// Error flow = user is not a candidate
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Employer.ID).
+		WillReturnError(errors.New("TEST ERROR"))
+	fetchedUser, err = repo.GetEmplByID(dummies.Employer.ID.String())
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+
+	// Error flow = user fetch error
+	mock.ExpectQuery(candQuery).
+		WithArgs(dummies.Employer.ID).
+		WillReturnRows(sqlmock.NewRows(candCol).AddRow(candRow...))
+	mock.ExpectQuery(userQuery).
+		WithArgs(dummies.User.ID).
+		WillReturnError(errors.New("TEST ERROR"))
+	fetchedUser, err = repo.GetEmplByID(dummies.Employer.ID.String())
+	assert.Nil(t, fetchedUser)
+	assert.Error(t, err)
+}
+
+func TestGetEmployerByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	query := "SELECT \\* FROM (.*).\"employers\" WHERE user_id = (.*) LIMIT 1"
+	cols, row := makeEmplRow(dummies.Employer)
+	mock.ExpectQuery(query).
+		WithArgs(dummies.Employer.UserID).
+		WillReturnRows(sqlmock.NewRows(cols).AddRow(row...))
+
+	fetchedEmpl, err := repo.GetEmployerByID(dummies.Employer.UserID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedEmpl, dummies.Employer)
+
+	// Error flow
+	error := errors.New("test error")
+	mock.ExpectQuery(query).WithArgs(dummies.Employer.UserID).WillReturnError(error)
+
+	fetchedEmpl, err = repo.GetEmployerByID(dummies.Employer.UserID.String())
+	assert.Nil(t, fetchedEmpl)
+	assert.Error(t, err)
+}
+
+func TestGetCandidateByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	query := "SELECT \\* FROM (.*).\"candidates\" WHERE user_id = (.*) LIMIT 1"
+	cols, row := makeCandRow(dummies.Candidate)
+	mock.ExpectQuery(query).
+		WithArgs(dummies.Candidate.UserID).
+		WillReturnRows(sqlmock.NewRows(cols).AddRow(row...))
+
+	fetchedCand, err := repo.GetCandidateByID(dummies.Candidate.UserID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *fetchedCand, dummies.Candidate)
+
+	// Error flow
+	error := errors.New("test error")
+	mock.ExpectQuery(query).WithArgs(dummies.Candidate.UserID).WillReturnError(error)
+
+	fetchedCand, err = repo.GetCandidateByID(dummies.Candidate.UserID.String())
+	assert.Nil(t, fetchedCand)
+	assert.Error(t, err)
+}
+
+//GetEmployerByID(id string) (*models.Employer, error)
+//GetCandidateByID(id string) (*models.Candidate, error)
+//UpdateEmployer(employer models.Employer) (*models.Employer, error)
