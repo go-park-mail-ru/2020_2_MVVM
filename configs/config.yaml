@@ -10,3 +10,6 @@ microservices:
   auth:
     host: 127.0.0.1
     port: 8081
+  vacancy:
+    host: localhost
+    port: 8082

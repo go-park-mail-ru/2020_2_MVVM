@@ -3,14 +3,14 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"net/http"
 )
 
 type VacancyHandler struct {
-	VacUseCase     vacancy.IUseCaseVacancy
+	vacancyClient  vacancyMicro.VacClient
 	SessionBuilder common.SessionBuilder
 }
 
@@ -57,12 +57,12 @@ const (
 )
 
 func NewRest(router *gin.RouterGroup,
-	useCase vacancy.IUseCaseVacancy,
 	sessionBuilder common.SessionBuilder,
-	AuthRequired gin.HandlerFunc) *VacancyHandler {
+	AuthRequired gin.HandlerFunc,
+	vacancyClient vacancyMicro.VacClient) *VacancyHandler {
 	rest := &VacancyHandler{
-		VacUseCase:     useCase,
 		SessionBuilder: sessionBuilder,
+		vacancyClient:  vacancyClient,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -70,15 +70,15 @@ func NewRest(router *gin.RouterGroup,
 
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
-	router.GET("/comp", v.GetCompVacancyListHandler)
-	router.GET("/page", v.GetVacancyListHandler)
-	router.POST("/search", v.SearchVacanciesHandler)
+	//router.GET("/comp", v.GetCompVacancyListHandler)
+	//router.GET("/page", v.GetVacancyListHandler)
+	//router.POST("/search", v.SearchVacanciesHandler)
 	router.Use(AuthRequired)
 	{
-		router.GET("/mine", v.GetUserVacancyListHandler)
-		router.PUT("/", v.UpdateVacancyHandler)
+		//router.GET("/mine", v.GetUserVacancyListHandler)
+		//router.PUT("/", v.UpdateVacancyHandler)
 		router.POST("/", v.CreateVacancyHandler)
-		router.GET("/recommendation", v.GetRecommendationUserVacancy)
+		//router.GET("/recommendation", v.GetRecommendationUserVacancy)
 	}
 }
 
@@ -92,7 +92,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
-	vac, err := v.VacUseCase.GetVacancy(vacId)
+	vac, err := v.vacancyClient.GetVacancy(vacId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, common.RespError{Err: common.DataBaseErr})
 		return
@@ -100,10 +100,10 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 
 	session := v.SessionBuilder.Build(ctx)
 	candID := session.GetCandID()
-	userID := session.GetUserID()
+	//userID := session.GetUserID()
 
 	if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
-		err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
+		//err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
 		if err != nil {
 			ctx.Error(err)
 		}
@@ -116,6 +116,7 @@ func (v *VacancyHandler) CreateVacancyHandler(ctx *gin.Context) {
 	vacHandlerCommon(v, ctx, vacCreate)
 }
 
+/*
 func (v *VacancyHandler) UpdateVacancyHandler(ctx *gin.Context) {
 	vacHandlerCommon(v, ctx, vacUpdate)
 }
@@ -190,7 +191,7 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
 
 }
-
+*/
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	var (
 		req vacRequest
@@ -228,10 +229,10 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			return
 		}
 		vacNew.EmpID = emplID
-		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
+		vacNew, err = v.vacancyClient.CreateVacancy(*vacNew)
 	} else {
 		vacNew.ID, _ = uuid.Parse(req.Id)
-		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
+		//vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, err)
@@ -246,6 +247,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	ctx.JSON(http.StatusOK, Resp{Vacancy: vacNew})
 }
 
+/*
 func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	var (
 		req     vacListRequest
@@ -274,4 +276,4 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		return
 	}
 	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
-}
+}*/

@@ -38,8 +38,8 @@ func (g *gRPCVacClient) UpdateVacancy(vacancy models.Vacancy) (*models.Vacancy, 
 }
 
 func (g *gRPCVacClient) GetVacancy(vacId uuid.UUID) (*models.Vacancy, error) {
-	id := api.VacId{Id: vacId.String()}
-	newVac, err := g.client.GetVacancy(g.ctx, &id)
+	id := &api.VacId{Id: vacId.String()}
+	newVac, err := g.client.GetVacancy(g.ctx, id)
 	if newVac == nil {
 		return nil, err
 	}
