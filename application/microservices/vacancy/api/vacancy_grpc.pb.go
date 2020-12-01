@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 type VacancyClient interface {
 	CreateVacancy(ctx context.Context, in *Vac, opts ...grpc.CallOption) (*Vac, error)
 	//rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
-	GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Empty, error)
+	GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Vac, error)
 }
 
 type vacancyClient struct {
@@ -39,8 +39,8 @@ func (c *vacancyClient) CreateVacancy(ctx context.Context, in *Vac, opts ...grpc
 	return out, nil
 }
 
-func (c *vacancyClient) GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *vacancyClient) GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Vac, error) {
+	out := new(Vac)
 	err := c.cc.Invoke(ctx, "/api.Vacancy/GetVacancy", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (c *vacancyClient) GetVacancy(ctx context.Context, in *VacId, opts ...grpc.
 type VacancyServer interface {
 	CreateVacancy(context.Context, *Vac) (*Vac, error)
 	//rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
-	GetVacancy(context.Context, *VacId) (*Empty, error)
+	GetVacancy(context.Context, *VacId) (*Vac, error)
 	mustEmbedUnimplementedVacancyServer()
 }
 
@@ -65,7 +65,7 @@ type UnimplementedVacancyServer struct {
 func (UnimplementedVacancyServer) CreateVacancy(context.Context, *Vac) (*Vac, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateVacancy not implemented")
 }
-func (UnimplementedVacancyServer) GetVacancy(context.Context, *VacId) (*Empty, error) {
+func (UnimplementedVacancyServer) GetVacancy(context.Context, *VacId) (*Vac, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVacancy not implemented")
 }
 func (UnimplementedVacancyServer) mustEmbedUnimplementedVacancyServer() {}

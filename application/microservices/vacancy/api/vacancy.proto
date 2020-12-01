@@ -40,7 +40,7 @@ message empty {
 service Vacancy {
   rpc CreateVacancy(vac) returns (vac) {}
   //rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
-  rpc  GetVacancy(vacId) returns (empty) {}
+  rpc  GetVacancy(vacId) returns (vac) {}
   /*rpc  GetVacancyList(uint, uint, uuid.UUID, int) returns ([]models.Vacancy, error)
   rpc  SearchVacancies(models.VacancySearchParams) returns ([]models.Vacancy, error)
   rpc  AddRecommendation(uuid.UUID, int) returns error
