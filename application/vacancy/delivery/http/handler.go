@@ -99,13 +99,15 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	}
 
 	session := v.SessionBuilder.Build(ctx)
-	candID := session.GetCandID()
-	//userID := session.GetUserID()
+	if session != nil {
+		candID := session.GetCandID()
+		//userID := session.GetUserID()
 
-	if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
-		//err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
-		if err != nil {
-			ctx.Error(err)
+		if err == nil && candID != uuid.Nil && vac.Sphere != -1 {
+			//err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
+			if err != nil {
+				ctx.Error(err)
+			}
 		}
 	}
 
