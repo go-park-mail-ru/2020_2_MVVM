@@ -5,6 +5,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/api"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -37,7 +38,7 @@ func (v *vacServer) CreateVacancy(ctx context.Context, req *api.Vac) (*api.Vac, 
 }
 
 func (v *vacServer) GetVacancy(ctx context.Context, vacId *api.VacId) (*api.Empty, error) {
-	/*id, _ := uuid.Parse(vacId.Id)
+	id, _ := uuid.Parse(vacId.Id)
 	newVac, err := v.vacUseCase.GetVacancy(id)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -45,6 +46,5 @@ func (v *vacServer) GetVacancy(ctx context.Context, vacId *api.VacId) (*api.Empt
 	return &api.Vac{Id: newVac.ID.String(), Title: newVac.Title, SalaryMin: uint32(newVac.SalaryMin), SalaryMax: uint32(newVac.SalaryMax), AreaSearch: newVac.AreaSearch,
 		Description: newVac.Description, Requirements: newVac.Requirements, Duties: newVac.Duties, Skills: newVac.Skills, Employment: newVac.Employment,
 		ExperienceMonth: uint32(newVac.ExperienceMonth), Location: newVac.Location, CareerLevel: newVac.CareerLevel, EducationLevel: newVac.EducationLevel,
-		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}, nil*/
-	return nil, nil
+		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}, nil
 }

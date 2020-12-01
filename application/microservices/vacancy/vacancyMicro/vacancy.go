@@ -43,10 +43,10 @@ func (g *gRPCVacClient) GetVacancy(vacId uuid.UUID) (*models.Vacancy, error) {
 	if newVac == nil {
 		return nil, err
 	}
-	/*vacResp := models.Vacancy{Title: newVac.Title, SalaryMin: int(newVac.SalaryMin), SalaryMax: int(newVac.SalaryMax), AreaSearch: newVac.AreaSearch,
+	vacResp := models.Vacancy{Title: newVac.Title, SalaryMin: int(newVac.SalaryMin), SalaryMax: int(newVac.SalaryMax), AreaSearch: newVac.AreaSearch,
 		Description: newVac.Description, Requirements: newVac.Requirements, Duties: newVac.Duties, Skills: newVac.Skills, Employment: newVac.Employment,
 		ExperienceMonth: int(newVac.ExperienceMonth), Location: newVac.Location, CareerLevel: newVac.CareerLevel, EducationLevel: newVac.EducationLevel,
-		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}*/
+		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}
 	return nil, err
 }
 
