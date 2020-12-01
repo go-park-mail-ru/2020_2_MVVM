@@ -75,8 +75,8 @@ func (g *gRPCVacClient) CreateVacancy(vacancy models.Vacancy) (*models.Vacancy, 
 }
 
 func (g *gRPCVacClient) UpdateVacancy(vacancy models.Vacancy) (*models.Vacancy, error) {
-	//panic("implement me")
-	return nil, nil
+	newVac, err := g.client.UpdateVacancy(g.ctx, ConvertToPbModel(&vacancy))
+	return ConvertToDbModel(newVac), err
 }
 
 func (g *gRPCVacClient) GetVacancy(vacId uuid.UUID) (*models.Vacancy, error) {

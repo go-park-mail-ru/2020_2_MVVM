@@ -32,6 +32,18 @@ func (v *vacServer) CreateVacancy(ctx context.Context, req *api.Vac) (*api.Vac, 
 	return vacancyMicro.ConvertToPbModel(newVac), nil
 }
 
+func (v *vacServer) UpdateVacancy(ctx context.Context, req *api.Vac) (*api.Vac, error) {
+	reqVac := vacancyMicro.ConvertToDbModel(req)
+	if req.Sphere == "" {
+		reqVac.Sphere = -1
+	}
+	newVac, err := v.vacUseCase.UpdateVacancy(*reqVac)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return vacancyMicro.ConvertToPbModel(newVac), nil
+}
+
 func (v *vacServer) GetVacancy(ctx context.Context, vacId *api.VacId) (*api.Vac, error) {
 	id, _ := uuid.Parse(vacId.Id)
 	newVac, err := v.vacUseCase.GetVacancy(id)
