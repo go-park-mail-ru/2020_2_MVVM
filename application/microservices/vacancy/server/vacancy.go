@@ -37,7 +37,7 @@ func (v *vacServer) CreateVacancy(ctx context.Context, req *api.Vac) (*api.Vac, 
 		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}, nil
 }
 
-func (v *vacServer) GetVacancy(ctx context.Context, vacId *api.VacId) (*api.Empty, error) {
+func (v *vacServer) GetVacancy(ctx context.Context, vacId *api.VacId) (*api.Vac, error) {
 	id, _ := uuid.Parse(vacId.Id)
 	newVac, err := v.vacUseCase.GetVacancy(id)
 	if err != nil {

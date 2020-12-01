@@ -47,7 +47,7 @@ func (g *gRPCVacClient) GetVacancy(vacId uuid.UUID) (*models.Vacancy, error) {
 		Description: newVac.Description, Requirements: newVac.Requirements, Duties: newVac.Duties, Skills: newVac.Skills, Employment: newVac.Employment,
 		ExperienceMonth: int(newVac.ExperienceMonth), Location: newVac.Location, CareerLevel: newVac.CareerLevel, EducationLevel: newVac.EducationLevel,
 		EmpPhone: newVac.EmpPhone, EmpEmail: newVac.EmpEmail, Gender: newVac.Gender}
-	return nil, err
+	return &vacResp, err
 }
 
 func (g *gRPCVacClient) GetVacancyList(u uint, u2 uint, uuid uuid.UUID, i int) ([]models.Vacancy, error) {
