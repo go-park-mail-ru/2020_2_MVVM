@@ -279,3 +279,69 @@ func (v *Response) UnmarshalJSON(data []byte) error {
 func (v *Response) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson6ff3ac1dDecodeGithubComGoParkMailRu20202MVVMGitApplicationModels1(l, v)
 }
+func easyjson6ff3ac1dDecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(in *jlexer.Lexer, out *ListResponseWithTitle) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(ListResponseWithTitle, 0, 0)
+			} else {
+				*out = ListResponseWithTitle{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v1 ResponseWithTitle
+			(v1).UnmarshalEasyJSON(in)
+			*out = append(*out, v1)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson6ff3ac1dEncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(out *jwriter.Writer, in ListResponseWithTitle) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v2, v3 := range in {
+			if v2 > 0 {
+				out.RawByte(',')
+			}
+			(v3).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v ListResponseWithTitle) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson6ff3ac1dEncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v ListResponseWithTitle) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson6ff3ac1dEncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *ListResponseWithTitle) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson6ff3ac1dDecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *ListResponseWithTitle) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson6ff3ac1dDecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(l, v)
+}

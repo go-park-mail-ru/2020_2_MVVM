@@ -6,48 +6,13 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"net/http"
 )
 
 type VacancyHandler struct {
 	VacUseCase     vacancy.IUseCaseVacancy
 	SessionBuilder common.SessionBuilder
-}
-
-type Resp struct {
-	Vacancy *models.Vacancy `json:"vacancy"`
-}
-
-type RespList struct {
-	Vacancies []models.Vacancy `json:"vacancyList"`
-}
-
-type vacRequest struct {
-	Id              string `json:"vac_id,uuid" valid:"-"`
-	Avatar          string `json:"avatar" valid:"-"`
-	Title           string `json:"title" binding:"required" valid:"stringlength(4|128)~название вакансии должно быть от 4 до 128 символов в длину."`
-	Gender          string `json:"gender" valid:"-"`
-	SalaryMin       int    `json:"salary_min" valid:"-"`
-	SalaryMax       int    `json:"salary_max" valid:"-"`
-	Description     string `json:"description" binding:"required" valid:"-"`
-	Requirements    string `json:"requirements" valid:"-"`
-	Duties          string `json:"duties" valid:"-"`
-	Skills          string `json:"skills" valid:"-"`
-	Sphere          *int   `json:"sphere" valid:"numeric~сфера деятельности должна содержать только код"`
-	Employment      string `json:"employment" valid:"-"`
-	ExperienceMonth int    `json:"experience_month" valid:"-"`
-	Location        string `json:"location" valid:"stringlength(4|512)~длина адреса от 4 до 512 смиволов"`
-	AreaSearch      string `json:"area_search" valid:"stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
-	CareerLevel     string `json:"career_level" valid:"-"`
-	EducationLevel  string `json:"education_level" valid:"-"`
-	EmpEmail        string `json:"email" valid:"email"`
-	EmpPhone        string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
-}
-
-type vacListRequest struct {
-	Start  uint   `form:"start"`
-	Limit  uint   `form:"limit" binding:"required"`
-	CompId string `form:"comp_id,uuid"`
 }
 
 const (
@@ -88,13 +53,13 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
 	vac, err := v.VacUseCase.GetVacancy(vacId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
@@ -109,7 +74,9 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 		}
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vac}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (v *VacancyHandler) CreateVacancyHandler(ctx *gin.Context) {
@@ -134,14 +101,14 @@ func (v *VacancyHandler) GetCompVacancyListHandler(ctx *gin.Context) {
 
 func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 	var (
-		req     vacListRequest
+		req     vacancy.VacListRequest
 		err     error
 		vacList []models.Vacancy
 	)
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	session := v.SessionBuilder.Build(ctx)
@@ -152,64 +119,68 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 		vacList, err = v.VacUseCase.GetRecommendation(userID, int(req.Start), int(req.Limit))
 		if err != nil {
 			if err.Error() == common.NoRecommendation {
-				ctx.JSON(http.StatusOK, models.RespError{Err: common.NoRecommendation})
+				common.WriteErrResponse(ctx, http.StatusOK, common.NoRecommendation)
 				return
 			}
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+			//ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	}
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
 
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
-	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &searchParams); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 
 	if err := common.ReqValidation(&searchParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-	VacList, err := v.VacUseCase.SearchVacancies(searchParams)
+	vacList, err := v.VacUseCase.SearchVacancies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	ctx.JSON(http.StatusOK, RespList{Vacancies: VacList})
 
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	var (
-		req vacRequest
+		req vacancy.VacRequest
 		err error
 	)
 
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: errImg.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
 		return
 	}
 	if req.Sphere == nil {
@@ -234,35 +205,39 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
 	}
 	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.DataBaseErr)
 		ctx.AbortWithError(http.StatusBadRequest, err)
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.DataBaseErr})
 		return
 	}
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, vacPath+vacNew.ID.String()); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, err.Error())
+			//ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vacNew})
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	var (
-		req     vacListRequest
+		req     vacancy.VacListRequest
 		err     error
 		vacList []models.Vacancy
 		id      = uuid.Nil
 	)
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if entityType == vacancy.ByEmpId {
 		session := v.SessionBuilder.Build(ctx)
 		emplID := session.GetEmplID()
 		if id, err = uuid.Parse(emplID.String()); err != nil {
-			ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.SessionErr})
+			common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
 			return
 		}
 	} else if entityType == vacancy.ByCompId {
@@ -270,8 +245,10 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	}
 	vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, id, entityType)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	ctx.JSON(http.StatusOK, RespList{Vacancies: vacList})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }

@@ -8,20 +8,13 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/mailru/easyjson"
 	"net/http"
 	"path"
 )
 
 type CompanyHandler struct {
 	CompUseCase official_company.IUseCaseOfficialCompany
-}
-
-type Resp struct {
-	Company *models.OfficialCompany `json:"company"`
-}
-
-type RespList struct {
-	Companies []models.OfficialCompany `json:"companyList"`
 }
 
 const (
@@ -56,33 +49,37 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	compUuid, _ := uuid.Parse(req.CompanyID)
 	comp, err := c.CompUseCase.GetOfficialCompany(compUuid)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Company: comp})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: comp}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.SessionErr})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
 		return
 	}
 	comp, err := c.CompUseCase.GetMineCompany(empId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Company: comp})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: comp}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (c *CompanyHandler) CreateCompanyHandler(ctx *gin.Context) {
@@ -96,31 +93,35 @@ func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	compList, err := c.CompUseCase.GetCompaniesList(req.Start, req.Limit)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, RespList{Companies: compList})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.RespList{Companies: compList}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 	var searchParams models.CompanySearchParams
 
-	if err := ctx.ShouldBindJSON(&searchParams); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &searchParams); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	compList, err := c.CompUseCase.SearchCompanies(searchParams)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	ctx.JSON(http.StatusOK, RespList{Companies: compList})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.RespList{Companies: compList}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (c *CompanyHandler) UpdateCompanyHandler(ctx *gin.Context) {
@@ -137,48 +138,43 @@ func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
 	empId, err := uuid.Parse("92f68cc8-45e7-41a6-966e-6599d7142ea8")
 	err = c.CompUseCase.DeleteOfficialCompany(uuid.Nil, empId)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, nil)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	var (
-		req struct {
-			Name        string `json:"name" binding:"required" valid:"stringlength(4|30)~название компании должно быть от 4 до 30 символов."`
-			Description string `json:"description" binding:"required" valid:"-"`
-			Spheres     []int  `json:"spheres" valid:"-"`
-			AreaSearch  string `json:"area_search" valid:"stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
-			Link        string `json:"link" valid:"url~неверный формат ссылки"`
-			Avatar      string `json:"avatar" valid:"-"`
-		}
+		req models.ReqComp
 		compNew    *models.OfficialCompany
 		err        error
 		avatarPath string
 	)
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: errImg.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
 		return
 	}
 	session := sessions.Default(ctx).Get("empl_id")
 	if session == nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return
 	}
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return
 	}
 	compId := uuid.New()
@@ -195,9 +191,9 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	}
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.EmpHaveComp {
-			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
+			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
 		} else {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		}
 		return
 	}
@@ -206,7 +202,9 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
-	ctx.JSON(http.StatusOK, Resp{Company: compNew})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: compNew}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func convertSliceToPqArr(slice []int) pq.Int64Array {

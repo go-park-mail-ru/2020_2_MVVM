@@ -7,15 +7,9 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"net/http"
 )
-
-type RespNotifications struct {
-	UnreadResp        []models.ResponseWithTitle `json:"unread_resp"`
-	UnreadRespCnt     uint                       `json:"unread_resp_cnt"`
-	RecommendedVac    []models.Vacancy           `json:"recommended_vac"`
-	RecommendedVacCnt uint                       `json:"recommended_vac_cnt"`
-}
 
 type ResponseHandler struct {
 	UsecaseResponse response.IUseCaseResponse
@@ -47,10 +41,10 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 }
 
 func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
-	var response models.Response
-	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	response := new(models.Response)
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, response); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	session := r.SessionBuilder.Build(ctx)
@@ -62,28 +56,29 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		userType = "employer"
 	} else {
-		err := errors.New("this user cannot respond")
-		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: common.AuthRequiredErr})
-		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.AuthRequiredErr)
+		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 
 	response.Initial = userType
-	pResponse, err := r.UsecaseResponse.Create(response)
+	pResponse, err := r.UsecaseResponse.Create(*response)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &pResponse)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
-	var response models.Response
-	if err := ctx.ShouldBindJSON(&response); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	response := new(models.Response)
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, response); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	session := r.SessionBuilder.Build(ctx)
@@ -95,22 +90,22 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		userType = common.Employer
 	} else {
-		err := errors.New("this user cannot respond")
-		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: common.AuthRequiredErr})
-		ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
+		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
 
 	response.Initial = userType
-
-	pResponse, err := r.UsecaseResponse.UpdateStatus(response, userType)
+	pResponse, err := r.UsecaseResponse.UpdateStatus(*response, userType)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, &pResponse)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
@@ -123,57 +118,63 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	if candID != uuid.Nil && emplID == uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(candID, nil)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+			//ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(emplID, nil)
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+			//ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else {
 		err := errors.New("this user cannot have responses")
-		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, err.Error())
 		return
 	}
 
-	ctx.JSON(http.StatusOK, responses)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListResponseWithTitle(responses), ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 	candID, vacancyID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.CandID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
 	resumes, err := r.UsecaseResponse.GetAllResumeWithoutResponse(candID, vacancyID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, resumes)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(resumes), ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (r *ResponseHandler) handlerGetAllVacancyWithoutResponse(ctx *gin.Context) {
 	emplID, resumeID, err := r.handlerGetAllEntityWithoutResponse(ctx, common.EmplID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	vacancies, err := r.UsecaseResponse.GetAllVacancyWithoutResponse(emplID, resumeID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, vacancies)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListVacancy(vacancies), ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (r *ResponseHandler) handlerGetAllEntityWithoutResponse(ctx *gin.Context, userType string) (uuid.UUID, uuid.UUID, error) {
@@ -226,19 +227,11 @@ func getNewResponses(r *ResponseHandler, unId uuid.UUID, userType string, respId
 
 func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	var (
-		notifications RespNotifications
+		notifications response.RespNotifications
 		err           error
 		status        int
 		daysFromNow   int
-		req           struct {
-			VacInLastNDays       *int        `json:"vac_in_last_n_days"` // notifications about recommended new vacancies, nil means from last 7 days max - month
-			OnlyVacCnt           bool        `json:"only_new_vac_cnt"`   // if true -> get only count of recommended vacancies
-			ListStart            uint        `json:"vac_list_start"`
-			ListEnd              uint        `json:"vac_list_limit"`
-			NewRespNotifications []uuid.UUID `json:"watched_responses"` // nil - all responses, for useless resp deleting put uuid in list
-			OnlyRespCnt          bool        `json:"only_new_resp_cnt"` // if true -> get only count of responses notifications
-			//Chat                 map[uuid.UUID][]string `json:"unread_messages"`
-		}
+		req response.ReqNotify
 	)
 
 	session := r.SessionBuilder.Build(ctx)
@@ -254,15 +247,16 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		ctx.JSON(http.StatusMethodNotAllowed, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, err.Error())
 		return
 	}
-	if err = ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if !req.OnlyVacCnt && req.ListEnd <= req.ListStart {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, "invalid 'vac_list_start' and 'vac_list_limit' params")
+		//ctx.JSON(http.StatusBadRequest, models.RespError{Err: "invalid 'vac_list_start' and 'vac_list_limit' params"})
 		return
 	}
 	if req.VacInLastNDays != nil {
@@ -289,5 +283,8 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		ctx.JSON(status, models.RespError{Err: common.DataBaseErr})
 		return
 	}
-	ctx.JSON(http.StatusOK, notifications)
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(&notifications, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }

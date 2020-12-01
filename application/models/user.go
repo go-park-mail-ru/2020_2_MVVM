@@ -44,3 +44,8 @@ type UserLogin struct {
 	Email    string `json:"email" binding:"required" valid:"email"`
 	Password string `json:"password" binding:"required" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
 }
+
+type RespUser struct {
+	User *User `json:"user"`
+}
+

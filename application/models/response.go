@@ -32,3 +32,6 @@ type ResponseWithTitle struct {
 	Status      string    `json:"status"`
 	DateCreate  time.Time `json:"date_create"`
 }
+
+//easyjson:json
+type ListResponseWithTitle []ResponseWithTitle

@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/url"
@@ -17,10 +18,6 @@ type UserHandler struct {
 	authClient     authmicro.AuthClient
 	cookieConfig   common.AuthCookieConfig
 	SessionBuilder common.SessionBuilder
-}
-
-type Resp struct {
-	User *models.User `json:"user"`
 }
 
 func NewRest(router *gin.RouterGroup,
@@ -55,12 +52,15 @@ func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 
 	userById, err := u.UserUseCase.GetUserByID(userID.String())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userById})
+	resp := models.RespUser{User: userById}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
@@ -69,19 +69,22 @@ func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetUserByID(req.UserID)
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
@@ -90,17 +93,20 @@ func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetCandByID(req.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
@@ -109,23 +115,26 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetEmplByID(req.UserID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
 	session, err := u.authClient.Login(reqUser.Email, reqUser.Password)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -145,21 +154,22 @@ func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
 func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 	var reqUser models.UserLogin
 
-	if err := ctx.ShouldBindJSON(&reqUser); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &reqUser); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if err := common.ReqValidation(&reqUser); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	u.login(ctx, reqUser)
-	ctx.JSON(http.StatusOK, nil)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	session := u.SessionBuilder.Build(ctx)
-
 	// clear cookie
 	http.SetCookie(ctx.Writer, &http.Cookie{
 		Name:     u.cookieConfig.Key,
@@ -173,33 +183,27 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 	})
 	err := u.authClient.Logout(session.GetSessionID())
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return
 	}
-	ctx.JSON(http.StatusOK, nil)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
-	var req struct {
-		UserType      string `json:"user_type" binding:"required"`
-		Password      string `json:"password" binding:"required" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		Name          string `json:"name" binding:"required" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
-		Surname       string `json:"surname" binding:"required" valid:"utfletter~фамилия должна содержать только буквы,stringlength(3|25)~длина фамилии должна быть от 3 до 25 символов."`
-		Email         string `json:"email" binding:"required" valid:"email"`
-		Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(7|18)~номер телефона от 7 до 18 цифр"`
-		SocialNetwork string `json:"social_network"`
-	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	var req user.Register
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 	userNew, err := u.UserUseCase.CreateUser(models.User{
@@ -213,9 +217,9 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.UserExistErr {
-			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
+			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
 		} else {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		}
 		return
 	}
@@ -225,25 +229,20 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		Password: req.Password,
 	}
 	u.login(ctx, reqUser)
-	ctx.JSON(http.StatusOK, Resp{User: userNew})
+	resp := models.RespUser{User: userNew}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
-	var req struct {
-		Name          string `json:"name" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов."`
-		Surname       string `json:"surname" valid:"utfletter~фамилия должна содержать только буквы,stringlength(3|25)~длина фамилии должна быть от 3 до 25 символов."`
-		Email         string `json:"email" valid:"email"`
-		NewPassword   string `json:"new_password" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		OldPassword   string `json:"old_password" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
-		Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
-		SocialNetwork string `json:"social_network"`
-	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: common.EmptyFieldErr})
+	var req user.Update
+	if err := easyjson.UnmarshalFromReader(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.EmptyFieldErr)
 		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, models.RespError{Err: err.Error()})
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -251,18 +250,21 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	userIDFromSession := session.GetUserID()
 	userID, errSession := uuid.Parse(userIDFromSession.String())
 	if errSession != nil {
-		ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 	userUpdate, err := u.UserUseCase.UpdateUser(models.User{ID: userID, Name: req.Name, Surname: req.Surname,
 		Phone: &req.Phone, Email: req.Email, SocialNetwork: &req.SocialNetwork})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.WrongPasswd {
-			ctx.JSON(http.StatusConflict, models.RespError{Err: errMsg})
+			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
 		} else {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.DataBaseErr})
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		}
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: userUpdate})
+	resp := models.RespUser{User: userUpdate}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }

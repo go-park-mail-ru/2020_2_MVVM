@@ -49,3 +49,6 @@ type VacancySearchParams struct {
 func (v Vacancy) TableName() string {
 	return "main.vacancy"
 }
+
+//easyjson:json
+type ListVacancy []Vacancy

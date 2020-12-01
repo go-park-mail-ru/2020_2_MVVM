@@ -585,3 +585,69 @@ func (v *Vacancy) UnmarshalJSON(data []byte) error {
 func (v *Vacancy) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson80a4d695DecodeGithubComGoParkMailRu20202MVVMGitApplicationModels1(l, v)
 }
+func easyjson80a4d695DecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(in *jlexer.Lexer, out *ListVacancy) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		in.Skip()
+		*out = nil
+	} else {
+		in.Delim('[')
+		if *out == nil {
+			if !in.IsDelim(']') {
+				*out = make(ListVacancy, 0, 0)
+			} else {
+				*out = ListVacancy{}
+			}
+		} else {
+			*out = (*out)[:0]
+		}
+		for !in.IsDelim(']') {
+			var v19 Vacancy
+			(v19).UnmarshalEasyJSON(in)
+			*out = append(*out, v19)
+			in.WantComma()
+		}
+		in.Delim(']')
+	}
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson80a4d695EncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(out *jwriter.Writer, in ListVacancy) {
+	if in == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
+		out.RawString("null")
+	} else {
+		out.RawByte('[')
+		for v20, v21 := range in {
+			if v20 > 0 {
+				out.RawByte(',')
+			}
+			(v21).MarshalEasyJSON(out)
+		}
+		out.RawByte(']')
+	}
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v ListVacancy) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson80a4d695EncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v ListVacancy) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson80a4d695EncodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *ListVacancy) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson80a4d695DecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *ListVacancy) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson80a4d695DecodeGithubComGoParkMailRu20202MVVMGitApplicationModels2(l, v)
+}

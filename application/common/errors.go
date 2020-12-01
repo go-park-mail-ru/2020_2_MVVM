@@ -54,30 +54,8 @@ func NewErr(code int, message string, meta interface{}) Err {
 	}
 }
 
-func WriteOkResponse(ctx gin.Context, body interface{}) {
-	resp := models.RespOk{
-		Status: http.StatusOK,
-		Body:   body,
-	}
-
-	ctx.Status(http.StatusOK)
-
-	//Hits.WithLabelValues("200", ctx.Request().URL.String()).Inc()
-	//FooCount.Add(1)
-
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-	}
-
-	//if _, err := easyjson.MarshalToWriter(resp, ctx.Response().Writer); err != nil {
-	//	return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	//}
-	//return nil
-}
-
 func WriteErrResponse(ctx *gin.Context, code int, message string) {
 	resp := models.RespError{
-		Code: code,
 		Err:   message,
 	}
 	ctx.Status(code)

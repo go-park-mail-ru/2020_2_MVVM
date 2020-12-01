@@ -111,7 +111,7 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 
 	var vacList []models.Vacancy
 
-	for len(vacList) < limit && curSphere < vacancy.CoutShheres {
+	for len(vacList) < limit && curSphere < vacancy.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
 		list, err := v.repos.GetRecommendation(start, limit, preferredSalary, arr)
 		vacList = append(vacList, list...)

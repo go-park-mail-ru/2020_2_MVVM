@@ -54,10 +54,10 @@ func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
 	case models.OfficialCompany:
 		comp := entity.(models.OfficialCompany)
-		return Resp{&comp}
+		return models.Resp{&comp}
 	case []models.OfficialCompany:
 		compList := entity.([]models.OfficialCompany)
-		return RespList{compList}
+		return models.RespList{compList}
 	case string:
 		err := entity.(string)
 		return models.RespError{Err: err}
