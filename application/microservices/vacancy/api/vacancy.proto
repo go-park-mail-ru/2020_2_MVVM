@@ -4,45 +4,90 @@ package api;
 
 option go_package = "api;api";
 
-message Sphere {
-
-}
-
 message vac{
-  string Id = 1;
-  string Title = 2;
-  string Gender = 3;
-  uint32 SalaryMin = 4;
-  uint32 SalaryMax = 5;
-  string Description = 6;
-  string Requirements = 7;
-  string Duties = 8;
-  string Skills = 9;
-  string Employment = 10;
-  uint32 ExperienceMonth = 11;
-  string Location = 12;
-  string AreaSearch = 13;
-  string CareerLevel = 14;
-  string EducationLevel = 15;
-  string EmpEmail = 16;
-  string EmpPhone = 17;
-  string Sphere = 18;
-}
+  string ID = 1;
+  string EmpID = 2;
+  string CompID = 3;
+  string Title = 4;
+  string Gender = 5;
+  uint32 SalaryMin = 6;
+  uint32 SalaryMax = 7;
+  string Description = 8;
+  string Requirements = 9;
+  string Duties = 10;
+  string Skills = 11;
+  string Sphere = 12;
+  string Employment = 13;
+  uint32 ExperienceMonth = 14;
+  string AreaSearch = 15;
+  string Location = 16;
+  string CareerLevel = 17;
+  string EducationLevel = 18;
+  string DateCreate = 19;
+  string EmpEmail = 20;
+  string EmpPhone = 21;
+  string Avatar = 22;
+};
 
 message vacId {
   string Id = 1;
-}
+};
 
-message empty {
+message vacList {
+  repeated vac list = 1;
+};
 
-}
+message vacListParams {
+  uint32 Start = 1;
+  uint32 Limit = 2;
+  string EntityId = 3;
+  int32  EntityType = 4;
+};
+
+message addRecParams {
+  string UserId = 1;
+  int32 Sphere = 2;
+};
+
+message getRecParams {
+  string UserId = 1;
+  int32 Start = 2;
+  int32 limit = 3;
+};
+
+message IntArr {
+  repeated int32 Elem = 1;
+};
+message StringArr {
+  repeated string Elem = 1;
+};
+
+
+message searchParams {
+  string KeyWords = 1;
+  int32 SalaryMin = 2;
+  int32 SalaryMax = 3;
+  string Gender = 4;
+  IntArr ExpList = 5; //int
+  StringArr EmpList = 6;     //string
+  StringArr EdList = 7; //string
+  StringArr CarList = 8; //string
+  IntArr SpheresList = 9;  //int
+  StringArr AreaList = 10; //string
+  string OrderBy = 11;
+  bool ByAsc = 12;
+  int32 DaysFromNow = 13;
+  string StartDate = 14;
+};
+
+message empty {};
 
 service Vacancy {
   rpc CreateVacancy(vac) returns (vac) {};
-  //rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
+  rpc UpdateVacancy(vac) returns (vac) {};
   rpc  GetVacancy(vacId) returns (vac) {};
-  /*rpc  GetVacancyList(uint, uint, uuid.UUID, int) returns ([]models.Vacancy, error)
-  rpc  SearchVacancies(models.VacancySearchParams) returns ([]models.Vacancy, error)
-  rpc  AddRecommendation(uuid.UUID, int) returns error
-  rpc  GetRecommendation(uuid.UUID, int, int) returns ([]models.Vacancy, error)*/
-}
+  rpc  GetVacancyList(vacListParams) returns (vacList) {};
+  rpc  SearchVacancies(searchParams) returns (vacList) {};
+  rpc  AddRecommendation(addRecParams) returns (empty) {};
+  rpc  GetRecommendation(getRecParams) returns (vacList) {};
+};

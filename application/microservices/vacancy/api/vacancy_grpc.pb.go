@@ -18,8 +18,12 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type VacancyClient interface {
 	CreateVacancy(ctx context.Context, in *Vac, opts ...grpc.CallOption) (*Vac, error)
-	//rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
+	UpdateVacancy(ctx context.Context, in *Vac, opts ...grpc.CallOption) (*Vac, error)
 	GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Vac, error)
+	GetVacancyList(ctx context.Context, in *VacListParams, opts ...grpc.CallOption) (*VacList, error)
+	SearchVacancies(ctx context.Context, in *SearchParams, opts ...grpc.CallOption) (*VacList, error)
+	AddRecommendation(ctx context.Context, in *AddRecParams, opts ...grpc.CallOption) (*Empty, error)
+	GetRecommendation(ctx context.Context, in *GetRecParams, opts ...grpc.CallOption) (*VacList, error)
 }
 
 type vacancyClient struct {
@@ -39,9 +43,54 @@ func (c *vacancyClient) CreateVacancy(ctx context.Context, in *Vac, opts ...grpc
 	return out, nil
 }
 
+func (c *vacancyClient) UpdateVacancy(ctx context.Context, in *Vac, opts ...grpc.CallOption) (*Vac, error) {
+	out := new(Vac)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/UpdateVacancy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *vacancyClient) GetVacancy(ctx context.Context, in *VacId, opts ...grpc.CallOption) (*Vac, error) {
 	out := new(Vac)
 	err := c.cc.Invoke(ctx, "/api.Vacancy/GetVacancy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vacancyClient) GetVacancyList(ctx context.Context, in *VacListParams, opts ...grpc.CallOption) (*VacList, error) {
+	out := new(VacList)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/GetVacancyList", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vacancyClient) SearchVacancies(ctx context.Context, in *SearchParams, opts ...grpc.CallOption) (*VacList, error) {
+	out := new(VacList)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/SearchVacancies", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vacancyClient) AddRecommendation(ctx context.Context, in *AddRecParams, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/AddRecommendation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *vacancyClient) GetRecommendation(ctx context.Context, in *GetRecParams, opts ...grpc.CallOption) (*VacList, error) {
+	out := new(VacList)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/GetRecommendation", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,8 +102,12 @@ func (c *vacancyClient) GetVacancy(ctx context.Context, in *VacId, opts ...grpc.
 // for forward compatibility
 type VacancyServer interface {
 	CreateVacancy(context.Context, *Vac) (*Vac, error)
-	//rpc UpdateVacancy(vacReq) returns (*models.Vacancy, error)
+	UpdateVacancy(context.Context, *Vac) (*Vac, error)
 	GetVacancy(context.Context, *VacId) (*Vac, error)
+	GetVacancyList(context.Context, *VacListParams) (*VacList, error)
+	SearchVacancies(context.Context, *SearchParams) (*VacList, error)
+	AddRecommendation(context.Context, *AddRecParams) (*Empty, error)
+	GetRecommendation(context.Context, *GetRecParams) (*VacList, error)
 	mustEmbedUnimplementedVacancyServer()
 }
 
@@ -65,8 +118,23 @@ type UnimplementedVacancyServer struct {
 func (UnimplementedVacancyServer) CreateVacancy(context.Context, *Vac) (*Vac, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateVacancy not implemented")
 }
+func (UnimplementedVacancyServer) UpdateVacancy(context.Context, *Vac) (*Vac, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateVacancy not implemented")
+}
 func (UnimplementedVacancyServer) GetVacancy(context.Context, *VacId) (*Vac, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVacancy not implemented")
+}
+func (UnimplementedVacancyServer) GetVacancyList(context.Context, *VacListParams) (*VacList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVacancyList not implemented")
+}
+func (UnimplementedVacancyServer) SearchVacancies(context.Context, *SearchParams) (*VacList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchVacancies not implemented")
+}
+func (UnimplementedVacancyServer) AddRecommendation(context.Context, *AddRecParams) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRecommendation not implemented")
+}
+func (UnimplementedVacancyServer) GetRecommendation(context.Context, *GetRecParams) (*VacList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRecommendation not implemented")
 }
 func (UnimplementedVacancyServer) mustEmbedUnimplementedVacancyServer() {}
 
@@ -99,6 +167,24 @@ func _Vacancy_CreateVacancy_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Vacancy_UpdateVacancy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Vac)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).UpdateVacancy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/UpdateVacancy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).UpdateVacancy(ctx, req.(*Vac))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Vacancy_GetVacancy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(VacId)
 	if err := dec(in); err != nil {
@@ -117,6 +203,78 @@ func _Vacancy_GetVacancy_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Vacancy_GetVacancyList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VacListParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).GetVacancyList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/GetVacancyList",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).GetVacancyList(ctx, req.(*VacListParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Vacancy_SearchVacancies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).SearchVacancies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/SearchVacancies",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).SearchVacancies(ctx, req.(*SearchParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Vacancy_AddRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRecParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).AddRecommendation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/AddRecommendation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).AddRecommendation(ctx, req.(*AddRecParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Vacancy_GetRecommendation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRecParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).GetRecommendation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/GetRecommendation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).GetRecommendation(ctx, req.(*GetRecParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Vacancy_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "api.Vacancy",
 	HandlerType: (*VacancyServer)(nil),
@@ -126,8 +284,28 @@ var _Vacancy_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Vacancy_CreateVacancy_Handler,
 		},
 		{
+			MethodName: "UpdateVacancy",
+			Handler:    _Vacancy_UpdateVacancy_Handler,
+		},
+		{
 			MethodName: "GetVacancy",
 			Handler:    _Vacancy_GetVacancy_Handler,
+		},
+		{
+			MethodName: "GetVacancyList",
+			Handler:    _Vacancy_GetVacancyList_Handler,
+		},
+		{
+			MethodName: "SearchVacancies",
+			Handler:    _Vacancy_SearchVacancies_Handler,
+		},
+		{
+			MethodName: "AddRecommendation",
+			Handler:    _Vacancy_AddRecommendation_Handler,
+		},
+		{
+			MethodName: "GetRecommendation",
+			Handler:    _Vacancy_GetRecommendation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
