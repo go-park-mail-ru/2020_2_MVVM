@@ -3,7 +3,7 @@ package authmicro
 import (
 	"context"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/microservises/auth"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"strconv"

@@ -4,9 +4,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
-	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
@@ -18,6 +18,7 @@ import (
 type Dummies struct {
 	Resume       models.Resume
 	Candidate    models.Candidate
+	Employer     models.Employer
 	User         models.User
 	FavoriteEmpl models.FavoritesForEmpl
 	FavoriteCand models.FavoritesForCand
@@ -37,6 +38,12 @@ func makeCandRow(cand models.Candidate) *sqlmock.Rows {
 	return sqlmock.NewRows(columns).AddRow(values...)
 }
 
+func makeEmplRow(empl models.Employer) *sqlmock.Rows {
+	columns := []string{"empl_id", "user_id", "comp_id"}
+	values := []driver.Value{empl.ID, empl.UserID, empl.CompanyID}
+	return sqlmock.NewRows(columns).AddRow(values...)
+}
+
 func makeResumeRow(resume models.Resume) *sqlmock.Rows {
 	columns := []string{"resume_id", "cand_id", "title", "description", "salary_min",
 		"salary_max", "gender", "career_level", "education_level", "experience_month",
@@ -47,10 +54,16 @@ func makeResumeRow(resume models.Resume) *sqlmock.Rows {
 	return sqlmock.NewRows(columns).AddRow(values...)
 }
 
+func makeFavoriteEmplRow(favorite models.FavoritesForEmpl) *sqlmock.Rows {
+	return sqlmock.NewRows([]string{"favorite_id", "empl_id", "resume_id"}).
+		AddRow(favorite.FavoriteID, favorite.EmplID, favorite.ResumeID)
+}
+
 func makeDummies() Dummies {
 	DummyResumeID := uuid.MustParse("9922c7ce-b347-4a26-8413-cb2d307fbbc3")
 	DummyUserID := uuid.MustParse("b6dff916-e486-4e42-b68b-000000000000")
-	DummyCandID := uuid.MustParse("b6dff916-e486-4e42-b68b-fe90d9a0bfda")
+	DummyCandID := uuid.MustParse("b6dff916-e486-1235-b68b-fe90d9a0bfda")
+	DummyEmplID := uuid.MustParse("112b9873-e041-43b6-85fd-2466a000a490")
 	return Dummies{
 		Resume: models.Resume{
 			ResumeID:    DummyResumeID,
@@ -69,6 +82,21 @@ func makeDummies() Dummies {
 		User: models.User{
 			ID:       DummyUserID,
 			UserType: "candidate",
+		},
+		FavoriteEmpl: models.FavoritesForEmpl{
+			FavoriteID: uuid.New(),
+			EmplID:     DummyEmplID,
+			ResumeID:   DummyResumeID,
+		},
+		FavoriteCand: models.FavoritesForCand{
+			ID:        uuid.New(),
+			CandID:    DummyCandID,
+			VacancyID: uuid.New(),
+		},
+		Employer: models.Employer{
+			ID:        DummyEmplID,
+			UserID:    DummyUserID,
+			CompanyID: uuid.New(),
 		},
 	}
 }
@@ -308,16 +336,107 @@ func TestList(t *testing.T) {
 	assert.Error(t, err)
 }
 
-//func TestAddFavorite(t *testing.T) {
-//	repo, mock := beforeTest(t)
-//	dummies := makeDummies()
-//
-//	repo.AddFavorite()
-//}
+func TestAddFavorite(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
 
-//AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error)
-//RemoveFavorite(favoriteForEmpl uuid.UUID) error
-//GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resume, error)
-//GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
-//GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
-//Drop(resume models.Resume) error
+	// OK flow
+	query := "INSERT INTO (.*).\"favorite_for_empl\" (.*) VALUES (.*)"
+	mock.ExpectQuery(query).
+		WithArgs(dummies.FavoriteEmpl.EmplID, dummies.FavoriteEmpl.ResumeID, dummies.FavoriteEmpl.FavoriteID).
+		WillReturnRows(sqlmock.NewRows([]string{"favorite_id"}).AddRow(dummies.FavoriteEmpl.FavoriteID))
+	result, err := repo.AddFavorite(dummies.FavoriteEmpl)
+	assert.Nil(t, err)
+	assert.Equal(t, dummies.FavoriteEmpl, *result)
+
+	// Err flow
+	mock.ExpectQuery(query).WillReturnError(errors.New("TEST ERROR"))
+	result, err = repo.AddFavorite(dummies.FavoriteEmpl)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+}
+
+func TestRemoveFavorite(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	// OK flow
+	query := "DELETE FROM (.*).\"favorite_for_empl\" WHERE favorite_id = "
+	mock.ExpectExec(query).
+		WithArgs(dummies.FavoriteEmpl.FavoriteID).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	err := repo.RemoveFavorite(dummies.FavoriteEmpl.FavoriteID)
+	assert.Nil(t, err)
+
+	// Err flow
+	mock.ExpectQuery(query).WillReturnError(errors.New("TEST ERROR"))
+	err = repo.RemoveFavorite(dummies.FavoriteEmpl.FavoriteID)
+	assert.Error(t, err)
+}
+
+func TestGetAllEmplFavoriteResume(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	r := dummies.Resume
+	r.Candidate = dummies.Candidate
+	r.Candidate.User = dummies.User
+
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"employers\" WHERE \"employers\".\"empl_id\" = .*").
+		WithArgs(dummies.FavoriteEmpl.EmplID).
+		WillReturnRows(makeEmplRow(dummies.Employer))
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"favorite_for_empl\" WHERE \"favorite_for_empl\".\"empl_id\" = .*").
+		WithArgs(dummies.FavoriteEmpl.EmplID).
+		WillReturnRows(makeFavoriteEmplRow(dummies.FavoriteEmpl))
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"resume\" WHERE \"resume\".\"resume_id\" = .*").
+		WithArgs(r.ResumeID).
+		WillReturnRows(makeResumeRow(r))
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"candidates\" WHERE \"candidates\".\"cand_id\" = .*").
+		WithArgs(r.CandID).
+		WillReturnRows(makeCandRow(r.Candidate))
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"users\" WHERE \"users\".\"user_id\" = .*").
+		WithArgs(r.Candidate.UserID).
+		WillReturnRows(makeUserRow(r.Candidate.User))
+
+	result, err := repo.GetAllEmplFavoriteResume(dummies.FavoriteEmpl.EmplID)
+	assert.Nil(t, err)
+	assert.Equal(t, []models.Resume{r}, result)
+
+	mock.ExpectQuery(".*").WillReturnError(errors.New("TEST ERROR"))
+	result, err = repo.GetAllEmplFavoriteResume(dummies.FavoriteEmpl.EmplID)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+}
+
+func TestGetFavoriteForResume(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"favorite_for_empl\" WHERE " +
+		"empl_id = (.*) AND resume_id = (.*) .* LIMIT 1").
+		WithArgs(dummies.Employer.ID, dummies.Resume.ResumeID).
+		WillReturnRows(makeFavoriteEmplRow(dummies.FavoriteEmpl))
+	result, err := repo.GetFavoriteForResume(dummies.Employer.ID, dummies.Resume.ResumeID)
+
+	assert.Nil(t, err)
+	assert.Equal(t, dummies.FavoriteEmpl, *result)
+}
+
+func TestGetFavoriteByID(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"favorite_for_empl\" WHERE  \"favorite_for_empl\".\"favorite_id\" = (.*) .*").
+		WithArgs(dummies.FavoriteEmpl.FavoriteID).
+		WillReturnRows(makeFavoriteEmplRow(dummies.FavoriteEmpl))
+	result, err := repo.GetFavoriteByID(dummies.FavoriteEmpl.FavoriteID)
+
+	assert.Nil(t, err)
+	assert.Equal(t, dummies.FavoriteEmpl, *result)
+
+	mock.ExpectQuery(".*").WillReturnError(errors.New("TEST ERROR"))
+	result, err = repo.GetFavoriteByID(dummies.FavoriteEmpl.FavoriteID)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+}

@@ -4,7 +4,7 @@ package vacancy
 
 import (
 	json "encoding/json"
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"

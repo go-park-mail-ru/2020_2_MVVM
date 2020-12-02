@@ -3,7 +3,7 @@ package usecase
 import (
 	"github.com/apsdehal/go-logger"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

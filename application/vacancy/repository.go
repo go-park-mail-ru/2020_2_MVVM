@@ -1,8 +1,8 @@
 package vacancy
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	"github.com/google/uuid"
 )
 

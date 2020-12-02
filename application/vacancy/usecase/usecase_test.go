@@ -2,8 +2,8 @@ package usecase
 
 import (
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/vacancy"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

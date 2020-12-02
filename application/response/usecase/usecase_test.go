@@ -4,7 +4,7 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	mCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/response"
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"

@@ -5,8 +5,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	user2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	user2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/user"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"golang.org/x/crypto/bcrypt"
@@ -132,11 +132,10 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 	}
 }
 
-func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
+func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) error {
 	session, err := u.authClient.Login(reqUser.Email, reqUser.Password)
 	if err != nil {
-		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
-		return
+		return err
 	}
 
 	// Save session id to the cookie
@@ -150,6 +149,7 @@ func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) {
 		Secure:   u.cookieConfig.Secure,
 		HttpOnly: u.cookieConfig.HttpOnly,
 	})
+	return nil
 }
 
 func (u *UserHandler) LoginHandler(ctx *gin.Context) {
@@ -163,7 +163,11 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-	u.login(ctx, reqUser)
+	err := u.login(ctx, reqUser)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -229,7 +233,12 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		Email:    userNew.Email,
 		Password: req.Password,
 	}
-	u.login(ctx, reqUser)
+
+	err = u.login(ctx, reqUser)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
 	resp := models.RespUser{User: userNew}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
