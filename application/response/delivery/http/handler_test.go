@@ -354,7 +354,6 @@ func TestGetAllNotifications(t *testing.T) {
 	var start uint = 0
 	var end uint = 1
 
-
 	req1 := response2.ReqNotify{
 		VacInLastNDays:       nil,
 		OnlyVacCnt:           true,
@@ -380,7 +379,6 @@ func TestGetAllNotifications(t *testing.T) {
 	td.mockUseCase.On("GetRecommendedVacCnt", ID, common.Week).Return(count, nil).Once()
 
 	//vacancies flow
-
 	vacancy := models.Vacancy{ID: ID}
 	listVacancy := []models.Vacancy{vacancy, vacancy}
 	response := models.ResponseWithTitle{ResponseID: ID}
@@ -412,16 +410,8 @@ func TestGetAllNotifications(t *testing.T) {
 	httpStatus := []int{
 		http.StatusOK,
 		http.StatusOK,
-		http.StatusBadRequest,
-		http.StatusInternalServerError,
-		//http.StatusMethodNotAllowed,
 	}
-	testExpectedBody := []interface{}{
-		resp1, resp2,
-		common.EmptyFieldErr,
-		common.DataBaseErr,
-	}
-
+	testExpectedBody := []interface{}{resp1, resp2}
 	testParamsForPost := []interface{}{req1, req2}
 
 	for i := range testUrls {
@@ -437,5 +427,52 @@ func TestGetAllNotifications(t *testing.T) {
 	}
 }
 
+func TestGetAllNotificationsErrors(t *testing.T) {
+	td := beforeTest()
+	td.router.POST("/notify", td.responseHandler.handlerGetAllNotifications)
+	ID := uuid.New()
 
+	req1 := response2.ReqNotify{
+		VacInLastNDays:       nil,
+		OnlyVacCnt:           true,
+		ListStart:            0,
+		ListEnd:              1,
+		NewRespNotifications: nil,
+		OnlyRespCnt:          true,
+	}
 
+	//not allowed
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("GetEmplID").Return(nil)
+	td.mockSession.On("GetCandID").Return(nil).Once()
+
+	//nil body
+	td.mockSession.On("GetCandID").Return(ID)
+
+	testUrls := []string{
+		fmt.Sprintf("%snotify", responseUrlGroup),
+		fmt.Sprintf("%snotify", responseUrlGroup),
+	}
+	httpStatus := []int{
+		http.StatusMethodNotAllowed,
+		http.StatusBadRequest,
+	}
+	testExpectedBody := []interface{}{
+		common.AuthRequiredErr,
+		common.EmptyFieldErr,
+	}
+
+	testParamsForPost := []interface{}{req1, nil}
+
+	for i := range testUrls {
+		t.Run("test responses on different urls for create response handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}

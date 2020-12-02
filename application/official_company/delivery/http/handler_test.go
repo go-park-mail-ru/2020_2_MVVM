@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/microservises/auth"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
@@ -166,7 +165,6 @@ func TestSearchCompaniesHandler(t *testing.T) {
 		})
 	}
 }
-
 
 func TestGetUserCompanyHandler(t *testing.T) {
 	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase

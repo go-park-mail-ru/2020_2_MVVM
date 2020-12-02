@@ -23,14 +23,15 @@ func TestGetOfficialCompany(t *testing.T) {
 	comp := models.OfficialCompany{
 		ID: compID,
 	}
-	mockRepo.On("GetOfficialCompany", compID).Return(&comp, nil)
-	mockRepo.On("GetOfficialCompany", emptyCompID).Return(nil, nil)
+	mockRepo.On("GetOfficialCompany", compID).Return(&comp, nil).Once()
 	ansCorrect, errNil1 := useCase.GetOfficialCompany(compID)
-	ansNil, errNil2 := useCase.GetOfficialCompany(emptyCompID)
 	assert.Nil(t, errNil1)
-	assert.Nil(t, errNil2)
-	assert.Nil(t, ansNil)
 	assert.Equal(t, *ansCorrect, comp)
+
+	mockRepo.On("GetOfficialCompany", emptyCompID).Return(nil, assert.AnError)
+	ansNil, errNil2 := useCase.GetOfficialCompany(emptyCompID)
+	assert.Error(t, errNil2)
+	assert.Nil(t, ansNil)
 }
 
 func TestGetMineCompany(t *testing.T) {
@@ -124,4 +125,37 @@ func TestSearchCompanies(t *testing.T) {
 func TestNewCompUseCase(t *testing.T) {
 	useCase := NewCompUseCase(nil, nil, nil)
 	assert.Equal(t, useCase, &CompanyUseCase{nil, nil, nil})
+}
+
+func TestDeleteOfficialCompany(t *testing.T) {
+	mockRepo, useCase := beforeTest()
+	ID := uuid.New()
+
+	mockRepo.On("DeleteOfficialCompany", ID, ID).Return(nil).Once()
+	errNil := useCase.DeleteOfficialCompany(ID, ID)
+	assert.Nil(t, errNil)
+
+	mockRepo.On("DeleteOfficialCompany", ID, ID).Return(assert.AnError)
+	errNotNil := useCase.DeleteOfficialCompany(ID, ID)
+	assert.Error(t, errNotNil)
+}
+
+func TestUpdateOfficialCompany(t *testing.T) {
+	mockRepo, useCase := beforeTest()
+	ID := uuid.New()
+	comp := models.OfficialCompany{
+		Name:        "name",
+		Description: "description",
+		AreaSearch:  "area",
+		Link:        "link",
+	}
+	mockRepo.On("UpdateOfficialCompany", comp, ID).Return(&comp, nil).Once()
+	ansCorrect, errNil := useCase.UpdateOfficialCompany(comp, ID)
+	assert.Nil(t, errNil)
+	assert.Equal(t, *ansCorrect, comp)
+
+	mockRepo.On("UpdateOfficialCompany", comp, uuid.Nil).Return(nil, assert.AnError)
+	ansWrong, errNotNil := useCase.UpdateOfficialCompany(comp, uuid.Nil)
+	assert.Nil(t, ansWrong)
+	assert.Error(t, errNotNil)
 }
