@@ -84,7 +84,6 @@ func NewApp(config Config) *App {
 	if err != nil {
 		log.Error.Fatal("connection to postgres db failed...")
 	}
-
 	r.Use(middlewares.RequestLogger(log.Info))
 	r.Use(middlewares.ErrorLogger(log.Error))
 	r.Use(middlewares.ErrorMiddleware())
@@ -111,13 +110,14 @@ func NewApp(config Config) *App {
 	authCookieConfig := common.AuthCookieConfig{
 		Key:    "session",
 		Path:   "/",
-		Domain: "localhost", // for postman
-		//Domain:   "studhunt.ru",
+		//Domain: "localhost", // for postman
+		Domain:   "studhunt.ru",
 		MaxAge: int((time.Hour * 12).Seconds()),
-		//Secure:   true,
-		Secure:   false, // for postman
+		Secure:   true,
+		//Secure:   false, // for postman
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
+		//SameSite: http.SameSiteStrictMode, prevent csrf
 	}
 	sessionBuilder := SessionBuilder.NewSessionBuilder{}
 	authMiddleware := middlewares.AuthRequired(authCookieConfig, authMicro)
@@ -132,7 +132,7 @@ func NewApp(config Config) *App {
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.Info, log.Error, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company, authMiddleware)
+	CompanyHandler.NewRest(api.Group("/company"), company, &sessionBuilder, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	//educationRep := EducationRepository.NewPgRepository(db)
