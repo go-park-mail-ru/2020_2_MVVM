@@ -155,19 +155,23 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 	}
 
 	var isFavorite *uuid.UUID = nil
-	session := r.SessionBuilder.Build(ctx)
-	emplID := session.GetEmplID()
 
-	if emplID != uuid.Nil {
-		favorite, err := r.UseCaseResume.GetFavoriteByResume(emplID, result.ResumeID)
-		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-		if favorite != nil {
-			isFavorite = &favorite.FavoriteID
+	session := r.SessionBuilder.Build(ctx)
+
+	if session != nil {
+		emplID := session.GetEmplID()
+		if emplID != uuid.Nil {
+			favorite, err := r.UseCaseResume.GetFavoriteByResume(emplID, result.ResumeID)
+			if err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
+			if favorite != nil {
+				isFavorite = &favorite.FavoriteID
+			}
 		}
 	}
+
 
 	resp := resume2.Response{
 		User:             result.Candidate.User,
