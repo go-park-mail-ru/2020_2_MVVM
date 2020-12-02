@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"

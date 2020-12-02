@@ -1,6 +1,6 @@
 package vacancy
 
-import "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+import "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 
 //len = 29
 /*var Spheres = []string{

@@ -5,8 +5,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )

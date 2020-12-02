@@ -3,7 +3,7 @@
 package vacancy
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	uuid "github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )

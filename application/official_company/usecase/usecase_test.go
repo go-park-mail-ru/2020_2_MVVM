@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

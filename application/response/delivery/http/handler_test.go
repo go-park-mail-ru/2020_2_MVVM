@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	response2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/response"
@@ -53,6 +54,9 @@ func beforeTest() TestData {
 
 func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
+	case response2.RespNotifications:
+		notify := entity.(response2.RespNotifications)
+		return &notify
 	case models.Response:
 		response := entity.(models.Response)
 		return &response
@@ -341,3 +345,64 @@ func TestGetAllVacancyWithoutResponse(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAllNotifications(t *testing.T) {
+	td := beforeTest()
+	td.router.POST("/notify", td.responseHandler.handlerGetAllNotifications)
+	ID := uuid.New()
+	var count uint = 5
+
+	req := response2.ReqNotify{
+		VacInLastNDays:       nil,
+		OnlyVacCnt:           true,
+		ListStart:            0,
+		ListEnd:              0,
+		NewRespNotifications: nil,
+		OnlyRespCnt:          true,
+	}
+
+	resp := response2.RespNotifications{
+		UnreadResp:        nil,
+		UnreadRespCnt:     count,
+		RecommendedVac:    nil,
+		RecommendedVacCnt: count,
+	}
+
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("GetEmplID").Return(ID).Once()
+	td.mockSession.On("GetCandID").Return(nil).Once()
+	td.mockSession.On("GetUserID").Return(ID).Once()
+	td.mockUseCase.On("GetResponsesCnt", ID, common.EmplID).Return(count, nil).Once()
+	td.mockUseCase.On("GetRecommendedVacCnt", ID, common.Week).Return(count, nil).Once()
+
+	testUrls := []string{
+		fmt.Sprintf("%snotify", responseUrlGroup),
+	}
+	httpStatus := []int{
+		http.StatusOK,
+		http.StatusBadRequest,
+		http.StatusInternalServerError,
+		//http.StatusMethodNotAllowed,
+	}
+	testExpectedBody := []interface{}{
+		resp,
+		common.EmptyFieldErr,
+		common.DataBaseErr,
+	}
+
+	testParamsForPost := []interface{}{req}
+
+	for i := range testUrls {
+		t.Run("test responses on different urls for create response handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+

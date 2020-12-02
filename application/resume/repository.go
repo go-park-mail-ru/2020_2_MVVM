@@ -1,8 +1,8 @@
 package resume
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 )
 
