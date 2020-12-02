@@ -211,12 +211,12 @@ func getNewResponses(r *ResponseHandler, unId uuid.UUID, userType string, respId
 		responses []models.ResponseWithTitle
 		err       error
 	)
-	if userType == common.Candidate {
+	if userType == common.CandID {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
-	} else if userType == common.Employer {
+	} else if userType == common.EmplID {
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)

@@ -350,47 +350,80 @@ func TestGetAllNotifications(t *testing.T) {
 	td := beforeTest()
 	td.router.POST("/notify", td.responseHandler.handlerGetAllNotifications)
 	ID := uuid.New()
-	var count uint = 5
+	var count uint = 2
+	var start uint = 0
+	var end uint = 1
 
-	req := response2.ReqNotify{
+
+	req1 := response2.ReqNotify{
 		VacInLastNDays:       nil,
 		OnlyVacCnt:           true,
 		ListStart:            0,
-		ListEnd:              0,
+		ListEnd:              1,
 		NewRespNotifications: nil,
 		OnlyRespCnt:          true,
 	}
 
-	resp := response2.RespNotifications{
+	resp1 := response2.RespNotifications{
 		UnreadResp:        nil,
 		UnreadRespCnt:     count,
 		RecommendedVac:    nil,
 		RecommendedVacCnt: count,
 	}
 
+	//count flow
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
-	td.mockSession.On("GetEmplID").Return(ID).Once()
-	td.mockSession.On("GetCandID").Return(nil).Once()
-	td.mockSession.On("GetUserID").Return(ID).Once()
+	td.mockSession.On("GetEmplID").Return(ID)
+	td.mockSession.On("GetCandID").Return(nil)
+	td.mockSession.On("GetUserID").Return(ID)
 	td.mockUseCase.On("GetResponsesCnt", ID, common.EmplID).Return(count, nil).Once()
 	td.mockUseCase.On("GetRecommendedVacCnt", ID, common.Week).Return(count, nil).Once()
 
+	//vacancies flow
+
+	vacancy := models.Vacancy{ID: ID}
+	listVacancy := []models.Vacancy{vacancy, vacancy}
+	response := models.ResponseWithTitle{ResponseID: ID}
+	listResp := []models.ResponseWithTitle{response, response}
+	req2 := response2.ReqNotify{
+		VacInLastNDays:       nil,
+		OnlyVacCnt:           false,
+		ListStart:            start,
+		ListEnd:              end,
+		NewRespNotifications: []uuid.UUID{ID},
+		OnlyRespCnt:          false,
+	}
+
+	resp2 := response2.RespNotifications{
+		UnreadResp:        listResp,
+		UnreadRespCnt:     count,
+		RecommendedVac:    listVacancy,
+		RecommendedVacCnt: count,
+	}
+
+	//listID := []uuid.UUID
+
+	td.mockUseCase.On("GetAllEmployerResponses", ID, []uuid.UUID{ID}).Return(listResp, nil).Once()
+	td.mockUseCase.On("GetRecommendedVacancies", ID, start, end, common.Week).Return(listVacancy, nil).Once()
+
 	testUrls := []string{
+		fmt.Sprintf("%snotify", responseUrlGroup),
 		fmt.Sprintf("%snotify", responseUrlGroup),
 	}
 	httpStatus := []int{
+		http.StatusOK,
 		http.StatusOK,
 		http.StatusBadRequest,
 		http.StatusInternalServerError,
 		//http.StatusMethodNotAllowed,
 	}
 	testExpectedBody := []interface{}{
-		resp,
+		resp1, resp2,
 		common.EmptyFieldErr,
 		common.DataBaseErr,
 	}
 
-	testParamsForPost := []interface{}{req}
+	testParamsForPost := []interface{}{req1, req2}
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for create response handler", func(t *testing.T) {
@@ -405,4 +438,7 @@ func TestGetAllNotifications(t *testing.T) {
 	}
 }
 
+
+//{"unread_resp":[{"response_id":"af173205-40c9-4764-8cd2-747e549ac394","resume_id":"00000000-0000-0000-0000-000000000000","resume_name":"","cand_name":"","cand_surname":"","vacancy_id":"00000000-0000-0000-0000-000000000000","vacancy_name":"","company_id":"00000000-0000-0000-0000-000000000000","company_name":"","initial":"","status":"","date_create":"0001-01-01T00:00:00Z"}],"unread_resp_cnt":2,"recommended_vac":[{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""},{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""}],"recommended_vac_cnt":2} but instead got {"unread_resp":null,"unread_resp_cnt":0,"recommended_vac":[{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""},{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""}],"recommended_vac_cnt":2}
+//
 
