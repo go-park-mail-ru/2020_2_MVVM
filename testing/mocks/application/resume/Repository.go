@@ -3,8 +3,8 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	resume "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -228,11 +228,11 @@ func (_m *Repository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {
 }
 
 // Search provides a mock function with given fields: searchParams
-func (_m *Repository) Search(searchParams *resume.SearchParams) ([]models.Resume, error) {
+func (_m *Repository) Search(searchParams *resume2.SearchParams) ([]models.Resume, error) {
 	ret := _m.Called(searchParams)
 
 	var r0 []models.Resume
-	if rf, ok := ret.Get(0).(func(*resume.SearchParams) []models.Resume); ok {
+	if rf, ok := ret.Get(0).(func(*resume2.SearchParams) []models.Resume); ok {
 		r0 = rf(searchParams)
 	} else {
 		if ret.Get(0) != nil {
@@ -241,7 +241,7 @@ func (_m *Repository) Search(searchParams *resume.SearchParams) ([]models.Resume
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*resume.SearchParams) error); ok {
+	if rf, ok := ret.Get(1).(func(*resume2.SearchParams) error); ok {
 		r1 = rf(searchParams)
 	} else {
 		r1 = ret.Error(1)

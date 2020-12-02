@@ -2,26 +2,131 @@ package repository
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
-	"github.com/go-pg/pg/v9"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
-	pgwrapper "gitlab.com/slax0rr/go-pg-wrapper"
-
-	//"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
-type pgReopository struct {
-	//db *pg.DB
-	db pgwrapper.DB
+type pgRepository struct {
+	db            *gorm.DB
+	vacRepository vacancy.RepositoryVacancy
 }
 
-func NewPgRepository(db *pg.DB) response.ResponseRepository {
-	return &pgReopository{db: pgwrapper.NewDB(db)}
+func NewPgRepository(db *gorm.DB, vacRepository vacancy.RepositoryVacancy) response.ResponseRepository {
+	return &pgRepository{db: db, vacRepository: vacRepository}
 }
 
-func (p *pgReopository) Create(response models.Response) (*models.Response, error) {
-	_, err := p.db.Model(&response).Returning("*").Insert()
+func (p pgRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (uint, error) {
+	var (
+		cnt  uint = 0
+		temp uint = 0
+	)
+	step := 2
+	curSphere := 0
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(candId)
+	if err != nil {
+		if err.Error() == common.NoRecommendation {
+			return 0, err
+		}
+		return 0, fmt.Errorf("error in GetRecommended vacancy cnt: %w", err)
+	}
+	for curSphere < vacancy2.CountSpheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+		err = p.db.Raw("select count(*) from main.vacancy where date_create >= ? and sphere in ?", startDate, arr).Scan(&temp).Error
+		cnt += temp
+		if err != nil {
+			err = fmt.Errorf("error in getRecommended vacancies: %w", err)
+			return 0, err
+		}
+		curSphere += step
+	}
+	return cnt, nil
+}
+
+func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error) {
+	step := 2
+	curSphere := 0
+	preferredSphere, err := p.vacRepository.GetPreferredSpheres(candId)
+	if err != nil {
+		if err.Error() == common.NoRecommendation {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error in GetRecommended vacancies: %w", err)
+	}
+	var (
+		vacList []models.Vacancy
+		list    []models.Vacancy
+	)
+	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+		err := p.db.Table("main.vacancy").Where("date_create >= ? and sphere in ?", startDate, arr).
+			Limit(limit).Offset(start).Find(&list).Error
+		vacList = append(vacList, list...)
+		if err != nil {
+			err = fmt.Errorf("error in GetRecommendation: %w", err)
+			return nil, err
+		}
+		curSphere += step
+	}
+	end := limit
+	if limit > len(vacList) {
+		end = len(vacList)
+	}
+	return vacList[0:end], err
+}
+
+func (p pgRepository) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	var (
+		err error
+		cnt uint
+	)
+	if userType == common.Candidate {
+		err = p.db.Raw("select count(*) from main.resume "+
+			"join main.response using(resume_id)"+
+			"where resume.cand_id = ?", userId).Scan(&cnt).Error
+	} else {
+		err = p.db.Raw("select count(*) from main.vacancy "+
+			"join main.response on vacancy_id=vac_id "+
+			"where vacancy.empl_id = ?", userId).Scan(&cnt).Error
+	}
+	return cnt, err
+}
+
+func (p pgRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UUID, entityType int) ([]models.Response, error) {
+	var (
+		responses []models.Response
+		err       error
+	)
+	if entityType == common.Resume {
+		err = p.db.Table("main.response").
+			Where("resume_id = ? and response_id IN ?", entityId, respIds).
+			UpdateColumn("unread", false).
+			Error
+	} else {
+		err = p.db.Table("main.response").Where("vacancy_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
+	}
+	if err != nil {
+		err = fmt.Errorf("error in get list responses: %w", err)
+		return nil, err
+	}
+	if entityType == common.Vacancy {
+		err = p.db.Where("vacancy_id = ? and unread = ?", entityId, true).Find(&responses).Error
+	} else {
+		err = p.db.Where("resume_id = ? and unread = ?", entityId, true).Find(&responses).Error
+	}
+	if err != nil {
+		err = fmt.Errorf("error in get list responses: %w", err)
+		return nil, err
+	}
+	return responses, nil
+}
+
+func (p *pgRepository) Create(response models.Response) (*models.Response, error) {
+	err := p.db.Create(&response).Error
 	if err != nil {
 		err = fmt.Errorf("error in inserting response: %w", err)
 		return nil, err
@@ -29,17 +134,17 @@ func (p *pgReopository) Create(response models.Response) (*models.Response, erro
 	return &response, nil
 }
 
-func (p *pgReopository) GetByID(responseID uuid.UUID) (*models.Response, error) {
-	var response models.Response
-	err := p.db.Model(&response).Where("response_id = ?", responseID).Select()
+func (p *pgRepository) GetByID(responseID uuid.UUID) (*models.Response, error) {
+	response := new(models.Response)
+	err := p.db.First(&response, responseID).Error
 	if err != nil {
 		return nil, err
 	}
-	return &response, nil
+	return response, nil
 }
 
-func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response, error) {
-	_, err := p.db.Model(&response).WherePK().Returning("*").UpdateNotZero()
+func (p *pgRepository) UpdateStatus(response models.Response) (*models.Response, error) {
+	err := p.db.Model(&response).Update("status", response.Status).Error
 	if err != nil {
 		err = fmt.Errorf("error in updating response with id %s, : %w", response.ID.String(), err)
 		return nil, err
@@ -47,9 +152,9 @@ func (p *pgReopository) UpdateStatus(response models.Response) (*models.Response
 	return &response, nil
 }
 
-func (p *pgReopository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
+func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Model(&responses).Where("resume_id = ?", resumeID).Select()
+	err := p.db.Find(&responses, "resume_id = ?", resumeID).Error
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
@@ -57,9 +162,9 @@ func (p *pgReopository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Respo
 	return responses, nil
 }
 
-func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
+func (p *pgRepository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Model(&responses).Where("vacancy_id = ?", vacancyID).Select()
+	err := p.db.Find(&responses, "vacancy_id = ?", vacancyID).Error
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
@@ -67,25 +172,35 @@ func (p *pgReopository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Res
 	return responses, nil
 }
 
-func (p *pgReopository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
+func (p *pgRepository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
 	var resume []models.Resume
-	query := fmt.Sprintf(`select main.resume.* from main.resume left join main.response on main.response.resume_id = main.resume.resume_id where cand_id = '%s' group by main.resume.resume_id having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
-	_, err := p.db.Query(&resume, query)
+	//query := fmt.Sprintf(`select resume.*
+	//		from resume
+	//		left join response on response.resume_id = resume.resume_id
+	//		where cand_id = '%s'
+	//		group by resume.resume_id
+	//		having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
+	err := p.db.Raw(`select main.resume.* 
+			from main.resume 
+			left join main.response on main.response.resume_id = main.resume.resume_id 
+			where cand_id = ?
+			group by main.resume.resume_id 
+			having sum(case when vacancy_id = ? then 1 else 0 end) = 0`, candID, vacancyID).
+		Scan(&resume).Error
 	if err != nil {
 		return nil, err
 	}
 	return resume, nil
 }
 
-func (p *pgReopository) GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error) {
+func (p *pgRepository) GetAllVacancyWithoutResponse(emplID uuid.UUID, resumeID uuid.UUID) ([]models.Vacancy, error) {
 	var vacancies []models.Vacancy
-	query := fmt.Sprintf(`select main.vacancy.*
+	err := p.db.Raw(`select main.vacancy.*
 			from main.vacancy
 			left join main.response on main.response.vacancy_id = main.vacancy.vac_id
-			where empl_id = '%s'
+			where empl_id = ?
 			group by main.vacancy.vac_id
-			having sum(case when resume_id = '%s' then 1 else 0 end) = 0`, emplID, resumeID)
-	_, err := p.db.Query(&vacancies, query)
+			having sum(case when resume_id = ? then 1 else 0 end) = 0`, emplID, resumeID).Scan(&vacancies).Error
 	if err != nil {
 		return nil, err
 	}

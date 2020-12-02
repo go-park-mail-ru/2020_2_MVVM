@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	uuid "github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -48,50 +48,4 @@ func (_m *UseCase) DropAllFromResume(resumeID uuid.UUID) error {
 	}
 
 	return r0
-}
-
-// GetAllFromResume provides a mock function with given fields: resumeID
-func (_m *UseCase) GetAllFromResume(resumeID uuid.UUID) ([]models.Education, error) {
-	ret := _m.Called(resumeID)
-
-	var r0 []models.Education
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []models.Education); ok {
-		r0 = rf(resumeID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Education)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(resumeID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetById provides a mock function with given fields: id
-func (_m *UseCase) GetById(id string) (*models.Education, error) {
-	ret := _m.Called(id)
-
-	var r0 *models.Education
-	if rf, ok := ret.Get(0).(func(string) *models.Education); ok {
-		r0 = rf(id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Education)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }

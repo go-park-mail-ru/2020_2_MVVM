@@ -3,8 +3,8 @@ package usecase
 import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	mCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/response"
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
@@ -34,12 +34,12 @@ var testUser = models.User{
 var candidate = models.Candidate{
 	ID:     ID,
 	UserID: ID,
-	User:   &testUser,
+	User:   testUser,
 }
 var testResume = models.Resume{
 	ResumeID:  ID,
 	CandID:    ID,
-	Candidate: &candidate,
+	Candidate: candidate,
 	Title:     "ID",
 }
 var briefResume = models.BriefResumeInfo{
@@ -201,7 +201,7 @@ func TestGetAllCandidateResponses(t *testing.T) {
 	mockCompanyUS.On("GetOfficialCompany", ID).Return(&testCompany, nil)
 
 	listRespWithTitle := []models.ResponseWithTitle{respWithTitle}
-	answerCorrect, errNill := usecase.GetAllCandidateResponses(ID)
+	answerCorrect, errNill := usecase.GetAllCandidateResponses(ID, []uuid.UUID(nil))
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listRespWithTitle)
 }
@@ -223,7 +223,7 @@ func TestGetAllEmployerResponses(t *testing.T) {
 	mockResumeUS.On("GetById", ID).Return(&testResume, nil)
 
 	listRespWithTitle := []models.ResponseWithTitle{respWithTitle}
-	answerCorrect, errNill := usecase.GetAllEmployerResponses(ID)
+	answerCorrect, errNill := usecase.GetAllEmployerResponses(ID, []uuid.UUID(nil))
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listRespWithTitle)
 }
@@ -254,4 +254,9 @@ func TestGetAllVacancyWithoutResponse(t *testing.T) {
 	answerCorrect, errNill := usecase.GetAllVacancyWithoutResponse(ID, ID)
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listVacancy)
+}
+
+func TestNewUsecase(t *testing.T) {
+	useCase := NewUsecase(nil, nil, nil, nil, nil, nil)
+	assert.Equal(t, useCase, &UseCaseResponse{nil, nil, nil, nil, nil, nil})
 }

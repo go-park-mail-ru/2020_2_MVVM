@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"time"
@@ -88,14 +88,22 @@ func (u *UseCaseResponse) UpdateStatus(response models.Response, userUpdate stri
 	return u.strg.UpdateStatus(response)
 }
 
-func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID) ([]models.ResponseWithTitle, error) {
+func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
+	var (
+		responses []models.ResponseWithTitle
+		resp      []models.Response
+		err       error
+	)
 	resumes, err := u.resumeUsecase.GetAllUserResume(candID)
 	if err != nil {
 		return nil, err
 	}
-	var responses []models.ResponseWithTitle
 	for i := range resumes {
-		resp, err := u.strg.GetResumeAllResponse(resumes[i].ResumeID)
+		if respIds != nil {
+			resp, err = u.strg.GetRespNotifications(respIds, resumes[i].ResumeID, common.Resume)
+		} else {
+			resp, err = u.strg.GetResumeAllResponse(resumes[i].ResumeID)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -130,15 +138,23 @@ func (u *UseCaseResponse) GetAllCandidateResponses(candID uuid.UUID) ([]models.R
 	return responses, nil
 }
 
-func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID) ([]models.ResponseWithTitle, error) {
+func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
+	var (
+		responses []models.ResponseWithTitle
+		resp      []models.Response
+		err       error
+	)
 	vacancyList, err := u.vacancyUsecase.GetVacancyList(0, 100, emplID, vacancy.ByEmpId)
 	if err != nil {
 		return nil, err
 	}
-	var responses []models.ResponseWithTitle
 	for i := range vacancyList {
 		comp, err := u.companyUsecase.GetOfficialCompany(vacancyList[i].CompID)
-		resp, err := u.strg.GetVacancyAllResponse(vacancyList[i].ID)
+		if respIds != nil {
+			resp, err = u.strg.GetRespNotifications(respIds, vacancyList[i].ID, common.Vacancy)
+		} else {
+			resp, err = u.strg.GetVacancyAllResponse(vacancyList[i].ID)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -165,9 +181,30 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID) ([]models.Re
 		responses[i].ResumeName = res.Title
 		responses[i].CandName = res.Candidate.User.Name
 		responses[i].CandSurname = res.Candidate.User.Surname
-
 	}
 	return responses, nil
+}
+
+func (u *UseCaseResponse) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	cnt, err := u.strg.GetResponsesCnt(userId, userType)
+	return cnt, err
+}
+
+func (u *UseCaseResponse) GetRecommendedVacCnt(candId uuid.UUID, daysFromNow int) (uint, error) {
+	startDate := ""
+	if daysFromNow > 0 {
+		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
+	}
+	cnt, err := u.strg.GetRecommendedVacCnt(candId, startDate)
+	return cnt, err
+}
+
+func (u *UseCaseResponse) GetRecommendedVacancies(candId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error) {
+	startDate := ""
+	if daysFromNow > 0 {
+		startDate = time.Now().AddDate(0, 0, -daysFromNow).Format("2006-01-02")
+	}
+	return u.strg.GetRecommendedVacancies(candId, int(start), int(limit), startDate)
 }
 
 func (u *UseCaseResponse) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.BriefResumeInfo, error) {

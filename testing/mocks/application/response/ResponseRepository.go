@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -99,6 +99,94 @@ func (_m *ResponseRepository) GetByID(responseID uuid.UUID) (*models.Response, e
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
 		r1 = rf(responseID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRecommendedVacCnt provides a mock function with given fields: candId, startDate
+func (_m *ResponseRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (uint, error) {
+	ret := _m.Called(candId, startDate)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uuid.UUID, string) uint); ok {
+		r0 = rf(candId, startDate)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, string) error); ok {
+		r1 = rf(candId, startDate)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRecommendedVacancies provides a mock function with given fields: candId, start, limit, startDate
+func (_m *ResponseRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit int, startDate string) ([]models.Vacancy, error) {
+	ret := _m.Called(candId, start, limit, startDate)
+
+	var r0 []models.Vacancy
+	if rf, ok := ret.Get(0).(func(uuid.UUID, int, int, string) []models.Vacancy); ok {
+		r0 = rf(candId, start, limit, startDate)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Vacancy)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, int, int, string) error); ok {
+		r1 = rf(candId, start, limit, startDate)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRespNotifications provides a mock function with given fields: respIds, entityId, entityType
+func (_m *ResponseRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UUID, entityType int) ([]models.Response, error) {
+	ret := _m.Called(respIds, entityId, entityType)
+
+	var r0 []models.Response
+	if rf, ok := ret.Get(0).(func([]uuid.UUID, uuid.UUID, int) []models.Response); ok {
+		r0 = rf(respIds, entityId, entityType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Response)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func([]uuid.UUID, uuid.UUID, int) error); ok {
+		r1 = rf(respIds, entityId, entityType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetResponsesCnt provides a mock function with given fields: userId, userType
+func (_m *ResponseRepository) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	ret := _m.Called(userId, userType)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uuid.UUID, string) uint); ok {
+		r0 = rf(userId, userType)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, string) error); ok {
+		r1 = rf(userId, userType)
 	} else {
 		r1 = ret.Error(1)
 	}

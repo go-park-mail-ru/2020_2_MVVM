@@ -12,7 +12,7 @@ create table resume
         constraint resume_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references candidates(cand_id),
+            references candidates(cand_id) ON DELETE CASCADE,
     title varchar(128) not null,
     description text not null,
     salary_min int null,
@@ -24,6 +24,7 @@ create table resume
     skills text null,
     place text null,
     area_search text,
+    path_to_avatar varchar(256),
     date_create date not null
 );
 

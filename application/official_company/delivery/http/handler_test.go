@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
-	mocks2 "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +22,6 @@ var testData struct {
 	compHandler *CompanyHandler
 	router      *gin.Engine
 	mockUseCase *mocks.IUseCaseOfficialCompany
-	mockAuth    *mocks2.AuthTest
 	httpStatus  []int
 	compList    []models.OfficialCompany
 }
@@ -47,10 +45,8 @@ func setUp() {
 		{Name: "name3", Description: "description3", Link: "link3", AreaSearch: "area3"},
 	}
 	testData.mockUseCase = new(mocks.IUseCaseOfficialCompany)
-	//testData.mockAuth = new(mocks2.AuthTest)
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	//testData.mockAuth.On("AuthRequired").Return(nil)
 	testData.compHandler = NewRest(api.Group("/company"), testData.mockUseCase, nil)
 }
 
@@ -58,16 +54,16 @@ func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
 	case models.OfficialCompany:
 		comp := entity.(models.OfficialCompany)
-		return Resp{&comp}
+		return models.Resp{&comp}
 	case []models.OfficialCompany:
 		compList := entity.([]models.OfficialCompany)
-		return RespList{compList}
+		return models.RespList{compList}
 	case string:
 		err := entity.(string)
-		return common.RespError{Err: err}
+		return models.RespError{Err: err}
 	case error:
 		err := entity.(error)
-		return common.RespError{Err: err.Error()}
+		return models.RespError{Err: err.Error()}
 	}
 	return nil
 }

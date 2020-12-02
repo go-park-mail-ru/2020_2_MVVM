@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -37,13 +37,13 @@ func (_m *IUseCaseResponse) Create(_a0 models.Response) (*models.Response, error
 	return r0, r1
 }
 
-// GetAllCandidateResponses provides a mock function with given fields: _a0
-func (_m *IUseCaseResponse) GetAllCandidateResponses(_a0 uuid.UUID) ([]models.ResponseWithTitle, error) {
-	ret := _m.Called(_a0)
+// GetAllCandidateResponses provides a mock function with given fields: candId, respIds
+func (_m *IUseCaseResponse) GetAllCandidateResponses(candId uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
+	ret := _m.Called(candId, respIds)
 
 	var r0 []models.ResponseWithTitle
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []models.ResponseWithTitle); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, []uuid.UUID) []models.ResponseWithTitle); ok {
+		r0 = rf(candId, respIds)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.ResponseWithTitle)
@@ -51,8 +51,8 @@ func (_m *IUseCaseResponse) GetAllCandidateResponses(_a0 uuid.UUID) ([]models.Re
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(uuid.UUID, []uuid.UUID) error); ok {
+		r1 = rf(candId, respIds)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,13 +60,13 @@ func (_m *IUseCaseResponse) GetAllCandidateResponses(_a0 uuid.UUID) ([]models.Re
 	return r0, r1
 }
 
-// GetAllEmployerResponses provides a mock function with given fields: _a0
-func (_m *IUseCaseResponse) GetAllEmployerResponses(_a0 uuid.UUID) ([]models.ResponseWithTitle, error) {
-	ret := _m.Called(_a0)
+// GetAllEmployerResponses provides a mock function with given fields: emplId, respIds
+func (_m *IUseCaseResponse) GetAllEmployerResponses(emplId uuid.UUID, respIds []uuid.UUID) ([]models.ResponseWithTitle, error) {
+	ret := _m.Called(emplId, respIds)
 
 	var r0 []models.ResponseWithTitle
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []models.ResponseWithTitle); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, []uuid.UUID) []models.ResponseWithTitle); ok {
+		r0 = rf(emplId, respIds)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.ResponseWithTitle)
@@ -74,8 +74,8 @@ func (_m *IUseCaseResponse) GetAllEmployerResponses(_a0 uuid.UUID) ([]models.Res
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(_a0)
+	if rf, ok := ret.Get(1).(func(uuid.UUID, []uuid.UUID) error); ok {
+		r1 = rf(emplId, respIds)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -122,6 +122,71 @@ func (_m *IUseCaseResponse) GetAllVacancyWithoutResponse(emplID uuid.UUID, resum
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uuid.UUID, uuid.UUID) error); ok {
 		r1 = rf(emplID, resumeID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRecommendedVacCnt provides a mock function with given fields: candId, daysFromNow
+func (_m *IUseCaseResponse) GetRecommendedVacCnt(candId uuid.UUID, daysFromNow int) (uint, error) {
+	ret := _m.Called(candId, daysFromNow)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uuid.UUID, int) uint); ok {
+		r0 = rf(candId, daysFromNow)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, int) error); ok {
+		r1 = rf(candId, daysFromNow)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetRecommendedVacancies provides a mock function with given fields: candId, start, limit, daysFromNow
+func (_m *IUseCaseResponse) GetRecommendedVacancies(candId uuid.UUID, start uint, limit uint, daysFromNow int) ([]models.Vacancy, error) {
+	ret := _m.Called(candId, start, limit, daysFromNow)
+
+	var r0 []models.Vacancy
+	if rf, ok := ret.Get(0).(func(uuid.UUID, uint, uint, int) []models.Vacancy); ok {
+		r0 = rf(candId, start, limit, daysFromNow)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Vacancy)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, uint, uint, int) error); ok {
+		r1 = rf(candId, start, limit, daysFromNow)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetResponsesCnt provides a mock function with given fields: userId, userType
+func (_m *IUseCaseResponse) GetResponsesCnt(userId uuid.UUID, userType string) (uint, error) {
+	ret := _m.Called(userId, userType)
+
+	var r0 uint
+	if rf, ok := ret.Get(0).(func(uuid.UUID, string) uint); ok {
+		r0 = rf(userId, userType)
+	} else {
+		r0 = ret.Get(0).(uint)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID, string) error); ok {
+		r1 = rf(userId, userType)
 	} else {
 		r1 = ret.Error(1)
 	}

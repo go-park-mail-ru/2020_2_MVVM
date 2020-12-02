@@ -3,8 +3,10 @@ package usecase
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
 	"math"
 	"strings"
@@ -65,7 +67,7 @@ func (v VacancyUseCase) GetVacancyList(start uint, limit uint, id uuid.UUID, typ
 
 func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]models.Vacancy, error) {
 	if params.SalaryMax == 0 {
-		params.SalaryMax = math.MaxInt64
+		params.SalaryMax = math.MaxInt32
 	}
 	if params.DaysFromNow > 0 {
 		params.StartDate = time.Now().AddDate(0, 0, -params.DaysFromNow).Format("2006-01-02")
@@ -87,4 +89,43 @@ func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]mo
 		return nil, err
 	}
 	return vacList, nil
+}
+
+func (v VacancyUseCase) AddRecommendation(userID uuid.UUID, sphere int) error {
+	return v.repos.AddRecommendation(userID, sphere)
+}
+
+func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
+	preferredSphere, err := v.repos.GetPreferredSpheres(userID)
+	if err != nil {
+		if err.Error() == common.NoRecommendation {
+			return nil, err
+		}
+		return nil, fmt.Errorf("error in GetUserRecommendations: %w", err)
+	}
+	step := 2
+	curSphere := 0
+	preferredSalary, err := v.repos.GetPreferredSalary(userID)
+	if err != nil {
+		return nil, fmt.Errorf("error in GetPreferredSalary: %w", err)
+	}
+
+	var vacList []models.Vacancy
+
+	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
+		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+		list, err := v.repos.GetRecommendation(start, limit, *preferredSalary, arr)
+		vacList = append(vacList, list...)
+		if err != nil {
+			err = fmt.Errorf("error in GetRecommendation: %w", err)
+			return nil, err
+		}
+		curSphere += step
+		start = 0
+	}
+	end := limit
+	if limit > len(vacList) {
+		end = len(vacList)
+	}
+	return vacList[0:end], err
 }

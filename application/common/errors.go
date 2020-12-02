@@ -2,26 +2,30 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/mailru/easyjson"
+	"io"
+	"net/http"
 )
 
 const (
 	EmptyFieldErr = "Обязательные поля не заполнены."
 	SessionErr    = "Ошибка авторизации. Попробуйте авторизоваться повторно."
+	AuthRequiredErr = "Необходима авторизация."
 	DataBaseErr   = "Что-то пошло не так. Попробуйте позже."
 	UserExistErr  = "Пользователь уже существует."
 	AuthErr       = "Пользователь с такими данными не зарегистрирован."
-	WrongPasswd   = "Не верное имя пользователя или пароль."
+	WrongPasswd   = "Неверное имя пользователя или пароль."
 	EmpHaveComp   = "Работодатель может являться представителем только одной компании."
+	NoRecommendation = "Для этого пользователя еще нет рекомендаций."
 )
 
 type Err struct {
 	code    int         `json:"code"`
 	message string      `json:"message"`
 	meta    interface{} `json:"meta"`
-}
-
-type RespError struct {
-	Err string `json:"error"`
 }
 
 func (e Err) Code() int         { return e.code }
@@ -51,9 +55,20 @@ func NewErr(code int, message string, meta interface{}) Err {
 		meta:    meta,
 	}
 }
-/*
-var ErrBadRequest = NewErr(400, "Неправильный запрос к серверу", nil)
-var ErrInternalServerError = NewErr(500, "Внутренняя ошибка сервера", nil)
 
-var ErrInvalidUpdatePassword = NewErr(1001, "неверный пароль", nil)
-*/
+func WriteErrResponse(ctx *gin.Context, code int, message string) {
+	resp := models.RespError{
+		Err:   message,
+	}
+	ctx.Status(code)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func UnmarshalFromReaderWithNilCheck(r io.Reader, v easyjson.Unmarshaler) error {
+	if r == nil {
+		return errors.New(EmptyFieldErr)
+	}
+	return easyjson.UnmarshalFromReader(r, v)
+}

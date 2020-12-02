@@ -4,20 +4,21 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 	"strings"
 	"time"
 )
 
 type ResumeUseCase struct {
-	infoLogger       *logger.Logger
-	errorLogger      *logger.Logger
-	userUseCase      user.UseCase
-	educationUseCase education.UseCase
+	infoLogger  *logger.Logger
+	errorLogger *logger.Logger
+	userUseCase user.UseCase
+	//educationUseCase education.UseCase
 	customExpUseCase custom_experience.UseCase
 	strg             resume.Repository
 }
@@ -25,16 +26,16 @@ type ResumeUseCase struct {
 func NewUseCase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
 	userUseCase user.UseCase,
-	educationUseCase education.UseCase,
+//educationUseCase education.UseCase,
 	customExpUseCase custom_experience.UseCase,
 	strg resume.Repository) resume.UseCase {
 	usecase := ResumeUseCase{
 		infoLogger:  infoLogger,
 		errorLogger: errorLogger,
 		userUseCase: userUseCase,
-		educationUseCase: educationUseCase,
+		//educationUseCase: educationUseCase,
 		customExpUseCase: customExpUseCase,
-		strg:        strg,
+		strg:             strg,
 	}
 	return &usecase
 }
@@ -42,53 +43,26 @@ func NewUseCase(infoLogger *logger.Logger,
 func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	// create resume
 	template.DateCreate = time.Now()
+	for i := range template.ExperienceCustomComp {
+		if *(template.ExperienceCustomComp[i].ContinueToToday) {
+			dateFinish := time.Now()
+			template.ExperienceCustomComp[i].Finish = &dateFinish
+		}
+		template.ExperienceCustomComp[i].ResumeID = template.ResumeID
+		template.ExperienceCustomComp[i].CandID = template.CandID
+
+	}
 	result, err := u.strg.Create(template)
 	if err != nil {
 		return nil, err
 	}
 
-	err = u.createExperienceAndEducation(template, *result)
-	if err != nil {
-		return nil, err
-	}
+	//err = u.createExperienceAndEducation(template, *result)
+	//if err != nil {
+	//	return nil, err
+	//}
 	return result, nil
 }
-
-func (u *ResumeUseCase) createExperienceAndEducation (template models.Resume, result models.Resume) error {
-	// create experience
-	var err error
-	for i := range template.ExperienceCustomComp {
-		if template.ExperienceCustomComp[i] == nil {
-			continue
-		}
-		if *(template.ExperienceCustomComp[i].ContinueToToday){
-			dateFinish := time.Now()
-			template.ExperienceCustomComp[i].Finish = &dateFinish
-		}
-		template.ExperienceCustomComp[i].ResumeID = result.ResumeID
-		template.ExperienceCustomComp[i].CandID = result.CandID
-
-		template.ExperienceCustomComp[i], err = u.customExpUseCase.Create(*template.ExperienceCustomComp[i])
-		if err != nil {
-			return err
-		}
-
-	}
-	// create education
-	for i := range template.Education {
-		if template.Education[i] == nil {
-			continue
-		}
-		template.Education[i].ResumeId = result.ResumeID
-		template.Education[i].CandID = result.CandID
-		template.Education[i], err = u.educationUseCase.Create(*template.Education[i])
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 
 func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	oldResume, err := u.strg.GetById(resume.ResumeID)
@@ -105,13 +79,13 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
-	if err != nil {
-		return nil, err
-	}
+	//err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	result, err := u.strg.Update(resume)
-	err = u.createExperienceAndEducation(resume, resume)
+	//err = u.createExperienceAndEducation(resume, resume)
 	return result, err
 }
 
@@ -125,7 +99,7 @@ func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResume
 	return DoBriefRespResume(r)
 }
 
-func (u *ResumeUseCase) Search(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error) {
+func (u *ResumeUseCase) Search(searchParams resume2.SearchParams) ([]models.BriefResumeInfo, error) {
 	if searchParams.KeyWords != nil {
 		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
 	}

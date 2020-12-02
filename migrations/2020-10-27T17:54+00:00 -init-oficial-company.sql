@@ -15,7 +15,9 @@ create table official_companies
     description text null,
     area_search varchar(128) not null,
     link text null,
-    count_vacancy int default 0
+    count_vacancy int default 0,
+    path_to_avatar varchar(256),
+    date_create date default current_date
 );
 
 -- +migrate Down

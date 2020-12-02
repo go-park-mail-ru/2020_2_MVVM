@@ -8,9 +8,9 @@ create table experience_in_custom_company
         constraint experience_in_custom_company_pkey
             primary key,
     cand_id uuid default uuid_generate_v4() not null
-            references candidates(cand_id),
+            references candidates(cand_id) ON DELETE CASCADE,
     resume_id uuid default uuid_generate_v4() not null
-            references resume(resume_id),
+            references resume(resume_id) ON DELETE CASCADE,
     name_job text not null,
     position text null,
     duties text null,

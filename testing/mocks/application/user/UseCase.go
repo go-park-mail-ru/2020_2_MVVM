@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -173,13 +173,13 @@ func (_m *UseCase) Login(_a0 models.UserLogin) (*models.User, error) {
 	return r0, r1
 }
 
-// UpdateUser provides a mock function with given fields: user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork
-func (_m *UseCase) UpdateUser(user_id string, newPassword string, oldPassword string, name string, surname string, email string, phone string, socialNetwork string) (*models.User, error) {
-	ret := _m.Called(user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork)
+// UpdateUser provides a mock function with given fields: _a0
+func (_m *UseCase) UpdateUser(_a0 models.User) (*models.User, error) {
+	ret := _m.Called(_a0)
 
 	var r0 *models.User
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, string, string) *models.User); ok {
-		r0 = rf(user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork)
+	if rf, ok := ret.Get(0).(func(models.User) *models.User); ok {
+		r0 = rf(_a0)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.User)
@@ -187,8 +187,8 @@ func (_m *UseCase) UpdateUser(user_id string, newPassword string, oldPassword st
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, string, string) error); ok {
-		r1 = rf(user_id, newPassword, oldPassword, name, surname, email, phone, socialNetwork)
+	if rf, ok := ret.Get(1).(func(models.User) error); ok {
+		r1 = rf(_a0)
 	} else {
 		r1 = ret.Error(1)
 	}
