@@ -129,13 +129,14 @@ func (c *CompanyHandler) UpdateCompanyHandler(ctx *gin.Context) {
 	compHandlerCommon(c, ctx, compUpdate)
 }
 
+/*
 func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
-	/*session := sessions.Default(ctx).Get("empl_id")
+	session := sessions.Default(ctx).Get("empl_id")
 	empId, errSession := uuid.Parse(session.(string))
 	if errSession != nil {
 		ctx.JSON(http.StatusBadRequest, common.RespError{Err: common.SessionErr})
 		return
-	}*/
+	}
 	empId, err := uuid.Parse("92f68cc8-45e7-41a6-966e-6599d7142ea8")
 	err = c.CompUseCase.DeleteOfficialCompany(uuid.Nil, empId)
 	if err != nil {
@@ -146,7 +147,7 @@ func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
-}
+}*/
 
 func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	var (
@@ -171,10 +172,6 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	}
 	session := c.SessionBuilder.Build(ctx)
 	empId := session.GetEmplID()
-	if session == nil {
-		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
-		return
-	}
 	if empId == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return

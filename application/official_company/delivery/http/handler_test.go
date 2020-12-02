@@ -166,7 +166,6 @@ func TestSearchCompaniesHandler(t *testing.T) {
 	}
 }
 
-
 func TestGetUserCompanyHandler(t *testing.T) {
 	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase
 	r.GET("/mine", c.GetUserCompanyHandler)
@@ -183,6 +182,58 @@ func TestGetUserCompanyHandler(t *testing.T) {
 	for i := range testExpectedBody {
 		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
 			w, err := general.PerformRequest(r, http.MethodGet, testUrl, nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestCreateCompanyHandler(t *testing.T) {
+	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase
+	r.POST("/", c.CreateCompanyHandler)
+	empID := uuid.New()
+	comp := models.OfficialCompany{ID: empID, Name:"test", Description: "test",Spheres: convertSliceToPqArr([]int{1, 2, 3})}
+
+	mockUseCase.On("CreateOfficialCompany", mock.Anything, empID).Return(&comp, nil).Once()
+	mockUseCase.On("CreateOfficialCompany", mock.Anything, empID).Return(nil, assert.AnError)
+	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
+	testData.mockSession.On("GetEmplID").Return(empID).Twice()
+	testExpectedBody := []interface{}{comp, common.EmptyFieldErr, common.DataBaseErr}
+	testParamsForPost := []interface{}{comp, nil, models.OfficialCompany{}}
+
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodPost, compUrlGroup, testParamsForPost[i])
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestUpdateCompanyHandler(t *testing.T) {
+	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase
+	r.PUT("/", c.UpdateCompanyHandler)
+	empID := uuid.New()
+	comp := models.OfficialCompany{ID: empID, Name:"test", Description: "test",Spheres: convertSliceToPqArr([]int{1, 2, 3})}
+
+	mockUseCase.On("UpdateOfficialCompany", mock.Anything, empID).Return(&comp, nil).Once()
+	mockUseCase.On("UpdateOfficialCompany", mock.Anything, empID).Return(nil, assert.AnError)
+	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
+	testData.mockSession.On("GetEmplID").Return(empID).Twice()
+	testExpectedBody := []interface{}{comp, common.EmptyFieldErr, common.DataBaseErr}
+	testParamsForPost := []interface{}{comp, nil, models.OfficialCompany{}}
+
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodPut, compUrlGroup, testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
