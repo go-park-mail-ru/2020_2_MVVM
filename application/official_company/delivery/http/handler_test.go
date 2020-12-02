@@ -174,20 +174,16 @@ func TestGetUserCompanyHandler(t *testing.T) {
 	empID := uuid.New()
 	comp := models.OfficialCompany{ID: empID}
 	mockUseCase.On("GetMineCompany", empID).Return(&comp, nil)
-	mockUseCase.On("GetMineCompany", uuid.Nil).Return(nil, assert.AnError)
+	mockUseCase.On("GetMineCompany", uuid.Nil).Return(nil, assert.AnError).Once()
 	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
-	testData.mockSession.On("GetEmplID").Return(uuid.New()).Once()
+	testData.mockSession.On("GetEmplID").Return(empID).Once()
+	testData.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
+	testUrl := fmt.Sprintf("%smine", compUrlGroup)
+	testExpectedBody := []interface{}{comp, common.SessionErr}
 
-	testUrls := []string{
-		fmt.Sprintf("%smine", compUrlGroup),
-		//fmt.Sprintf("%sby/id/invalidUuid", compUrlGroup),
-		//fmt.Sprintf("%sby/id/%s", compUrlGroup, uuid.Nil),
-	}
-	testExpectedBody := []interface{}{comp}
-
-	for i := range testUrls {
+	for i := range testExpectedBody {
 		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
-			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
+			w, err := general.PerformRequest(r, http.MethodGet, testUrl, nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
