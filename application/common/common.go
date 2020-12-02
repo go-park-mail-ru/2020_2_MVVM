@@ -9,7 +9,7 @@ const (
 	Employer  = "employer"
 	Vacancy   = 0
 	Resume    = 1
-	DOMAIN    = "https://studhunt.ru"
+	DOMAIN    = "https://studhunt.ru/"
 	Month     = 30
 	Week      = 7
 )

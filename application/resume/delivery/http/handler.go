@@ -103,7 +103,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 	avatarName := resumePath + template.ResumeID.String()
 	if file != nil {
-		template.Avatar = path.Join(common.DOMAIN, common.ImgDir, avatarName)
+		template.Avatar = common.DOMAIN + path.Join(common.ImgDir, avatarName)
 	}
 	result, err := r.UseCaseResume.Create(*template)
 	if err != nil {
