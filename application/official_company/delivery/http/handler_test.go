@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
+	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/official_company"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"net/http"
 	"os"
 	"testing"
@@ -21,6 +24,9 @@ const (
 var testData struct {
 	compHandler *CompanyHandler
 	router      *gin.Engine
+	sessionInfo auth.SessionInfo
+	mockSB      *mocksCommon.SessionBuilder
+	mockSession *mocksCommon.Session
 	mockUseCase *mocks.IUseCaseOfficialCompany
 	httpStatus  []int
 	compList    []models.OfficialCompany
@@ -45,9 +51,11 @@ func setUp() {
 		{Name: "name3", Description: "description3", Link: "link3", AreaSearch: "area3"},
 	}
 	testData.mockUseCase = new(mocks.IUseCaseOfficialCompany)
+	testData.mockSB = new(mocksCommon.SessionBuilder)
+	testData.mockSession = new(mocksCommon.Session)
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	testData.compHandler = NewRest(api.Group("/company"), testData.mockUseCase, nil)
+	testData.compHandler = NewRest(api.Group("/company"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {})
 }
 
 func getRespStruct(entity interface{}) interface{} {
@@ -158,7 +166,7 @@ func TestSearchCompaniesHandler(t *testing.T) {
 	}
 }
 
-/*
+
 func TestGetUserCompanyHandler(t *testing.T) {
 	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase
 	r.GET("/mine", c.GetUserCompanyHandler)
@@ -166,6 +174,8 @@ func TestGetUserCompanyHandler(t *testing.T) {
 	comp := models.OfficialCompany{ID: empID}
 	mockUseCase.On("GetMineCompany", empID).Return(&comp, nil)
 	mockUseCase.On("GetMineCompany", uuid.Nil).Return(nil, assert.AnError)
+	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
+	testData.mockSession.On("GetEmplID").Return(uuid.New()).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%smine", compUrlGroup),
@@ -176,13 +186,13 @@ func TestGetUserCompanyHandler(t *testing.T) {
 
 	for i := range testUrls {
 		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
-			w, err := PerformRequest(r, http.MethodGet, testUrls[i], nil)
+			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-			if err := ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
 				t.Fatal(err)
 			}
 		})
 	}
-}*/
+}

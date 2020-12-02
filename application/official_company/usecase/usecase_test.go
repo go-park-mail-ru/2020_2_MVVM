@@ -119,3 +119,9 @@ func TestSearchCompanies(t *testing.T) {
 	assert.Error(t, errNotNil)
 	assert.Nil(t, ansWrong)
 }
+
+
+func TestNewCompUseCase(t *testing.T) {
+	useCase := NewCompUseCase(nil, nil, nil)
+	assert.Equal(t, useCase, &CompanyUseCase{nil, nil, nil})
+}

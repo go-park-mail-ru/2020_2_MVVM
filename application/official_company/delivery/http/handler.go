@@ -68,7 +68,7 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	session := c.SessionBuilder.Build(ctx)
 	empId := session.GetEmplID()
-	if empId != uuid.Nil {
+	if empId == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
 		return
 	}
