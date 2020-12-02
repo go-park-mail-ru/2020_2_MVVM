@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "api;api";
+
+message vac{
+  string ID = 1;
+  string EmpID = 2;
+  string CompID = 3;
+  string Title = 4;
+  string Gender = 5;
+  uint32 SalaryMin = 6;
+  uint32 SalaryMax = 7;
+  string Description = 8;
+  string Requirements = 9;
+  string Duties = 10;
+  string Skills = 11;
+  string Sphere = 12;
+  string Employment = 13;
+  uint32 ExperienceMonth = 14;
+  string AreaSearch = 15;
+  string Location = 16;
+  string CareerLevel = 17;
+  string EducationLevel = 18;
+  string DateCreate = 19;
+  string EmpEmail = 20;
+  string EmpPhone = 21;
+  string Avatar = 22;
+};
+
+message vacId {
+  string Id = 1;
+};
+
+message vacList {
+  repeated vac list = 1;
+};
+
+message vacListParams {
+  uint32 Start = 1;
+  uint32 Limit = 2;
+  string EntityId = 3;
+  int32  EntityType = 4;
+};
+
+message addRecParams {
+  string UserId = 1;
+  int32 Sphere = 2;
+};
+
+message getRecParams {
+  string UserId = 1;
+  int32 Start = 2;
+  int32 limit = 3;
+};
+
+message IntArr {
+  repeated int32 Elem = 1;
+};
+message StringArr {
+  repeated string Elem = 1;
+};
+
+
+message searchParams {
+  string KeyWords = 1;
+  int32 SalaryMin = 2;
+  int32 SalaryMax = 3;
+  string Gender = 4;
+  IntArr ExpList = 5; //int
+  StringArr EmpList = 6;     //string
+  StringArr EdList = 7; //string
+  StringArr CarList = 8; //string
+  IntArr SpheresList = 9;  //int
+  StringArr AreaList = 10; //string
+  string OrderBy = 11;
+  bool ByAsc = 12;
+  int32 DaysFromNow = 13;
+  string StartDate = 14;
+};
+
+message empty {};
+
+service Vacancy {
+  rpc CreateVacancy(vac) returns (vac) {};
+  rpc UpdateVacancy(vac) returns (vac) {};
+  rpc  GetVacancy(vacId) returns (vac) {};
+  rpc  GetVacancyList(vacListParams) returns (vacList) {};
+  rpc  SearchVacancies(searchParams) returns (vacList) {};
+  rpc  AddRecommendation(addRecParams) returns (empty) {};
+  rpc  GetRecommendation(getRecParams) returns (vacList) {};
+};

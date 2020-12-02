@@ -13,6 +13,7 @@ import (
 	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
 	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/middlewares"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
 	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
@@ -24,7 +25,6 @@ import (
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
 	UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
-	//UserHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/delivery/http"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
@@ -41,6 +41,7 @@ import (
 
 type Microservices struct {
 	Auth common.MicroserviceConfig `yaml:"auth"`
+	Vac  common.MicroserviceConfig `yaml:"vacancy"`
 }
 
 type Config struct {
@@ -98,9 +99,13 @@ func NewApp(config Config) *App {
 
 	api := r.Group("/api/v1")
 
-	authmicro, err := authmicro.NewAuthClient(config.Micro.Auth.Host, config.Micro.Auth.Port, log)
+	authMicro, err := authmicro.NewAuthClient(config.Micro.Auth.Host, config.Micro.Auth.Port, log)
 	if err != nil {
 		log.Error.Fatal("connection to the auth microservice failed...")
+	}
+	vacMicro, err := vacancyMicro.NewVacClient(config.Micro.Vac.Host, config.Micro.Vac.Port, log)
+	if err != nil {
+		log.Error.Fatal("connection to the vacancy microservice failed...")
 	}
 
 	authCookieConfig := common.AuthCookieConfig{
@@ -114,16 +119,16 @@ func NewApp(config Config) *App {
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 	}
-	authMiddleware := middlewares.AuthRequired(authCookieConfig, authmicro)
+	sessionBuilder := SessionBuilder.NewSessionBuilder{}
+	authMiddleware := middlewares.AuthRequired(authCookieConfig, authMicro)
 
 	UserRep := UserRepository.NewPgRepository(db)
 	userCase := UserUseCase.NewUserUseCase(log.Info, log.Error, UserRep)
-	sessionBuilder := SessionBuilder.NewSessionBuilder{}
-	UserHandler.NewRest(api.Group("/users"), userCase, authmicro, authCookieConfig, &sessionBuilder, authMiddleware)
+	UserHandler.NewRest(api.Group("/users"), userCase, authMicro, authCookieConfig, &sessionBuilder, authMiddleware)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
 	vacancy := VacancyUseCase.NewVacUseCase(log.Info, log.Error, vacancyRep)
-	VacancyHandler.NewRest(api.Group("/vacancy"), vacancy, &sessionBuilder, authMiddleware)
+	VacancyHandler.NewRest(api.Group("/vacancy"), &sessionBuilder, authMiddleware, vacMicro, authMicro)
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.Info, log.Error, companyRep)

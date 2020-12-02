@@ -8,6 +8,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"os"
 	"path"
 	"sort"
 	"strconv"
@@ -32,7 +33,10 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		return nil, err
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
-		vac.Avatar = path.Join(common.DOMAIN, common.ImgDir, "company", compId.String())
+		avatarPath := common.DOMAIN + path.Join(common.ImgDir, "company", compId.String())
+		if _, err := os.Stat(avatarPath); err == nil {
+			vac.Avatar = avatarPath
+		}
 		vac.DateCreate = time.Now().Format("2006-01-02")
 		vac.CompID = compId
 		company.ID = compId

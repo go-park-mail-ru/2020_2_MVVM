@@ -14,7 +14,7 @@ import (
 )
 
 type ResumeHandler struct {
-	UseCaseResume           resume.UseCase
+	UseCaseResume resume.UseCase
 	//UseCaseEducation        education.UseCase
 	UseCaseCustomExperience custom_experience.UseCase
 	SessionBuilder          common.SessionBuilder
@@ -24,12 +24,12 @@ const resumePath = "resume/"
 
 func NewRest(router *gin.RouterGroup,
 	useCaseResume resume.UseCase,
-	//useCaseEducation education.UseCase,
+//useCaseEducation education.UseCase,
 	useCaseCustomExperience custom_experience.UseCase,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *ResumeHandler {
 	rest := &ResumeHandler{
-		UseCaseResume:           useCaseResume,
+		UseCaseResume: useCaseResume,
 		//UseCaseEducation:        useCaseEducation,
 		UseCaseCustomExperience: useCaseCustomExperience,
 		SessionBuilder:          sessionBuilder,
@@ -84,7 +84,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 
 	template := new(models.Resume)
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  template); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, template); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -216,7 +216,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 
 	var template models.Resume
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &template); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &template); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -263,7 +263,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 
 func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	var searchParams resume.SearchParams
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &searchParams); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return

@@ -19,7 +19,10 @@ type SessionBuilder interface {
 type NewSessionBuilder struct{}
 
 func (sb *NewSessionBuilder) Build(ctx *gin.Context) Session {
-	session, _ := ctx.Get("session")
+	session, exist := ctx.Get("session")
+	if !exist {
+		return nil
+	}
 	return session.(Session)
 }
 

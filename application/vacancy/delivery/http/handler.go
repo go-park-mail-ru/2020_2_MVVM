@@ -3,6 +3,8 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/google/uuid"
@@ -11,8 +13,9 @@ import (
 )
 
 type VacancyHandler struct {
-	VacUseCase     vacancy.IUseCaseVacancy
+	vacancyClient  vacancyMicro.VacClient
 	SessionBuilder common.SessionBuilder
+	autClient      authmicro.AuthClient
 }
 
 const (
@@ -22,12 +25,14 @@ const (
 )
 
 func NewRest(router *gin.RouterGroup,
-	useCase vacancy.IUseCaseVacancy,
 	sessionBuilder common.SessionBuilder,
-	AuthRequired gin.HandlerFunc) *VacancyHandler {
+	AuthRequired gin.HandlerFunc,
+	vacancyClient vacancyMicro.VacClient,
+	autClient authmicro.AuthClient) *VacancyHandler {
 	rest := &VacancyHandler{
-		VacUseCase:     useCase,
 		SessionBuilder: sessionBuilder,
+		vacancyClient:  vacancyClient,
+		autClient:      autClient,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -51,29 +56,27 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	var req struct {
 		VacID string `uri:"vacancy_id" binding:"required,uuid"`
 	}
-
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
 	vacId, _ := uuid.Parse(req.VacID)
-	vac, err := v.VacUseCase.GetVacancy(vacId)
+	vac, err := v.vacancyClient.GetVacancy(vacId)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-
-	session := v.SessionBuilder.Build(ctx)
-	candID := session.GetCandID()
-	userID := session.GetUserID()
-
-	if candID != uuid.Nil && vac.Sphere != -1 {
-		err := v.VacUseCase.AddRecommendation(userID, vac.Sphere)
-		if err != nil {
-			ctx.Error(err)
+	sessionID, _ := ctx.Cookie("session")
+	if sessionID != "" {
+		if session, _ := v.autClient.Check(sessionID); session != nil {
+			if session.GetCandID() != uuid.Nil && vac.Sphere != -1 {
+				err := v.vacancyClient.AddRecommendation(session.GetUserID(), vac.Sphere)
+				if err != nil {
+					_ = ctx.Error(err)
+				}
+			}
 		}
 	}
-
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vac}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -108,32 +111,20 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	session := v.SessionBuilder.Build(ctx)
-	candID := session.GetCandID()
-	userID := session.GetUserID()
-
-	if err == nil && candID != uuid.Nil {
-		vacList, err = v.VacUseCase.GetRecommendation(userID, int(req.Start), int(req.Limit))
+	if session.GetCandID() != uuid.Nil {
+		vacList, err = v.vacancyClient.GetRecommendation(session.GetUserID(), int(req.Start), int(req.Limit))
 		if err != nil {
 			if err.Error() == common.NoRecommendation {
 				common.WriteErrResponse(ctx, http.StatusOK, common.NoRecommendation)
 				return
 			}
 			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-			//ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	}
-
-	if err != nil {
-		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-		//ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -142,21 +133,20 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	var searchParams models.VacancySearchParams
 
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &searchParams); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
-
 	if err := common.ReqValidation(&searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-	vacList, err := v.VacUseCase.SearchVacancies(searchParams)
+
+	vacList, err := v.vacancyClient.SearchVacancies(searchParams)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -168,16 +158,13 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		err error
 	)
 
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		return
 	}
-
 	if err := common.ReqValidation(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-
 	file, errImg := common.GetImageFromBase64(req.Avatar)
 	if errImg != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
@@ -191,31 +178,29 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: *req.Sphere,
 		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
 		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
+	session := v.SessionBuilder.Build(ctx)
+	vacNew.EmpID = session.GetEmplID()
 	if treatmentType == vacCreate {
-		session := v.SessionBuilder.Build(ctx)
-		emplID := session.GetEmplID()
 		if session == nil {
 			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
 			return
 		}
-		vacNew.EmpID = emplID
-		vacNew, err = v.VacUseCase.CreateVacancy(*vacNew)
+		vacNew, err = v.vacancyClient.CreateVacancy(*vacNew)
+	} else if vacNew.ID, _ = uuid.Parse(req.Id); vacNew.ID != uuid.Nil {
+		vacNew, err = v.vacancyClient.UpdateVacancy(*vacNew)
 	} else {
-		vacNew.ID, _ = uuid.Parse(req.Id)
-		vacNew, err = v.VacUseCase.UpdateVacancy(*vacNew)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
 	}
 	if err != nil {
-		common.WriteErrResponse(ctx, http.StatusBadRequest, common.DataBaseErr)
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, vacPath+vacNew.ID.String()); err != nil {
 			common.WriteErrResponse(ctx, http.StatusInternalServerError, err.Error())
-			//ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
-
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -243,7 +228,7 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	} else if entityType == vacancy.ByCompId {
 		id, _ = uuid.Parse(req.CompId)
 	}
-	vacList, err = v.VacUseCase.GetVacancyList(req.Start, req.Limit, id, entityType)
+	vacList, err = v.vacancyClient.GetVacancyList(req.Start, req.Limit, id, entityType)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
