@@ -5,8 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	response2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/response"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	response2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/response"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"net/http"
@@ -211,12 +211,12 @@ func getNewResponses(r *ResponseHandler, unId uuid.UUID, userType string, respId
 		responses []models.ResponseWithTitle
 		err       error
 	)
-	if userType == common.Candidate {
+	if userType == common.CandID {
 		responses, err = r.UsecaseResponse.GetAllCandidateResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
 		}
-	} else if userType == common.Employer {
+	} else if userType == common.EmplID {
 		responses, err = r.UsecaseResponse.GetAllEmployerResponses(unId, respIds)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.New(common.DataBaseErr)
@@ -248,8 +248,8 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		unId, userType = emplID, common.EmplID
 	}
 
-	if err != nil {
-		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, err.Error())
+	if candID == uuid.Nil && emplID == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
 		return
 	}
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {

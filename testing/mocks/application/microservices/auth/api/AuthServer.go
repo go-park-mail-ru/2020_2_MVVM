@@ -4,7 +4,7 @@ package mocks
 
 import (
 	context "context"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/microservises/auth"
 
 	mock "github.com/stretchr/testify/mock"
 )

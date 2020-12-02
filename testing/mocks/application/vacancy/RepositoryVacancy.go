@@ -3,10 +3,10 @@
 package mocks
 
 import (
-	dtovacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
+	dtovacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	mock "github.com/stretchr/testify/mock"
 
-	models "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	models "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 
 	uuid "github.com/google/uuid"
 )

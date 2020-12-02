@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"github.com/apsdehal/go-logger"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	mExperience "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	mEducation "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/education"
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"

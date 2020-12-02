@@ -8,7 +8,7 @@ import (
 	sessionrepo "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session/repository"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/microservises/auth"
 	"github.com/go-redis/redis/v8"
 	yconfig "github.com/rowdyroad/go-yaml-config"
 	"google.golang.org/grpc"

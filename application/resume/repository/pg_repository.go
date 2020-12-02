@@ -3,8 +3,8 @@ package repository
 import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
-	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

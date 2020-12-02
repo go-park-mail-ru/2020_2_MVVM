@@ -9,7 +9,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"github.com/jinzhu/copier"
 	"time"
