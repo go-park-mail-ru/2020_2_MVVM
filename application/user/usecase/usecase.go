@@ -5,8 +5,8 @@ import (
 	"fmt"
 	logger "github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -94,7 +94,7 @@ func (u *UserUseCase) UpdateUser(userNew models.User) (*models.User, error) {
 		userOld.Phone = userNew.Phone
 	}
 	if userNew.SocialNetwork != nil && *userNew.SocialNetwork != "" {
-		userOld.SocialNetwork= userNew.SocialNetwork
+		userOld.SocialNetwork = userNew.SocialNetwork
 	}
 	if userNew.PasswordHash != nil {
 		isEqual := bcrypt.CompareHashAndPassword(userOld.PasswordHash, userNew.PasswordHash)

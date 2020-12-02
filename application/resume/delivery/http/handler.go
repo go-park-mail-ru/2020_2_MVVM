@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	//"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"net/http"
@@ -119,7 +119,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -169,7 +169,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -246,7 +246,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 		}
 	}
 
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             result.Candidate.User,
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
@@ -262,7 +262,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
-	var searchParams resume.SearchParams
+	var searchParams resume2.SearchParams
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)

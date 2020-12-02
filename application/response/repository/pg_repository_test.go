@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/vacancy"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -353,11 +353,11 @@ func TestGetRespNotifications(t *testing.T) {
 
 func TestGetRecommendedVacCnt(t *testing.T) {
 	repo, mock, vacMock := beforeTest2(t)
-	pair := vacancy.Pair{
+	pair := vacancy2.Pair{
 		SphereInd: 1,
 		Score:     2,
 	}
-	pairs := []vacancy.Pair{pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair,
+	pairs := []vacancy2.Pair{pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair,
 		pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair}
 	vacMock.On("GetPreferredSpheres", ID).Return(pairs, nil).Twice()
 	query := "select count(.*) from main.vacancy where date_create >= (.*) and sphere in .*"
@@ -365,7 +365,7 @@ func TestGetRecommendedVacCnt(t *testing.T) {
 	startDate := "20-20-2020"
 	step := 2
 	curSphere := 0
-	for curSphere < vacancy.CountSpheres {
+	for curSphere < vacancy2.CountSpheres {
 		mock.ExpectQuery(query).
 			WithArgs(startDate, 1, 1).
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
@@ -396,11 +396,11 @@ func TestGetRecommendedVacancies(t *testing.T) {
 
 	start := 0
 	limit := 1
-	pair := vacancy.Pair{
+	pair := vacancy2.Pair{
 		SphereInd: 1,
 		Score:     2,
 	}
-	pairs := []vacancy.Pair{pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair,
+	pairs := []vacancy2.Pair{pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair,
 		pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair}
 	vacMock.On("GetPreferredSpheres", ID).Return(pairs, nil).Once()
 
@@ -409,7 +409,7 @@ func TestGetRecommendedVacancies(t *testing.T) {
 	startDate := "20-20-2020"
 	step := 2
 	curSphere := 0
-	for curSphere < vacancy.CountSpheres {
+	for curSphere < vacancy2.CountSpheres {
 		mock.ExpectQuery(query).
 			WithArgs(startDate, 1, 1).
 			WillReturnRows(sqlmock.NewRows(dummies.VacancyColumns).AddRow(dummies.VacancyRow...))

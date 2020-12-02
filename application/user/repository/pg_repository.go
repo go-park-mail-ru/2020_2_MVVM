@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

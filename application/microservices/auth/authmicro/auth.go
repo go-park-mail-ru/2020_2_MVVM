@@ -3,20 +3,20 @@ package authmicro
 import (
 	"context"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"strconv"
 )
 
 type gRPCAuthClient struct {
-	client api.AuthClient
+	client auth.AuthClient
 	gConn  *grpc.ClientConn
 	logger common.Logger
 	ctx    context.Context
 }
 
-func buildSession(answer *api.SessionInfo) common.BasicSession {
+func buildSession(answer *auth.SessionInfo) common.BasicSession {
 	s := common.BasicSession{SessionID: answer.SessionID, UserID: uuid.Nil, EmplID: uuid.Nil, CandID: uuid.Nil}
 	s.UserID, _ = uuid.Parse(answer.UserID)
 	if answer.CandID != "" {
@@ -37,11 +37,11 @@ func NewAuthClient(host string, port int, logger common.Logger) (AuthClient, err
 		return nil, err
 	}
 
-	return &gRPCAuthClient{client: api.NewAuthClient(gConn), gConn: gConn, logger: logger, ctx: context.Background()}, nil
+	return &gRPCAuthClient{client: auth.NewAuthClient(gConn), gConn: gConn, logger: logger, ctx: context.Background()}, nil
 }
 
 func (a *gRPCAuthClient) Login(login string, password string) (common.Session, error) {
-	usr := &api.Credentials{
+	usr := &auth.Credentials{
 		Login:    login,
 		Password: password,
 	}
@@ -55,7 +55,7 @@ func (a *gRPCAuthClient) Login(login string, password string) (common.Session, e
 }
 
 func (a *gRPCAuthClient) Check(sessionID string) (common.Session, error) {
-	sid := &api.SessionID{SessionID: sessionID}
+	sid := &auth.SessionID{SessionID: sessionID}
 
 	answer, err := a.client.Check(a.ctx, sid)
 	if err != nil {
@@ -66,7 +66,7 @@ func (a *gRPCAuthClient) Check(sessionID string) (common.Session, error) {
 }
 
 func (a *gRPCAuthClient) Logout(sessionID string) error {
-	workload := &api.SessionID{SessionID: sessionID}
+	workload := &auth.SessionID{SessionID: sessionID}
 	_, err := a.client.Logout(a.ctx, workload)
 	if err != nil {
 		return err

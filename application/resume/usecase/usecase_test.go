@@ -2,8 +2,8 @@ package usecase
 
 import (
 	"github.com/apsdehal/go-logger"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	mExperience "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	mEducation "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/education"
 	mResume "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/resume"
@@ -76,9 +76,9 @@ func beforeTest(t *testing.T) (*mResume.Repository, *mUser.UseCase, *mEducation.
 	mockExperienceUS := new(mExperience.UseCase)
 	mockUserUS := new(mUser.UseCase)
 	usecase := ResumeUseCase{
-		infoLogger:       infoLogger,
-		errorLogger:      errorLogger,
-		userUseCase:      mockUserUS,
+		infoLogger:  infoLogger,
+		errorLogger: errorLogger,
+		userUseCase: mockUserUS,
 		//educationUseCase: mockEducationUS,
 		customExpUseCase: mockExperienceUS,
 		strg:             mockRepo,
@@ -145,14 +145,13 @@ func TestResumeUpdateUser(t *testing.T) {
 	assert.Nil(t, answerWrong2)
 	assert.Error(t, errNotNil2)
 
-
 }
 
 func TestResumeSearch(t *testing.T) {
 	mockRepo, _, _, _, usecase := beforeTest(t)
 
 	word := "word"
-	params := resume.SearchParams{
+	params := resume2.SearchParams{
 		KeyWords: &word,
 	}
 
@@ -253,4 +252,9 @@ func TestResumeGetAllEmplFavoriteResume(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, answer, listBrief)
+}
+
+func TestNewUseCase(t *testing.T) {
+	useCase := NewUseCase(nil, nil, nil, nil, nil)
+	assert.Equal(t, useCase, &ResumeUseCase{nil, nil, nil, nil, nil})
 }

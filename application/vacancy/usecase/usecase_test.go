@@ -1,7 +1,9 @@
 package usecase
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/vacancy"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -122,4 +124,51 @@ func TestSearchVacancies(t *testing.T) {
 	//ansWrong, errNotNil := useCase.SearchVacancies(paramsErr)
 	//assert.Error(t, errNotNil)
 	//assert.Nil(t, ansWrong)
+}
+
+func TestAddRecommendation(t *testing.T) {
+	mockRepo, useCase := beforeTest()
+	userID := uuid.New()
+	sphere := 0
+
+	emptyId := uuid.Nil
+	mockRepo.On("AddRecommendation", userID, sphere).Return(nil)
+	mockRepo.On("AddRecommendation", emptyId, sphere).Return(assert.AnError)
+	errNil := useCase.AddRecommendation(userID, 0)
+	errNotNil := useCase.AddRecommendation(emptyId, sphere)
+	assert.Nil(t, errNil)
+	assert.Error(t, errNotNil)
+}
+
+func TestGetRecommendation(t *testing.T) {
+	mockRepo, useCase := beforeTest()
+	userID := uuid.New()
+	start := 0
+	vacList := []models.Vacancy{
+		{Title: "title1", Description: "description1", AreaSearch: "area1", SalaryMax: 15},
+		{Title: "title2", Description: "description2", AreaSearch: "area1", SalaryMax: 12},
+		{Title: "title3", Description: "description3", AreaSearch: "area3", SalaryMax: 8}}
+	vacPair := []vacancy.Pair{{Score: 5, SphereInd: 2}, {Score: 3, SphereInd: 1}}
+	var salary float64 = 0
+
+	length := len(vacList)
+	emptyId := uuid.Nil
+	mockRepo.On("GetPreferredSpheres", userID).Return(vacPair, nil)
+	mockRepo.On("GetPreferredSpheres", emptyId).Return(nil, assert.AnError)
+	mockRepo.On("GetPreferredSalary", userID).Return(&salary, nil)
+	mockRepo.On("GetPreferredSalary", emptyId).Return(nil, assert.AnError)
+	mockRepo.On("GetRecommendation", start, length, salary, []int{2, 1}).Return(vacList, nil).Once()
+	mockRepo.On("GetRecommendation", start, length, salary, []int{2, 1}).Return(nil, assert.AnError)
+	ansCorrect, errNil := useCase.GetRecommendation(userID, 0, length)
+	ansWrong, errNotNil := useCase.GetRecommendation(emptyId, 0, length)
+	assert.Equal(t, ansCorrect, vacList)
+	assert.Nil(t, ansWrong)
+	assert.Nil(t, errNil)
+	assert.Error(t, errNotNil)
+}
+
+func TestNewVacUseCase(t *testing.T) {
+	vacancyRep := RepositoryVacancy.NewPgRepository(nil)
+	vac := NewVacUseCase(nil, nil, vacancyRep)
+	assert.Equal(t, vac, &VacancyUseCase{iLog: nil, errLog: nil, repos: vacancyRep})
 }

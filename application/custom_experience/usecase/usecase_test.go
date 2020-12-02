@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"github.com/apsdehal/go-logger"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

@@ -1,9 +1,9 @@
 package vacancy
 
-import "github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+import "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 
 //len = 29
-var Spheres = []string{
+/*var Spheres = []string{
 	"Автомобильный бизнес",
 	"Гостиницы, рестораны, общепит, кейтеринг",
 	"Государственные организации",
@@ -33,7 +33,7 @@ var Spheres = []string{
 	"Химическое производство, удобрения",
 	"Электроника, приборостроение, бытовая техника, компьютеры и оргтехника",
 	"Энергетика",
-}
+}*/
 
 var CountSpheres = 29
 

@@ -2,8 +2,9 @@ package repository
 
 import (
 	"fmt"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -107,7 +108,7 @@ func (p *PGRepository) Update(resume models.Resume) (*models.Resume, error) {
 	return &resume, nil
 }
 
-func (p *PGRepository) Search(searchParams *resume.SearchParams) ([]models.Resume, error) {
+func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resume, error) {
 	var brief []models.Resume
 	err := p.db.Table("main.resume").Scopes(func(q *gorm.DB) *gorm.DB {
 		if len(searchParams.AreaSearch) != 0 {
@@ -194,7 +195,6 @@ func (p *PGRepository) GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resu
 
 func (p *PGRepository) GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error) {
 	var favorite models.FavoritesForEmpl
-
 
 	err := p.db.Where("empl_id = ?", userID).
 		Where("resume_id = ?", resumeID).

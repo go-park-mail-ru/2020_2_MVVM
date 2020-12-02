@@ -4,8 +4,7 @@ package mocks
 
 import (
 	context "context"
-
-	api "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
 
 	grpc "google.golang.org/grpc"
 
@@ -18,7 +17,7 @@ type AuthClient struct {
 }
 
 // Check provides a mock function with given fields: ctx, in, opts
-func (_m *AuthClient) Check(ctx context.Context, in *api.SessionID, opts ...grpc.CallOption) (*api.SessionInfo, error) {
+func (_m *AuthClient) Check(ctx context.Context, in *auth.SessionID, opts ...grpc.CallOption) (*auth.SessionInfo, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -28,17 +27,17 @@ func (_m *AuthClient) Check(ctx context.Context, in *api.SessionID, opts ...grpc
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *api.SessionInfo
-	if rf, ok := ret.Get(0).(func(context.Context, *api.SessionID, ...grpc.CallOption) *api.SessionInfo); ok {
+	var r0 *auth.SessionInfo
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.SessionID, ...grpc.CallOption) *auth.SessionInfo); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.SessionInfo)
+			r0 = ret.Get(0).(*auth.SessionInfo)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.SessionID, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.SessionID, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -48,7 +47,7 @@ func (_m *AuthClient) Check(ctx context.Context, in *api.SessionID, opts ...grpc
 }
 
 // Login provides a mock function with given fields: ctx, in, opts
-func (_m *AuthClient) Login(ctx context.Context, in *api.Credentials, opts ...grpc.CallOption) (*api.SessionInfo, error) {
+func (_m *AuthClient) Login(ctx context.Context, in *auth.Credentials, opts ...grpc.CallOption) (*auth.SessionInfo, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -58,17 +57,17 @@ func (_m *AuthClient) Login(ctx context.Context, in *api.Credentials, opts ...gr
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *api.SessionInfo
-	if rf, ok := ret.Get(0).(func(context.Context, *api.Credentials, ...grpc.CallOption) *api.SessionInfo); ok {
+	var r0 *auth.SessionInfo
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.Credentials, ...grpc.CallOption) *auth.SessionInfo); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.SessionInfo)
+			r0 = ret.Get(0).(*auth.SessionInfo)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.Credentials, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.Credentials, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -78,7 +77,7 @@ func (_m *AuthClient) Login(ctx context.Context, in *api.Credentials, opts ...gr
 }
 
 // Logout provides a mock function with given fields: ctx, in, opts
-func (_m *AuthClient) Logout(ctx context.Context, in *api.SessionID, opts ...grpc.CallOption) (*api.Empty, error) {
+func (_m *AuthClient) Logout(ctx context.Context, in *auth.SessionID, opts ...grpc.CallOption) (*auth.Empty, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -88,17 +87,17 @@ func (_m *AuthClient) Logout(ctx context.Context, in *api.SessionID, opts ...grp
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *api.Empty
-	if rf, ok := ret.Get(0).(func(context.Context, *api.SessionID, ...grpc.CallOption) *api.Empty); ok {
+	var r0 *auth.Empty
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.SessionID, ...grpc.CallOption) *auth.Empty); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.Empty)
+			r0 = ret.Get(0).(*auth.Empty)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.SessionID, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.SessionID, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

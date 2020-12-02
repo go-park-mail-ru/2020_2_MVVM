@@ -16,7 +16,7 @@ type OfficialCompany struct {
 	Avatar      string        `gorm:"column:path_to_avatar" json:"avatar"`
 }
 
-func (c OfficialCompany) TableName() string {
+func (v OfficialCompany) TableName() string {
 	return "main.official_companies"
 }
 

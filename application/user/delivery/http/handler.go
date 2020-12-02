@@ -4,8 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	user2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/user"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"golang.org/x/crypto/bcrypt"
@@ -192,7 +193,7 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 }
 
 func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
-	var req user.Register
+	var req user2.Register
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
@@ -236,7 +237,7 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 }
 
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
-	var req user.Update
+	var req user2.Update
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return

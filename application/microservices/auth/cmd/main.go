@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
 	server "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/server"
 	sessionrepo "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session/repository"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	UserUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
 	"github.com/go-redis/redis/v8"
 	yconfig "github.com/rowdyroad/go-yaml-config"
 	"google.golang.org/grpc"
@@ -66,7 +66,7 @@ func main() {
 	server := server.NewAuthServer(ucase, redis)
 
 	gServer := grpc.NewServer()
-	api.RegisterAuthServer(gServer, server)
+	auth.RegisterAuthServer(gServer, server)
 	err = gServer.Serve(listener)
 	if err != nil {
 		log.Error.Fatalf("error in listening api server: %s", err)

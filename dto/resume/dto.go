@@ -1,7 +1,7 @@
 package resume
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 )
 

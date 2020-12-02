@@ -3,21 +3,21 @@ package vacancyMicro
 import (
 	"context"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/api"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"strconv"
 )
 
 type gRPCVacClient struct {
-	client api.VacancyClient
+	client vacancy.VacancyClient
 	gConn  *grpc.ClientConn
 	logger common.Logger
 	ctx    context.Context
 }
 
-func ConvertToDbModel(pbModel *api.Vac) *models.Vacancy {
+func ConvertToDbModel(pbModel *vacancy.Vac) *models.Vacancy {
 	if pbModel == nil {
 		return nil
 	}
@@ -36,18 +36,18 @@ func ConvertToDbModel(pbModel *api.Vac) *models.Vacancy {
 	return &vacResp
 }
 
-func ConvertToPbModel(dbModel *models.Vacancy) *api.Vac {
+func ConvertToPbModel(dbModel *models.Vacancy) *vacancy.Vac {
 	if dbModel == nil {
-		return &api.Vac{}
+		return &vacancy.Vac{}
 	}
-	return &api.Vac{ID: dbModel.ID.String(), EmpID: dbModel.EmpID.String(), CompID: dbModel.CompID.String(), Title: dbModel.Title,
+	return &vacancy.Vac{ID: dbModel.ID.String(), EmpID: dbModel.EmpID.String(), CompID: dbModel.CompID.String(), Title: dbModel.Title,
 		SalaryMin: uint32(dbModel.SalaryMin), SalaryMax: uint32(dbModel.SalaryMax), AreaSearch: dbModel.AreaSearch, Description: dbModel.Description, Requirements: dbModel.Requirements,
 		Duties: dbModel.Duties, Skills: dbModel.Skills, Employment: dbModel.Employment, ExperienceMonth: uint32(dbModel.ExperienceMonth), Location: dbModel.Location,
 		CareerLevel: dbModel.CareerLevel, EducationLevel: dbModel.EducationLevel, EmpPhone: dbModel.EmpPhone, EmpEmail: dbModel.EmpEmail, Gender: dbModel.Gender,
 		Sphere: strconv.Itoa(dbModel.Sphere), Avatar: dbModel.Avatar, DateCreate: dbModel.DateCreate}
 }
 
-func ConvertToListPbModels(pbModels *api.VacList) []models.Vacancy {
+func ConvertToListPbModels(pbModels *vacancy.VacList) []models.Vacancy {
 	var vacList []models.Vacancy
 	if pbModels == nil {
 		return nil
@@ -58,11 +58,11 @@ func ConvertToListPbModels(pbModels *api.VacList) []models.Vacancy {
 	return vacList
 }
 
-func ConvertToListDbModels(dbModels []models.Vacancy) *api.VacList {
+func ConvertToListDbModels(dbModels []models.Vacancy) *vacancy.VacList {
 	if dbModels == nil {
-		return &api.VacList{}
+		return &vacancy.VacList{}
 	}
-	var pbModels = new(api.VacList)
+	var pbModels = new(vacancy.VacList)
 	for _, dbModel := range dbModels {
 		pbModels.List = append(pbModels.List, ConvertToPbModel(&dbModel))
 	}
@@ -80,17 +80,17 @@ func (g *gRPCVacClient) UpdateVacancy(vacancy models.Vacancy) (*models.Vacancy, 
 }
 
 func (g *gRPCVacClient) GetVacancy(vacId uuid.UUID) (*models.Vacancy, error) {
-	newVac, err := g.client.GetVacancy(g.ctx, &api.VacId{Id: vacId.String()})
+	newVac, err := g.client.GetVacancy(g.ctx, &vacancy.VacId{Id: vacId.String()})
 	return ConvertToDbModel(newVac), err
 }
 
 func (g *gRPCVacClient) GetVacancyList(start uint, limit uint, entityId uuid.UUID, entityType int) ([]models.Vacancy, error) {
-	vacList, err := g.client.GetVacancyList(g.ctx, &api.VacListParams{Start: uint32(start), Limit: uint32(limit),
+	vacList, err := g.client.GetVacancyList(g.ctx, &vacancy.VacListParams{Start: uint32(start), Limit: uint32(limit),
 		EntityId: entityId.String(), EntityType: int32(entityType)})
 	return ConvertToListPbModels(vacList), err
 }
 
-func ConvertToStringListPbModels(pbModels *api.StringArr) []string {
+func ConvertToStringListPbModels(pbModels *vacancy.StringArr) []string {
 	if pbModels == nil {
 		return nil
 	}
@@ -100,7 +100,7 @@ func ConvertToStringListPbModels(pbModels *api.StringArr) []string {
 	}
 	return strList
 }
-func ConvertToIntListPbModels(pbModels *api.IntArr) []int {
+func ConvertToIntListPbModels(pbModels *vacancy.IntArr) []int {
 	if pbModels == nil {
 		return nil
 	}
@@ -111,22 +111,22 @@ func ConvertToIntListPbModels(pbModels *api.IntArr) []int {
 	return intList
 }
 
-func ConvertIntListToPbModel(slice []int) *api.IntArr {
+func ConvertIntListToPbModel(slice []int) *vacancy.IntArr {
 	if slice == nil {
 		return nil
 	}
-	intArr := new(api.IntArr)
+	intArr := new(vacancy.IntArr)
 	for _, e := range slice {
 		intArr.Elem = append(intArr.Elem, int32(e))
 	}
 	return intArr
 }
 
-func ConvertStringListToPbModel(slice []string) *api.StringArr {
+func ConvertStringListToPbModel(slice []string) *vacancy.StringArr {
 	if slice == nil {
 		return nil
 	}
-	stringArr := new(api.StringArr)
+	stringArr := new(vacancy.StringArr)
 	for _, s := range slice {
 		stringArr.Elem = append(stringArr.Elem, s)
 	}
@@ -134,7 +134,7 @@ func ConvertStringListToPbModel(slice []string) *api.StringArr {
 }
 
 func (g *gRPCVacClient) SearchVacancies(params models.VacancySearchParams) ([]models.Vacancy, error) {
-	searchParams := &api.SearchParams{
+	searchParams := &vacancy.SearchParams{
 		AreaList:    ConvertStringListToPbModel(params.AreaSearch),
 		ExpList:     ConvertIntListToPbModel(params.ExperienceMonth),
 		EdList:      ConvertStringListToPbModel(params.EducationLevel),
@@ -155,12 +155,12 @@ func (g *gRPCVacClient) SearchVacancies(params models.VacancySearchParams) ([]mo
 }
 
 func (g *gRPCVacClient) AddRecommendation(userId uuid.UUID, sphere int) error {
-	_, err := g.client.AddRecommendation(g.ctx, &api.AddRecParams{UserId: userId.String(), Sphere: int32(sphere)})
+	_, err := g.client.AddRecommendation(g.ctx, &vacancy.AddRecParams{UserId: userId.String(), Sphere: int32(sphere)})
 	return err
 }
 
 func (g gRPCVacClient) GetRecommendation(userId uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
-	vacList, err := g.client.GetRecommendation(g.ctx, &api.GetRecParams{UserId: userId.String(), Start: int32(start), Limit: int32(limit)})
+	vacList, err := g.client.GetRecommendation(g.ctx, &vacancy.GetRecParams{UserId: userId.String(), Start: int32(start), Limit: int32(limit)})
 	return ConvertToListPbModels(vacList), err
 }
 
@@ -173,5 +173,5 @@ func NewVacClient(host string, port int, logger common.Logger) (VacClient, error
 		return nil, err
 	}
 
-	return &gRPCVacClient{client: api.NewVacancyClient(gConn), gConn: gConn, logger: logger, ctx: context.Background()}, nil
+	return &gRPCVacClient{client: vacancy.NewVacancyClient(gConn), gConn: gConn, logger: logger, ctx: context.Background()}, nil
 }

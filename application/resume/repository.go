@@ -1,7 +1,8 @@
 package resume
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	"github.com/google/uuid"
 )
 
@@ -9,7 +10,7 @@ type Repository interface {
 	Create(resume models.Resume) (*models.Resume, error)
 	Drop(resume models.Resume) error
 	Update(resume models.Resume) (*models.Resume, error)
-	Search(searchParams *SearchParams) ([]models.Resume, error)
+	Search(searchParams *resume.SearchParams) ([]models.Resume, error)
 	GetById(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	List(start, limit uint) ([]models.Resume, error)

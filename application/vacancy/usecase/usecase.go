@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
 	"math"
 	"strings"
@@ -111,9 +112,9 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 
 	var vacList []models.Vacancy
 
-	for len(vacList) < limit && curSphere < vacancy.CountSpheres {
+	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
-		list, err := v.repos.GetRecommendation(start, limit, preferredSalary, arr)
+		list, err := v.repos.GetRecommendation(start, limit, *preferredSalary, arr)
 		vacList = append(vacList, list...)
 		if err != nil {
 			err = fmt.Errorf("error in GetRecommendation: %w", err)

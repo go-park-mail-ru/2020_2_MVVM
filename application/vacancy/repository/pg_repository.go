@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"os"
@@ -170,7 +171,7 @@ func (p *pgRepository) AddRecommendation(userID uuid.UUID, sphere int) error {
 	return nil
 }
 
-func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, error) {
+func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy2.Pair, error) {
 	rec := new(models.Recommendation)
 	err := p.db.Take(rec, "user_id = ?", userID).Error
 	if err != nil {
@@ -181,7 +182,7 @@ func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, er
 		return nil, err
 	}
 
-	spheres := []vacancy.Pair{{0, rec.Sphere0}, {1, rec.Sphere1},
+	spheres := []vacancy2.Pair{{0, rec.Sphere0}, {1, rec.Sphere1},
 		{2, rec.Sphere2}, {3, rec.Sphere3}, {4, rec.Sphere4},
 		{5, rec.Sphere5}, {6, rec.Sphere6}, {7, rec.Sphere7},
 		{8, rec.Sphere8}, {9, rec.Sphere9}, {10, rec.Sphere10},
@@ -213,7 +214,7 @@ func (p *pgRepository) GetPreferredSalary(userID uuid.UUID) (*float64, error) {
 	return preferredSalary, nil
 }
 
-func (p *pgRepository) GetRecommendation(start int, limit int, salary *float64, spheres []int) ([]models.Vacancy, error) {
+func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, spheres []int) ([]models.Vacancy, error) {
 	var vacList []models.Vacancy
 	err := p.db.Table("main.vacancy").
 		//

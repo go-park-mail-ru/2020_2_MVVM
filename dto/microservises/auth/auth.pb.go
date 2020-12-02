@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: api/auth.proto
 
-package api
+package auth
 
 import (
 	proto "github.com/golang/protobuf/proto"

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -17,11 +17,11 @@ import (
 type authServer struct {
 	usecase user.UseCase
 	srepo   session.Repository
-	api.UnimplementedAuthServer
+	auth.UnimplementedAuthServer
 }
 
-func convertSessionInfo(sessionID string, basic *common.BasicSession) *api.SessionInfo {
-	sinfo := api.SessionInfo{SessionID: sessionID, UserID: basic.UserID.String()}
+func convertSessionInfo(sessionID string, basic *common.BasicSession) *auth.SessionInfo {
+	sinfo := auth.SessionInfo{SessionID: sessionID, UserID: basic.UserID.String()}
 	if basic.EmplID != uuid.Nil {
 		str := basic.EmplID.String()
 		sinfo.EmplID = str
@@ -33,7 +33,7 @@ func convertSessionInfo(sessionID string, basic *common.BasicSession) *api.Sessi
 	return &sinfo
 }
 
-func (a *authServer) Login(ctx context.Context, cred *api.Credentials) (*api.SessionInfo, error) {
+func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.SessionInfo, error) {
 	fmt.Print("Login")
 	if cred == nil {
 		return nil, errors.Errorf("Incorrect credentials format")
@@ -83,7 +83,7 @@ func (a *authServer) Login(ctx context.Context, cred *api.Credentials) (*api.Ses
 	return convertSessionInfo(sessionID.String(), &s), nil
 }
 
-func (a *authServer) Check(ctx context.Context, workload *api.SessionID) (*api.SessionInfo, error) {
+func (a *authServer) Check(ctx context.Context, workload *auth.SessionID) (*auth.SessionInfo, error) {
 	if workload == nil {
 		return nil, errors.Errorf("Incorrect session id format")
 	}
@@ -94,14 +94,14 @@ func (a *authServer) Check(ctx context.Context, workload *api.SessionID) (*api.S
 	return convertSessionInfo(workload.SessionID, sessionInfo), nil
 }
 
-func (a *authServer) Logout(ctx context.Context, workload *api.SessionID) (*api.Empty, error) {
+func (a *authServer) Logout(ctx context.Context, workload *auth.SessionID) (*auth.Empty, error) {
 	if workload == nil {
 		return nil, errors.Errorf("Incorrect session id format")
 	}
 	err := a.srepo.Delete(workload.SessionID)
-	return &api.Empty{}, err
+	return &auth.Empty{}, err
 }
 
-func NewAuthServer(usecase user.UseCase, srepo session.Repository) api.AuthServer {
+func NewAuthServer(usecase user.UseCase, srepo session.Repository) auth.AuthServer {
 	return &authServer{usecase: usecase, srepo: srepo}
 }

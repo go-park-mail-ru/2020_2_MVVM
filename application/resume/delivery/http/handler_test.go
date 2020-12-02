@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mocksExp "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
@@ -74,8 +74,8 @@ func beforeTest() TestData {
 
 func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
-	case resume.Response:
-		resp := entity.(resume.Response)
+	case resume2.Response:
+		resp := entity.(resume2.Response)
 		return &resp
 	case models.FavoritesForEmpl:
 		resp := entity.(models.FavoritesForEmpl)
@@ -132,7 +132,7 @@ func TestGetResumeSearchHandler(t *testing.T) {
 	td := beforeTest()
 	td.router.GET("/search", td.resumeHandler.GetResumePage)
 
-	params := resume.SearchParams{
+	params := resume2.SearchParams{
 		KeyWords:        nil,
 		SalaryMin:       nil,
 		SalaryMax:       nil,
@@ -186,7 +186,7 @@ func TestGetResumeByID(t *testing.T) {
 	td.mockUseCase.On("GetById", uuid.Nil).Return(nil, assert.AnError)
 
 	res2 := res
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
@@ -272,7 +272,7 @@ func TestCreateResume(t *testing.T) {
 	td.mockUseCase.On("Create", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
 	td.mockUseCase.On("Create", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
 
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             res.Candidate.User,
 		Educations:       res.Education,
 		CustomExperience: res.ExperienceCustomComp,
@@ -329,7 +329,7 @@ func TestUpdateResume(t *testing.T) {
 	td.mockUseCase.On("Update", res).Return(nil, assert.AnError)
 
 	res2 := res
-	resp := resume.Response{
+	resp := resume2.Response{
 		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,

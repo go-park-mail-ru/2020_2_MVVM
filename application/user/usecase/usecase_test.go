@@ -2,7 +2,8 @@ package usecase
 
 import (
 	"github.com/apsdehal/go-logger"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -148,6 +149,19 @@ func TestUserGetEmplByID(t *testing.T) {
 	assert.Equal(t, *answer, user)
 }
 
+func TestUserGetCandByID(t *testing.T) {
+	mockRepo, usecase := beforeTest(t)
+	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
+
+	user := models.User{
+		ID: userID,
+	}
+	mockRepo.On("GetCandByID", userID.String()).Return(&user, nil)
+	answer, err := usecase.GetCandByID(userID.String())
+	assert.Nil(t, err)
+	assert.Equal(t, *answer, user)
+}
+
 func TestUserGetCandidateByID(t *testing.T) {
 	mockRepo, usecase := beforeTest(t)
 	userID, _ := uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
@@ -163,4 +177,10 @@ func TestUserGetCandidateByID(t *testing.T) {
 	answerNotCorrect, errNotNil := usecase.GetCandidateByID(uuid.Nil.String())
 	assert.Nil(t, answerNotCorrect)
 	assert.Error(t, errNotNil)
+}
+
+func TestNewUserUseCase(t *testing.T) {
+	UserRep := UserRepository.NewPgRepository(nil)
+	userUseCase := NewUserUseCase(nil, nil, UserRep)
+	assert.Equal(t, userUseCase, &UserUseCase{iLog: nil, errLog: nil, repos: UserRep})
 }

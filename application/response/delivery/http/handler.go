@@ -4,8 +4,9 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	response2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/response"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"net/http"
@@ -228,11 +229,11 @@ func getNewResponses(r *ResponseHandler, unId uuid.UUID, userType string, respId
 
 func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	var (
-		notifications response.RespNotifications
+		notifications response2.RespNotifications
 		err           error
 		status        int
 		daysFromNow   int
-		req response.ReqNotify
+		req           response2.ReqNotify
 	)
 
 	session := r.SessionBuilder.Build(ctx)

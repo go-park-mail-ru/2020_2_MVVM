@@ -4,8 +4,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
@@ -174,7 +175,7 @@ func TestSearch(t *testing.T) {
 	dummies := makeDummies()
 	r := dummies.Resume
 
-	searchParams := resume.SearchParams{
+	searchParams := resume2.SearchParams{
 		Gender:          []string{"male"},
 		EducationLevel:  []string{"bomz"},
 		CareerLevel:     []string{"work for food"},

@@ -4,7 +4,7 @@
 // 	protoc        (unknown)
 // source: api/vacancy.proto
 
-package api
+package vacancy
 
 import (
 	proto "github.com/golang/protobuf/proto"

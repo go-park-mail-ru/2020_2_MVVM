@@ -3,9 +3,10 @@ package repository
 import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func (p pgRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (
 		}
 		return 0, fmt.Errorf("error in GetRecommended vacancy cnt: %w", err)
 	}
-	for curSphere < vacancy.CountSpheres {
+	for curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
 		err = p.db.Raw("select count(*) from main.vacancy where date_create >= ? and sphere in ?", startDate, arr).Scan(&temp).Error
 		cnt += temp
@@ -60,7 +61,7 @@ func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit
 		vacList []models.Vacancy
 		list    []models.Vacancy
 	)
-	for len(vacList) < limit && curSphere < vacancy.CountSpheres {
+	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
 		err := p.db.Table("main.vacancy").Where("date_create >= ? and sphere in ?", startDate, arr).
 			Limit(limit).Offset(start).Find(&list).Error

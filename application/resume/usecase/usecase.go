@@ -4,19 +4,20 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	//"github.com/go-park-mail-ru/2020_2_MVVM.git/application/education"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/resume"
+
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
 	"github.com/google/uuid"
 	"strings"
 	"time"
 )
 
 type ResumeUseCase struct {
-	infoLogger       *logger.Logger
-	errorLogger      *logger.Logger
-	userUseCase      user.UseCase
+	infoLogger  *logger.Logger
+	errorLogger *logger.Logger
+	userUseCase user.UseCase
 	//educationUseCase education.UseCase
 	customExpUseCase custom_experience.UseCase
 	strg             resume.Repository
@@ -25,7 +26,7 @@ type ResumeUseCase struct {
 func NewUseCase(infoLogger *logger.Logger,
 	errorLogger *logger.Logger,
 	userUseCase user.UseCase,
-	//educationUseCase education.UseCase,
+//educationUseCase education.UseCase,
 	customExpUseCase custom_experience.UseCase,
 	strg resume.Repository) resume.UseCase {
 	usecase := ResumeUseCase{
@@ -34,7 +35,7 @@ func NewUseCase(infoLogger *logger.Logger,
 		userUseCase: userUseCase,
 		//educationUseCase: educationUseCase,
 		customExpUseCase: customExpUseCase,
-		strg:        strg,
+		strg:             strg,
 	}
 	return &usecase
 }
@@ -43,7 +44,7 @@ func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	// create resume
 	template.DateCreate = time.Now()
 	for i := range template.ExperienceCustomComp {
-		if *(template.ExperienceCustomComp[i].ContinueToToday){
+		if *(template.ExperienceCustomComp[i].ContinueToToday) {
 			dateFinish := time.Now()
 			template.ExperienceCustomComp[i].Finish = &dateFinish
 		}
@@ -98,7 +99,7 @@ func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResume
 	return DoBriefRespResume(r)
 }
 
-func (u *ResumeUseCase) Search(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error) {
+func (u *ResumeUseCase) Search(searchParams resume2.SearchParams) ([]models.BriefResumeInfo, error) {
 	if searchParams.KeyWords != nil {
 		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
 	}

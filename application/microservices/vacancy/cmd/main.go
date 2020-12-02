@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/api"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/server"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/vacancy"
 	yconfig "github.com/rowdyroad/go-yaml-config"
 	"google.golang.org/grpc"
 	"gorm.io/driver/postgres"
@@ -51,7 +51,7 @@ func main() {
 	vacServer := server.NewVacServer(vacancy)
 
 	gServer := grpc.NewServer()
-	api.RegisterVacancyServer(gServer, vacServer)
+	vacancy2.RegisterVacancyServer(gServer, vacServer)
 	err = gServer.Serve(listener)
 	if err != nil {
 		log.Error.Fatalf("error in listening api server: %s", err)

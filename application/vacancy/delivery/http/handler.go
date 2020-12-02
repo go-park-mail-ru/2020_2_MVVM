@@ -5,8 +5,9 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/dto/vacancy"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"net/http"
@@ -77,7 +78,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 			}
 		}
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vac}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vac}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
@@ -104,7 +105,7 @@ func (v *VacancyHandler) GetCompVacancyListHandler(ctx *gin.Context) {
 
 func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 	var (
-		req     vacancy.VacListRequest
+		req     vacancy2.VacListRequest
 		err     error
 		vacList []models.Vacancy
 	)
@@ -125,7 +126,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 			return
 		}
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
@@ -147,19 +148,20 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	var (
-		req vacancy.VacRequest
+		req vacancy2.VacRequest
 		err error
 	)
 
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
 	}
 	if err := common.ReqValidation(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
@@ -182,7 +184,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 	vacNew.EmpID = session.GetEmplID()
 	if treatmentType == vacCreate {
 		if session == nil {
-			ctx.JSON(http.StatusInternalServerError, models.RespError{Err: common.SessionErr})
+			common.WriteErrResponse(ctx, http.StatusForbidden, common.SessionErr)
 			return
 		}
 		vacNew, err = v.vacancyClient.CreateVacancy(*vacNew)
@@ -201,14 +203,14 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 			common.WriteErrResponse(ctx, http.StatusInternalServerError, err.Error())
 		}
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
 func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 	var (
-		req     vacancy.VacListRequest
+		req     vacancy2.VacListRequest
 		err     error
 		vacList []models.Vacancy
 		id      = uuid.Nil
@@ -233,7 +235,8 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
+

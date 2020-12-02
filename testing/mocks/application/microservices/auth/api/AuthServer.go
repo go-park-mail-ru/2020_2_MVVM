@@ -4,8 +4,7 @@ package mocks
 
 import (
 	context "context"
-
-	api "github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/api"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/dto/microservises/auth"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -16,20 +15,20 @@ type AuthServer struct {
 }
 
 // Check provides a mock function with given fields: _a0, _a1
-func (_m *AuthServer) Check(_a0 context.Context, _a1 *api.SessionID) (*api.SessionInfo, error) {
+func (_m *AuthServer) Check(_a0 context.Context, _a1 *auth.SessionID) (*auth.SessionInfo, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *api.SessionInfo
-	if rf, ok := ret.Get(0).(func(context.Context, *api.SessionID) *api.SessionInfo); ok {
+	var r0 *auth.SessionInfo
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.SessionID) *auth.SessionInfo); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.SessionInfo)
+			r0 = ret.Get(0).(*auth.SessionInfo)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.SessionID) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.SessionID) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -39,20 +38,20 @@ func (_m *AuthServer) Check(_a0 context.Context, _a1 *api.SessionID) (*api.Sessi
 }
 
 // Login provides a mock function with given fields: _a0, _a1
-func (_m *AuthServer) Login(_a0 context.Context, _a1 *api.Credentials) (*api.SessionInfo, error) {
+func (_m *AuthServer) Login(_a0 context.Context, _a1 *auth.Credentials) (*auth.SessionInfo, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *api.SessionInfo
-	if rf, ok := ret.Get(0).(func(context.Context, *api.Credentials) *api.SessionInfo); ok {
+	var r0 *auth.SessionInfo
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.Credentials) *auth.SessionInfo); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.SessionInfo)
+			r0 = ret.Get(0).(*auth.SessionInfo)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.Credentials) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.Credentials) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -62,20 +61,20 @@ func (_m *AuthServer) Login(_a0 context.Context, _a1 *api.Credentials) (*api.Ses
 }
 
 // Logout provides a mock function with given fields: _a0, _a1
-func (_m *AuthServer) Logout(_a0 context.Context, _a1 *api.SessionID) (*api.Empty, error) {
+func (_m *AuthServer) Logout(_a0 context.Context, _a1 *auth.SessionID) (*auth.Empty, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *api.Empty
-	if rf, ok := ret.Get(0).(func(context.Context, *api.SessionID) *api.Empty); ok {
+	var r0 *auth.Empty
+	if rf, ok := ret.Get(0).(func(context.Context, *auth.SessionID) *auth.Empty); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*api.Empty)
+			r0 = ret.Get(0).(*auth.Empty)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *api.SessionID) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *auth.SessionID) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
