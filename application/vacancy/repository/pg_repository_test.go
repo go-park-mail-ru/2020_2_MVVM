@@ -16,6 +16,7 @@ import (
 type Dummies struct {
 	ID      uuid.UUID
 	Vacancy models.Vacancy
+	ListVac []models.Vacancy
 }
 
 func makeVacRow(vac models.Vacancy) *sqlmock.Rows {
@@ -32,13 +33,15 @@ func makeVacRow(vac models.Vacancy) *sqlmock.Rows {
 
 func makeDummies() Dummies {
 	ID := uuid.New()
+	vac := models.Vacancy{
+		ID:     ID,
+		EmpID:  ID,
+		CompID: ID,
+	}
 	return Dummies{
 		ID: ID,
-		Vacancy: models.Vacancy{
-			ID:     ID,
-			EmpID:  ID,
-			CompID: ID,
-		},
+		Vacancy: vac,
+		ListVac: []models.Vacancy{vac},
 	}
 }
 
@@ -104,12 +107,70 @@ func TestUpdateVacancy(t *testing.T) {
 	assert.Equal(t, *result, dummies.Vacancy)
 
 	// Error flow
-	//error := errors.New("test error")
-	//mock.ExpectQuery(query).
-	//	WithArgs(dummies.Vacancy.ID).
-	//	WillReturnError(error)
-	//
-	//result, err = repo.GetVacancyById(dummies.Vacancy.ID)
-	//assert.Nil(t, result)
-	//assert.Error(t, err)
+	testErr := errors.New("test testErr")
+	mock.ExpectQuery(query).
+		WithArgs(dummies.Vacancy.ID).
+		WillReturnError(testErr)
+
+	result, err = repo.UpdateVacancy(dummies.Vacancy)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+
+	mock.ExpectQuery(query).
+		WithArgs(dummies.Vacancy.ID).
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+	mock.ExpectQuery(query2).
+		WithArgs(dummies.ID, dummies.ID, dummies.ID, dummies.Vacancy.ID).
+		WillReturnError(testErr)
+
+	result, err = repo.UpdateVacancy(dummies.Vacancy)
+	assert.Nil(t, result)
+	assert.Error(t, err)
+}
+
+func TestGetVacancyList(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+	var  start uint = 0
+	var limit uint = 2
+
+	// all
+	query := "SELECT \\* FROM \"main\".\"vacancy\" ORDER BY date_create LIMIT 2"
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+
+	result, err := repo.GetVacancyList(start, limit, dummies.Vacancy.ID, -1)
+	assert.Nil(t, err)
+	assert.Equal(t, result, dummies.ListVac)
+
+	//employer
+	query2 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE empl_id = (.*) ORDER BY date_create LIMIT 2"
+	mock.ExpectQuery(query2).
+		WithArgs(dummies.ID).
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+
+	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, 1)
+	assert.Nil(t, err)
+	assert.Equal(t, result, dummies.ListVac)
+
+	//company
+	query3 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE comp_id = (.*) ORDER BY date_create LIMIT 2"
+	mock.ExpectQuery(query3).
+		WithArgs(dummies.ID).
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+
+	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, result, dummies.ListVac)
+
+	// Error flow
+	testErr := errors.New("test error")
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnError(testErr)
+
+	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, -1)
+	assert.Nil(t, result)
+	assert.Error(t, err)
 }
