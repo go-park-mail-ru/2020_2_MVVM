@@ -132,7 +132,7 @@ func NewApp(config Config) *App {
 
 	companyRep := RepositoryCompany.NewPgRepository(db)
 	company := CompanyUseCase.NewCompUseCase(log.Info, log.Error, companyRep)
-	CompanyHandler.NewRest(api.Group("/company"), company, authMiddleware)
+	CompanyHandler.NewRest(api.Group("/company"), company, &sessionBuilder, authMiddleware)
 
 	resumeRep := ResumeRepository.NewPgRepository(db)
 	//educationRep := EducationRepository.NewPgRepository(db)

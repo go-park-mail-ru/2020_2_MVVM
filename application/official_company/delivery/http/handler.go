@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company"
@@ -14,7 +13,8 @@ import (
 )
 
 type CompanyHandler struct {
-	CompUseCase official_company.IUseCaseOfficialCompany
+	CompUseCase    official_company.IUseCaseOfficialCompany
+	SessionBuilder common.SessionBuilder
 }
 
 const (
@@ -24,8 +24,9 @@ const (
 	compPath   = "company/"
 )
 
-func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany, AuthRequired gin.HandlerFunc) *CompanyHandler {
-	rest := &CompanyHandler{CompUseCase: useCase}
+func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialCompany,
+		sessionBuilder common.SessionBuilder, AuthRequired gin.HandlerFunc) *CompanyHandler {
+	rest := &CompanyHandler{CompUseCase: useCase, SessionBuilder: sessionBuilder}
 	rest.Routes(router, AuthRequired)
 	return rest
 }
@@ -65,9 +66,9 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 }
 
 func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
-	session := sessions.Default(ctx).Get("empl_id")
-	empId, errSession := uuid.Parse(session.(string))
-	if errSession != nil {
+	session := c.SessionBuilder.Build(ctx)
+	empId := session.GetEmplID()
+	if empId != uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
 		return
 	}
@@ -149,12 +150,12 @@ func (c *CompanyHandler) DeleteCompanyHandler(ctx *gin.Context) {
 
 func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	var (
-		req models.ReqComp
+		req        models.ReqComp
 		compNew    *models.OfficialCompany
 		err        error
 		avatarPath string
 	)
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 
@@ -168,13 +169,13 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
 		return
 	}
-	session := sessions.Default(ctx).Get("empl_id")
+	session := c.SessionBuilder.Build(ctx)
+	empId := session.GetEmplID()
 	if session == nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return
 	}
-	empId, errSession := uuid.Parse(session.(string))
-	if errSession != nil {
+	if empId == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
 		return
 	}
