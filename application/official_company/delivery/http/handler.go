@@ -157,6 +157,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
+
 	}
 	if err := common.ReqValidation(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
@@ -180,7 +181,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	compId := uuid.New()
 	avatarName := compPath + compId.String()
 	if file != nil {
-		avatarPath = path.Join(common.DOMAIN, common.ImgDir, avatarName)
+		avatarPath = common.DOMAIN + path.Join(common.ImgDir, avatarName)
 	}
 	if treatmentType == compCreate {
 		compNew, err = c.CompUseCase.CreateOfficialCompany(models.OfficialCompany{ID: compId, Name: req.Name, Spheres: convertSliceToPqArr(req.Spheres),
