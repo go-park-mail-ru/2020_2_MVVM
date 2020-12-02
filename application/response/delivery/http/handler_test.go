@@ -368,7 +368,7 @@ func TestGetAllNotifications(t *testing.T) {
 		UnreadResp:        nil,
 		UnreadRespCnt:     count,
 		RecommendedVac:    nil,
-		RecommendedVacCnt: count,
+		RecommendedVacCnt: 0,
 	}
 
 	//count flow
@@ -385,8 +385,9 @@ func TestGetAllNotifications(t *testing.T) {
 	listVacancy := []models.Vacancy{vacancy, vacancy}
 	response := models.ResponseWithTitle{ResponseID: ID}
 	listResp := []models.ResponseWithTitle{response, response}
+	var days int = 1
 	req2 := response2.ReqNotify{
-		VacInLastNDays:       nil,
+		VacInLastNDays:       &days,
 		OnlyVacCnt:           false,
 		ListStart:            start,
 		ListEnd:              end,
@@ -401,10 +402,8 @@ func TestGetAllNotifications(t *testing.T) {
 		RecommendedVacCnt: count,
 	}
 
-	//listID := []uuid.UUID
-
 	td.mockUseCase.On("GetAllEmployerResponses", ID, []uuid.UUID{ID}).Return(listResp, nil).Once()
-	td.mockUseCase.On("GetRecommendedVacancies", ID, start, end, common.Week).Return(listVacancy, nil).Once()
+	td.mockUseCase.On("GetRecommendedVacancies", ID, start, end, 1).Return(listVacancy, nil).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%snotify", responseUrlGroup),
@@ -439,6 +438,4 @@ func TestGetAllNotifications(t *testing.T) {
 }
 
 
-//{"unread_resp":[{"response_id":"af173205-40c9-4764-8cd2-747e549ac394","resume_id":"00000000-0000-0000-0000-000000000000","resume_name":"","cand_name":"","cand_surname":"","vacancy_id":"00000000-0000-0000-0000-000000000000","vacancy_name":"","company_id":"00000000-0000-0000-0000-000000000000","company_name":"","initial":"","status":"","date_create":"0001-01-01T00:00:00Z"}],"unread_resp_cnt":2,"recommended_vac":[{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""},{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""}],"recommended_vac_cnt":2} but instead got {"unread_resp":null,"unread_resp_cnt":0,"recommended_vac":[{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""},{"vac_id":"af173205-40c9-4764-8cd2-747e549ac394","empl_id":"00000000-0000-0000-0000-000000000000","comp_id":"00000000-0000-0000-0000-000000000000","title":"","gender":"","salary_min":0,"salary_max":0,"description":"","requirements":"","duties":"","skills":"","sphere":0,"employment":"","experience_month":0,"area_search":"","location":"","career_level":"","education_level":"","date_create":"","email":"","phone":"","avatar":""}],"recommended_vac_cnt":2}
-//
 
