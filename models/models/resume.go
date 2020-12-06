@@ -15,7 +15,7 @@ type Resume struct {
 	SalaryMax            *int                   `gorm:"column:salary_max" json:"salary_max" valid:"-"`
 	Description          string                 `gorm:"column:description; notnull" json:"description" binding:"required" valid:"required"`
 	Skills               string                 `gorm:"column:skills; notnull" json:"skills" binding:"required" valid:"required"`
-	Gender               string                 `gorm:"column:gender; notnull" json:"gender" binding:"required" valid:"required,alpha;stringlength(4|6)"`
+	Gender               string                 `gorm:"column:gender;" json:"gender" binding:"required" valid:"alpha;stringlength(4|6)"`
 	EducationLevel       *string                `gorm:"column:education_level" json:"education_level" valid:"-"`
 	CareerLevel          *string                `gorm:"column:career_level" json:"career_level" valid:"-"`
 	Place                *string                `gorm:"column:place" json:"place" valid:"-"`
@@ -25,6 +25,9 @@ type Resume struct {
 	Education            []Education            `gorm:"-;" json:"education" valid:"-"`
 	ExperienceCustomComp []ExperienceCustomComp `gorm:"foreignKey:ResumeID" json:"custom_experience" valid:"-"`
 	Avatar               string                 `gorm:"column:path_to_avatar" json:"avatar" valid:"-"`
+	CandName             string                 `json:"cand_name" valid:"utfletter~имя должно содержать только буквы,stringlength(3|25)~длина имени должна быть от 3 до 25 символов., required"`
+	CandSurname          string                 `json:"cand_surname" valid:"utfletter~фамилия должна содержать только буквы,stringlength(3|25)~длина фамилии должна быть от 3 до 25 символов., required"`
+	CandEmail            string                 `json:"cand_email" valid:"email, required"`
 }
 
 func (r Resume) TableName() string {

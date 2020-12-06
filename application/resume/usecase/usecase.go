@@ -56,11 +56,6 @@ func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//err = u.createExperienceAndEducation(template, *result)
-	//if err != nil {
-	//	return nil, err
-	//}
 	return result, nil
 }
 
