@@ -68,6 +68,16 @@ func easyjson39b3a2f5DecodeGithubComGoParkMailRu20202MVVMGitModelsModels(in *jle
 				}
 				*out.SalaryMax = int(in.Int())
 			}
+		case "sphere":
+			if in.IsNull() {
+				in.Skip()
+				out.Sphere = nil
+			} else {
+				if out.Sphere == nil {
+					out.Sphere = new(int)
+				}
+				*out.Sphere = int(in.Int())
+			}
 		case "description":
 			out.Description = string(in.String())
 		case "skills":
@@ -232,6 +242,15 @@ func easyjson39b3a2f5EncodeGithubComGoParkMailRu20202MVVMGitModelsModels(out *jw
 			out.RawString("null")
 		} else {
 			out.Int(int(*in.SalaryMax))
+		}
+	}
+	{
+		const prefix string = ",\"sphere\":"
+		out.RawString(prefix)
+		if in.Sphere == nil {
+			out.RawString("null")
+		} else {
+			out.Int(int(*in.Sphere))
 		}
 	}
 	{

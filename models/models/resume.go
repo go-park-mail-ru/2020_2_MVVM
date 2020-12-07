@@ -13,6 +13,7 @@ type Resume struct {
 	Title                string                 `gorm:"column:title; notnull" json:"title" binding:"required" valid:"required, stringlength(4|128)~название резюме должно быть от 4 до 128 символов в длину." `
 	SalaryMin            *int                   `gorm:"column:salary_min" json:"salary_min" valid:"-"`
 	SalaryMax            *int                   `gorm:"column:salary_max" json:"salary_max" valid:"-"`
+	Sphere               *int                   `gorm:"column:sphere" json:"sphere" valid:"numeric~сфера деятельности должна содержать только код"`
 	Description          string                 `gorm:"column:description; notnull" json:"description" binding:"required" valid:"required"`
 	Skills               string                 `gorm:"column:skills; notnull" json:"skills" binding:"required" valid:"required"`
 	Gender               string                 `gorm:"column:gender;" json:"gender" binding:"required" valid:"alpha;stringlength(4|6)"`

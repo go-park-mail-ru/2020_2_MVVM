@@ -187,7 +187,6 @@ func TestGetResumeByID(t *testing.T) {
 
 	res2 := res
 	resp := resume2.Response{
-		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
 		IsFavorite:       &favorite.FavoriteID,
@@ -273,7 +272,6 @@ func TestCreateResume(t *testing.T) {
 	td.mockUseCase.On("Create", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
 
 	resp := resume2.Response{
-		User:             res.Candidate.User,
 		Educations:       res.Education,
 		CustomExperience: res.ExperienceCustomComp,
 		IsFavorite:       nil,
@@ -330,7 +328,6 @@ func TestUpdateResume(t *testing.T) {
 
 	res2 := res
 	resp := resume2.Response{
-		User:             res2.Candidate.User,
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
 		IsFavorite:       nil,

@@ -3,6 +3,7 @@ package usecase
 import (
 	"fmt"
 	"github.com/apsdehal/go-logger"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 
@@ -43,6 +44,9 @@ func NewUseCase(infoLogger *logger.Logger,
 func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	// create resume
 	template.DateCreate = time.Now()
+	if template.Sphere == nil {
+		template.Sphere = &common.DefaultSphere
+	}
 	for i := range template.ExperienceCustomComp {
 		if *(template.ExperienceCustomComp[i].ContinueToToday) {
 			dateFinish := time.Now()
@@ -70,6 +74,9 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 		return nil, err
 	}
 	resume.DateCreate = oldResume.DateCreate
+	if resume.Sphere == nil {
+		resume.Sphere = &common.DefaultSphere
+	}
 	err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
 	if err != nil {
 		return nil, err

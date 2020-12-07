@@ -33,7 +33,6 @@ func (p *PGRepository) Create(resume models.Resume) (*models.Resume, error) {
 		err = fmt.Errorf("error in inserting resume with title: %s : error: %w", resume.Title, err)
 		return nil, err
 	}
-	resume.Candidate = *candidate
 	return &resume, nil
 }
 
@@ -41,7 +40,6 @@ func (p *PGRepository) GetById(id uuid.UUID) (*models.Resume, error) {
 	var r models.Resume
 	err := p.db.
 		Preload(clause.Associations).
-		Preload("Candidate.User").
 		First(&r, id).
 		Error
 
@@ -102,8 +100,6 @@ func (p *PGRepository) Update(resume models.Resume) (*models.Resume, error) {
 	if err := p.db.Model(&resume).Where("resume_id = ?", resume.ResumeID).Updates(resume).Error; err != nil {
 		return nil, fmt.Errorf("can't update resume with id:%s, %s", resume.ResumeID, err)
 	}
-
-	resume.Candidate = *candidate
 
 	return &resume, nil
 }
