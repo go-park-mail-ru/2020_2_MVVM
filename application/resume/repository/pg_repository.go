@@ -55,6 +55,7 @@ func (p *PGRepository) List(start, limit uint) ([]models.Resume, error) {
 	err := p.db.
 		Preload("Candidate").
 		Preload("Candidate.User").
+		Order("date_create desc").
 		Offset(int(start)).Limit(int(limit)).
 		Find(&brief).
 		Error
@@ -70,6 +71,7 @@ func (p *PGRepository) GetAllUserResume(userID uuid.UUID) ([]models.Resume, erro
 	err := p.db.
 		Preload("Candidate").
 		Preload("Candidate.User").
+		Order("date_create desc").
 		Find(&brief, `Resume.cand_id = ?`, userID).
 		Error
 	if err != nil {
@@ -122,6 +124,9 @@ func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resu
 		if len(searchParams.ExperienceMonth) != 0 {
 			q = q.Where("experience_month IN (?)", searchParams.ExperienceMonth)
 		}
+		if len(searchParams.Sphere) != 0 {
+			q = q.Where("sphere IN (?)", searchParams.Sphere)
+		}
 		if searchParams.SalaryMin != nil {
 			q = q.Where("salary_min >= ?", searchParams.SalaryMin)
 		}
@@ -131,9 +136,16 @@ func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resu
 		if searchParams.KeyWords != nil {
 			q = q.Where("LOWER(title) LIKE ?", "%"+*searchParams.KeyWords+"%")
 		}
+		if searchParams.StartLimit.Start != nil {
+			q = q.Offset(int(*searchParams.StartLimit.Start))
+		}
+		if searchParams.StartLimit.Limit != nil {
+			q = q.Limit(int(*searchParams.StartLimit.Limit))
+		}
 		return q
 	}).Preload("Candidate").
 		Preload("Candidate.User").
+		Order("date_create desc").
 		Find(&brief).
 		Error
 	if err != nil {
@@ -179,6 +191,7 @@ func (p *PGRepository) GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resu
 		Preload("Favorites.Resume.Candidate").
 		Preload("Favorites.Resume.Candidate.User").
 		First(&buffer).
+		Order("date_create desc").
 		Error
 
 	var resumes []models.Resume

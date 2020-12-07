@@ -64,7 +64,7 @@ func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit
 	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
 		err := p.db.Table("main.vacancy").Where("date_create >= ? and sphere in ?", startDate, arr).
-			Limit(limit).Offset(start).Find(&list).Error
+			Order("date_create desc").Limit(limit).Offset(start).Find(&list).Error
 		vacList = append(vacList, list...)
 		if err != nil {
 			err = fmt.Errorf("error in GetRecommendation: %w", err)
@@ -107,16 +107,23 @@ func (p pgRepository) GetRespNotifications(respIds []uuid.UUID, entityId uuid.UU
 			UpdateColumn("unread", false).
 			Error
 	} else {
-		err = p.db.Table("main.response").Where("vacancy_id = ? and response_id IN ?", entityId, respIds).UpdateColumn("unread", false).Error
+		err = p.db.Table("main.response").
+			Where("vacancy_id = ? and response_id IN ?", entityId, respIds).
+			UpdateColumn("unread", false).
+			Error
 	}
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
 	}
 	if entityType == common.Vacancy {
-		err = p.db.Where("vacancy_id = ? and unread = ?", entityId, true).Find(&responses).Error
+		err = p.db.Where("vacancy_id = ? and unread = ?", entityId, true).
+			Order("date_create desc").
+			Find(&responses).Error
 	} else {
-		err = p.db.Where("resume_id = ? and unread = ?", entityId, true).Find(&responses).Error
+		err = p.db.Where("resume_id = ? and unread = ?", entityId, true).
+			Order("date_create desc").
+			Find(&responses).Error
 	}
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
@@ -154,7 +161,9 @@ func (p *pgRepository) UpdateStatus(response models.Response) (*models.Response,
 
 func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Find(&responses, "resume_id = ?", resumeID).Error
+	err := p.db.Order("date_create desc").
+		Find(&responses, "resume_id = ?", resumeID).
+		Error
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
@@ -164,7 +173,9 @@ func (p *pgRepository) GetResumeAllResponse(resumeID uuid.UUID) ([]models.Respon
 
 func (p *pgRepository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Response, error) {
 	var responses []models.Response
-	err := p.db.Find(&responses, "vacancy_id = ?", vacancyID).Error
+	err := p.db.Order("date_create desc").
+		Find(&responses, "vacancy_id = ?", vacancyID).
+		Error
 	if err != nil {
 		err = fmt.Errorf("error in get list responses: %w", err)
 		return nil, err
@@ -174,12 +185,6 @@ func (p *pgRepository) GetVacancyAllResponse(vacancyID uuid.UUID) ([]models.Resp
 
 func (p *pgRepository) GetAllResumeWithoutResponse(candID uuid.UUID, vacancyID uuid.UUID) ([]models.Resume, error) {
 	var resume []models.Resume
-	//query := fmt.Sprintf(`select resume.*
-	//		from resume
-	//		left join response on response.resume_id = resume.resume_id
-	//		where cand_id = '%s'
-	//		group by resume.resume_id
-	//		having sum(case when vacancy_id = '%s' then 1 else 0 end) = 0`, candID, vacancyID)
 	err := p.db.Raw(`select main.resume.* 
 			from main.resume 
 			left join main.response on main.response.resume_id = main.resume.resume_id 

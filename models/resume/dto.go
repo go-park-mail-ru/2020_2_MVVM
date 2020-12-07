@@ -15,6 +15,12 @@ type SearchParams struct {
 	ExperienceMonth []int    `json:"experience_month"`
 	AreaSearch      []string `json:"area_search"`
 	Sphere          []int    `json:"sphere"`
+	StartLimit      StartLimit
+}
+
+type StartLimit struct {
+	Start *uint `form:"start"`
+	Limit *uint `form:"limit"`
 }
 
 type Response struct {

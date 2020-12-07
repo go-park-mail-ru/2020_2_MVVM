@@ -263,7 +263,14 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
+	var request resume2.StartLimit
+	if err := ctx.ShouldBindQuery(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+
 	var searchParams resume2.SearchParams
+	searchParams.StartLimit = request
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)

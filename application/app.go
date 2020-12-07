@@ -110,11 +110,11 @@ func NewApp(config Config) *App {
 	authCookieConfig := common.AuthCookieConfig{
 		Key:    "session",
 		Path:   "/",
-		Domain: "localhost", // for postman
-		//Domain:   "studhunt.ru",
+		//Domain: "localhost", // for postman
+		Domain:   "studhunt.ru",
 		MaxAge: int((time.Hour * 12).Seconds()),
-		//Secure:   true,
-		Secure:   false, // for postman
+		Secure:   true,
+		//Secure:   false, // for postman
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 		//SameSite: http.SameSiteStrictMode, prevent csrf

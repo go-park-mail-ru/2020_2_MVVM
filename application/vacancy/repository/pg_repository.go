@@ -96,7 +96,7 @@ func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, enti
 	} else if entityType == vacancy.ByCompId {
 		err = p.db.Where("comp_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
 	} else {
-		err = p.db.Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Limit(int(limit)).Offset(int(start)).Order("date_create desc").Find(&vacList).Error
 	}
 	if err != nil {
 		err = fmt.Errorf("error in list selection from %v to %v: error: %w", start, limit, err)
@@ -229,7 +229,7 @@ func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, s
 		Where("sphere IN (?)", spheres).
 		Limit(limit).
 		Offset(start).
-		Order("date_create").
+		Order("date_create desc").
 		Find(&vacList).Error
 
 	if err != nil {
