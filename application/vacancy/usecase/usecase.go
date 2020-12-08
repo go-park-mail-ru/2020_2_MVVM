@@ -73,7 +73,7 @@ func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]mo
 		params.StartDate = time.Now().AddDate(0, 0, -params.DaysFromNow).Format("2006-01-02")
 	}
 	if params.OrderBy != "" {
-		if s := params.OrderBy; s == "salary_min" || s == "salary_max" || s == "week_work_hours" || s == "date_create" {
+		if s := params.OrderBy; s == "salary_min" || s == "salary_max" || s == "experience_month" || s == "date_create" {
 			if params.ByAsc {
 				params.OrderBy += " ASC"
 			} else {
