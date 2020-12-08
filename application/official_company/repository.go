@@ -13,4 +13,5 @@ type OfficialCompanyRepository interface {
 	GetMineCompany(uuid.UUID) (*models.OfficialCompany, error)
 	GetOfficialCompany(uuid.UUID) (*models.OfficialCompany, error)
 	SearchCompanies(models.CompanySearchParams) ([]models.OfficialCompany, error)
+	GetAllCompaniesNames () ([]models.BriefCompany, error)
 }

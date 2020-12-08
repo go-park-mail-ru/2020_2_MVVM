@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/google/uuid"
 )
 
 type UseCase interface {
@@ -11,7 +12,7 @@ type UseCase interface {
 	GetEmployerByID(id string) (*models.Employer, error)
 	//UpdateEmployer(employer models.Employer) (*models.Employer, error)
 	GetCandidateByID(id string) (*models.Candidate, error)
-	CreateUser(user models.User) (*models.User, error)
+	CreateUser(user models.User, companyID *uuid.UUID) (*models.User, error)
 	UpdateUser(user models.User) (*models.User, error)
 	Login(user models.UserLogin) (*models.User, error)
 }

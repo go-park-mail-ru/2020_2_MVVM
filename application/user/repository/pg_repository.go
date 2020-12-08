@@ -6,6 +6,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -85,7 +86,7 @@ func (p *pgStorage) GetEmplByID(id string) (*models.User, error) {
 	return p.GetUserByID(empl.UserID.String())
 }
 
-func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
+func (p *pgStorage) CreateUser(user models.User, companyID *uuid.UUID) (*models.User, error) {
 	errInsert := p.db.Create(&user).Error
 	if errInsert != nil {
 		if errInsert.Error() != "ERROR: duplicate key value violates unique constraint \"users_email_key\" (SQLSTATE 23505)" {
@@ -98,7 +99,12 @@ func (p *pgStorage) CreateUser(user models.User) (*models.User, error) {
 	}
 	if user.UserType == "employer" {
 		newEmpl := models.Employer{UserID: user.ID}
-		errInsert = p.db.Omit("comp_id").Create(&newEmpl).Error
+		if companyID != nil {
+			newEmpl.CompanyID = *companyID
+			errInsert = p.db.Create(&newEmpl).Error
+		} else {
+			errInsert = p.db.Omit("comp_id").Create(&newEmpl).Error
+		}
 	} else if user.UserType == "candidate" {
 		newCand := models.Candidate{UserID: user.ID}
 		errInsert = p.db.Create(&newCand).Error

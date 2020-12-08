@@ -138,3 +138,12 @@ func (p *pgRepository) GetOfficialCompany(compId uuid.UUID) (*models.OfficialCom
 
 	return &comp, nil
 }
+
+func (p *pgRepository) GetAllCompaniesNames() ([]models.BriefCompany, error) {
+	var listComp []models.BriefCompany
+	err := p.db.Table("main.official_companies").Find(&listComp).Error
+	if err != nil {
+		return nil, fmt.Errorf("error in select official company names: error: %w", err)
+	}
+	return listComp, nil
+}
