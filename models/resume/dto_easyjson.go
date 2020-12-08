@@ -304,15 +304,7 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResume1(in *jl
 				in.Delim(']')
 			}
 		case "keywordsGeo":
-			if in.IsNull() {
-				in.Skip()
-				out.KeywordsGeo = nil
-			} else {
-				if out.KeywordsGeo == nil {
-					out.KeywordsGeo = new(string)
-				}
-				*out.KeywordsGeo = string(in.String())
-			}
+			out.KeywordsGeo = string(in.String())
 		case "StartLimit":
 			(out.StartLimit).UnmarshalEasyJSON(in)
 		default:
@@ -455,11 +447,7 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResume1(out *j
 	{
 		const prefix string = ",\"keywordsGeo\":"
 		out.RawString(prefix)
-		if in.KeywordsGeo == nil {
-			out.RawString("null")
-		} else {
-			out.String(string(*in.KeywordsGeo))
-		}
+		out.String(string(in.KeywordsGeo))
 	}
 	{
 		const prefix string = ",\"StartLimit\":"
