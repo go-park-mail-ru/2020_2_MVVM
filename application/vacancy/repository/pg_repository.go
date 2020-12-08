@@ -92,9 +92,9 @@ func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, enti
 	}
 
 	if entityType == vacancy.ByEmpId {
-		err = p.db.Where("empl_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Where("empl_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create desc").Find(&vacList).Error
 	} else if entityType == vacancy.ByCompId {
-		err = p.db.Where("comp_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create").Find(&vacList).Error
+		err = p.db.Where("comp_id = ?", id).Limit(int(limit)).Offset(int(start)).Order("date_create desc").Find(&vacList).Error
 	} else {
 		err = p.db.Limit(int(limit)).Offset(int(start)).Order("date_create desc").Find(&vacList).Error
 	}
@@ -142,6 +142,8 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy)
+		} else {
+			return q.Order("date_create desc")
 		}
 		return q
 	}).Find(&vacList).Error
