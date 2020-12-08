@@ -171,7 +171,7 @@ func TestSearch(t *testing.T) {
 	searchParams := models.CompanySearchParams{
 		KeyWords:   "A",
 		AreaSearch: []string{"Moscow", "Paris"},
-		Spheres:    []int{1, 2},
+		Sphere:     []int{1, 2},
 		OrderBy:    "name",
 		ByAsc:      false,
 		VacCount:   2,

@@ -84,7 +84,7 @@ func (v *vacServer) SearchVacancies(ctx context.Context, params *vacancy2.Search
 		Employment:      vacancyMicro.ConvertToStringListPbModels(params.EmpList),
 		EducationLevel:  vacancyMicro.ConvertToStringListPbModels(params.EdList),
 		CareerLevel:     vacancyMicro.ConvertToStringListPbModels(params.CarList),
-		Spheres:         vacancyMicro.ConvertToIntListPbModels(params.SpheresList),
+		Sphere:          vacancyMicro.ConvertToIntListPbModels(params.SpheresList),
 		AreaSearch:      vacancyMicro.ConvertToStringListPbModels(params.AreaList),
 		OrderBy:         params.OrderBy,
 		ByAsc:           params.ByAsc,

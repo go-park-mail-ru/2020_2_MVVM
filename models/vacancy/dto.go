@@ -3,7 +3,7 @@ package vacancy
 import "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 
 //len = 29
-/*var Spheres = []string{
+/*var Sphere = []string{
 	"Автомобильный бизнес",
 	"Гостиницы, рестораны, общепит, кейтеринг",
 	"Государственные организации",

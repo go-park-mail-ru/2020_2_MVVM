@@ -115,8 +115,8 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		if params.StartDate != "" {
 			q = q.Where("date_create >= (?)", params.StartDate)
 		}
-		if len(params.Spheres) != 0 {
-			q = q.Where("sphere IN (?)", params.Spheres)
+		if len(params.Sphere) != 0 {
+			q = q.Where("sphere IN (?)", params.Sphere)
 		}
 		if len(params.EducationLevel) != 0 {
 			q = q.Where("education_level IN (?)", params.EducationLevel)

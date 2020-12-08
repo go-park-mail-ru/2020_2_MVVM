@@ -38,7 +38,7 @@ type VacancySearchParams struct {
 	Employment      []string `json:"employment"`
 	EducationLevel  []string `json:"education_level"`
 	CareerLevel     []string `json:"career_level"`
-	Spheres         []int    `json:"spheres"`
+	Sphere          []int    `json:"sphere"`
 	AreaSearch      []string `json:"area_search"`
 	OrderBy         string   `json:"order_by"`
 	ByAsc           bool     `json:"byAsc"`

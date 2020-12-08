@@ -140,7 +140,7 @@ func (g *gRPCVacClient) SearchVacancies(params models.VacancySearchParams) ([]mo
 		EdList:      ConvertStringListToPbModel(params.EducationLevel),
 		EmpList:     ConvertStringListToPbModel(params.Employment),
 		CarList:     ConvertStringListToPbModel(params.CareerLevel),
-		SpheresList: ConvertIntListToPbModel(params.Spheres),
+		SpheresList: ConvertIntListToPbModel(params.Sphere),
 		DaysFromNow: int32(params.DaysFromNow),
 		KeyWords:    params.KeyWords,
 		SalaryMax:   int32(params.SalaryMax),
