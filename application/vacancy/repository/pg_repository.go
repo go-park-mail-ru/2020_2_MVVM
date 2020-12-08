@@ -128,7 +128,7 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 			q = q.Where("experience_month IN (?)", params.ExperienceMonth)
 		}
 		if len(params.Employment) != 0 {
-			q = q.Where("employment IN (?)", params.ExperienceMonth)
+			q = q.Where("employment IN (?)", params.Employment)
 		}
 		if len(params.AreaSearch) != 0 {
 			q = q.Where("area_search IN (?)", params.AreaSearch)
