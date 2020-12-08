@@ -136,6 +136,9 @@ func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resu
 		if searchParams.KeyWords != nil {
 			q = q.Where("LOWER(title) LIKE ?", "%"+*searchParams.KeyWords+"%")
 		}
+		if searchParams.KeywordsGeo != nil {
+			q = q.Where("LOWER(area_search) LIKE ?", "%"+*searchParams.KeywordsGeo+"%") //for main
+		}
 		if searchParams.StartLimit.Start != nil {
 			q = q.Offset(int(*searchParams.StartLimit.Start))
 		}

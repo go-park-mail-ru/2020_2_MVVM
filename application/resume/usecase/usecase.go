@@ -104,6 +104,7 @@ func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResume
 func (u *ResumeUseCase) Search(searchParams resume2.SearchParams) ([]models.BriefResumeInfo, error) {
 	if searchParams.KeyWords != nil {
 		*searchParams.KeyWords = strings.ToLower(*searchParams.KeyWords)
+		*searchParams.KeywordsGeo = strings.ToLower(*searchParams.KeywordsGeo)
 	}
 	r, err := u.strg.Search(&searchParams)
 	if err != nil {

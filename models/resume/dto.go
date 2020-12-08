@@ -15,6 +15,7 @@ type SearchParams struct {
 	ExperienceMonth []int    `json:"experience_month"`
 	AreaSearch      []string `json:"area_search"`
 	Sphere          []int    `json:"sphere"`
+	KeywordsGeo     *string   `json:"keywordsGeo"` ////for main
 	StartLimit      StartLimit
 }
 

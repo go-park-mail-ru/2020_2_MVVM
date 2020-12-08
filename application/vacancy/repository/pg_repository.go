@@ -140,6 +140,9 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		if params.KeyWords != "" {
 			q = q.Where("LOWER(title) LIKE ?", "%"+params.KeyWords+"%")
 		}
+		if params.KeywordsGeo != "" {
+			q = q.Where("LOWER(area_search) LIKE ?", "%"+params.KeywordsGeo+"%") //for main
+		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy)
 		} else {

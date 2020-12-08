@@ -309,5 +309,5 @@ var _Vacancy_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/vacancy.proto",
+	Metadata: "vacancy.proto",
 }

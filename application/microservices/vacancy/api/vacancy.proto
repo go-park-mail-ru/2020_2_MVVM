@@ -78,6 +78,7 @@ message searchParams {
   bool ByAsc = 12;
   int32 DaysFromNow = 13;
   string StartDate = 14;
+  string KeyWordsGeo = 15;
 };
 
 message empty {};

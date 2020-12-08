@@ -150,6 +150,7 @@ func (g *gRPCVacClient) SearchVacancies(params models.VacancySearchParams) ([]mo
 		Gender:      params.Gender,
 		OrderBy:     params.OrderBy,
 		ByAsc:       params.ByAsc,
+		KeyWordsGeo: params.KeywordsGeo,
 	}
 	vacList, err := g.client.SearchVacancies(g.ctx, searchParams)
 

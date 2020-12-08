@@ -44,6 +44,7 @@ type VacancySearchParams struct {
 	ByAsc           bool     `json:"byAsc"`
 	DaysFromNow     int      `json:"days_from_now"`
 	StartDate       string   `json:"start_date"`
+	KeywordsGeo     string   `json:"keywordsGeo"` //for main
 }
 
 func (v Vacancy) TableName() string {

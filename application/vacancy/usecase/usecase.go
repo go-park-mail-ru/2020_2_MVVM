@@ -84,6 +84,7 @@ func (v VacancyUseCase) SearchVacancies(params models.VacancySearchParams) ([]mo
 		}
 	}
 	params.KeyWords = strings.ToLower(params.KeyWords)
+	params.KeywordsGeo = strings.ToLower(params.KeywordsGeo)
 	vacList, err := v.repos.SearchVacancies(params)
 	if err != nil {
 		return nil, err
