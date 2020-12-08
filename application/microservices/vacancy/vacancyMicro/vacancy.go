@@ -95,8 +95,8 @@ func ConvertToStringListPbModels(pbModels *vacancy.StringArr) []string {
 		return nil
 	}
 	strList := make([]string, len(pbModels.Elem))
-	for _, pbModel := range pbModels.Elem {
-		strList = append(strList, pbModel)
+	for i, pbModel := range pbModels.Elem {
+		strList[i] = pbModel
 	}
 	return strList
 }
@@ -105,8 +105,8 @@ func ConvertToIntListPbModels(pbModels *vacancy.IntArr) []int {
 		return nil
 	}
 	intList := make([]int, len(pbModels.Elem))
-	for _, pbModel := range pbModels.Elem {
-		intList = append(intList, int(pbModel))
+	for i, pbModel := range pbModels.Elem {
+		intList[i] = int(pbModel)
 	}
 	return intList
 }
@@ -116,8 +116,9 @@ func ConvertIntListToPbModel(slice []int) *vacancy.IntArr {
 		return nil
 	}
 	intArr := new(vacancy.IntArr)
-	for _, e := range slice {
-		intArr.Elem = append(intArr.Elem, int32(e))
+	intArr.Elem = make([]int32, len(slice))
+	for i, e := range slice {
+		intArr.Elem[i] = int32(e)
 	}
 	return intArr
 }
@@ -127,8 +128,9 @@ func ConvertStringListToPbModel(slice []string) *vacancy.StringArr {
 		return nil
 	}
 	stringArr := new(vacancy.StringArr)
-	for _, s := range slice {
-		stringArr.Elem = append(stringArr.Elem, s)
+	stringArr.Elem = make([]string, len(slice))
+	for i, s := range slice {
+		stringArr.Elem[i] = s
 	}
 	return stringArr
 }
