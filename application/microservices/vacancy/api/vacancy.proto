@@ -80,6 +80,14 @@ message searchParams {
   string StartDate = 14;
 };
 
+message sphereCnt {
+  int32 Cnt = 1;
+}
+
+message topSpheres {
+  map<int32, int32> Cnt = 1;
+}
+
 message empty {};
 
 service Vacancy {
@@ -90,4 +98,5 @@ service Vacancy {
   rpc  SearchVacancies(searchParams) returns (vacList) {};
   rpc  AddRecommendation(addRecParams) returns (empty) {};
   rpc  GetRecommendation(getRecParams) returns (vacList) {};
+  rpc  GetVacancyTopSpheres(sphereCnt) returns (topSpheres) {};
 };

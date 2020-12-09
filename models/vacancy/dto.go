@@ -1,6 +1,8 @@
 package vacancy
 
-import "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+import (
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+)
 
 //len = 29
 /*var Sphere = []string{
@@ -76,5 +78,9 @@ type VacListRequest struct {
 	Start  uint   `form:"start"`
 	Limit  uint   `form:"limit" binding:"required"`
 	CompId string `form:"comp_id,uuid"`
+	Sphere *int    `form:"sphere"`
 }
 
+type TopSpheres struct {
+	TopSpheresCnt *int `form:"top_spheres_cnt"`
+}

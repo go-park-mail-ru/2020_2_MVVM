@@ -16,7 +16,7 @@ import (
 type VacancyHandler struct {
 	vacancyClient  vacancyMicro.VacClient
 	SessionBuilder common.SessionBuilder
-	autClient      authmicro.AuthClient
+	authClient     authmicro.AuthClient
 }
 
 const (
@@ -29,11 +29,11 @@ func NewRest(router *gin.RouterGroup,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc,
 	vacancyClient vacancyMicro.VacClient,
-	autClient authmicro.AuthClient) *VacancyHandler {
+	authClient authmicro.AuthClient) *VacancyHandler {
 	rest := &VacancyHandler{
 		SessionBuilder: sessionBuilder,
 		vacancyClient:  vacancyClient,
-		autClient:      autClient,
+		authClient:     authClient,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -42,6 +42,7 @@ func NewRest(router *gin.RouterGroup,
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
 	router.GET("/comp", v.GetCompVacancyListHandler)
+	router.GET("/top", v.GetVacancyTopSpheres)
 	router.GET("/page", v.GetVacancyListHandler)
 	router.POST("/search", v.SearchVacanciesHandler)
 	router.Use(AuthRequired)
@@ -69,7 +70,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	}
 	sessionID, _ := ctx.Cookie("session")
 	if sessionID != "" {
-		if session, _ := v.autClient.Check(sessionID); session != nil {
+		if session, _ := v.authClient.Check(sessionID); session != nil {
 			if session.GetCandID() != uuid.Nil && vac.Sphere != -1 {
 				err := v.vacancyClient.AddRecommendation(session.GetUserID(), vac.Sphere)
 				if err != nil {
@@ -151,6 +152,20 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
+}
+
+func (v *VacancyHandler) GetVacancyTopSpheres(ctx *gin.Context) {
+	var (
+		req        vacancy2.TopSpheres
+		//topSpheres map[int]int
+	)
+
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	//topSpheres = v.vacancyClient.
+	//var resp = make(map[int]int, 5)
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
@@ -239,4 +254,3 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
-

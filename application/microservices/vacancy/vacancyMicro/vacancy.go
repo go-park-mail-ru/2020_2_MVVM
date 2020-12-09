@@ -17,6 +17,10 @@ type gRPCVacClient struct {
 	ctx    context.Context
 }
 
+func (g *gRPCVacClient) GetVacancyTopSpheres(spheresCnt int) error {
+	panic("implement me")
+}
+
 func ConvertToDbModel(pbModel *vacancy.Vac) *models.Vacancy {
 	if pbModel == nil {
 		return nil

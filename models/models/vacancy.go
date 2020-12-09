@@ -46,6 +46,7 @@ type VacancySearchParams struct {
 	StartDate       string   `json:"start_date"`
 }
 
+
 func (v Vacancy) TableName() string {
 	return "main.vacancy"
 }
