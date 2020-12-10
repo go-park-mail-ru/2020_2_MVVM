@@ -190,6 +190,8 @@ func easyjson80a4d695DecodeGithubComGoParkMailRu20202MVVMGitModelsModels(in *jle
 			out.DaysFromNow = int(in.Int())
 		case "start_date":
 			out.StartDate = string(in.String())
+		case "keywordsGeo":
+			out.KeywordsGeo = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -339,6 +341,11 @@ func easyjson80a4d695EncodeGithubComGoParkMailRu20202MVVMGitModelsModels(out *jw
 		const prefix string = ",\"start_date\":"
 		out.RawString(prefix)
 		out.String(string(in.StartDate))
+	}
+	{
+		const prefix string = ",\"keywordsGeo\":"
+		out.RawString(prefix)
+		out.String(string(in.KeywordsGeo))
 	}
 	out.RawByte('}')
 }

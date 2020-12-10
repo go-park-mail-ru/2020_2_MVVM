@@ -214,6 +214,17 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
+
+	var uuidComp *uuid.UUID = nil
+	if req.Company != "" {
+		uuidTmp, err := uuid.Parse(req.Company)
+		uuidComp = &uuidTmp
+		if err != nil {
+			common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+			return
+		}
+	}
+
 	userNew, err := u.UserUseCase.CreateUser(models.User{
 		UserType:      req.UserType,
 		Name:          req.Name,
@@ -222,7 +233,7 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 		PasswordHash:  passwordHash,
 		Phone:         &req.Phone,
 		SocialNetwork: &req.SocialNetwork,
-	})
+	}, uuidComp)
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.UserExistErr {
 			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)

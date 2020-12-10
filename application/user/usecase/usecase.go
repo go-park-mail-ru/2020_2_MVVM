@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -64,8 +65,8 @@ func (u *UserUseCase) GetEmployerByID(id string) (*models.Employer, error) {
 	return emplById, nil
 }
 
-func (u *UserUseCase) CreateUser(user models.User) (*models.User, error) {
-	userNew, err := u.repos.CreateUser(user)
+func (u *UserUseCase) CreateUser(user models.User, companyID *uuid.UUID) (*models.User, error) {
+	userNew, err := u.repos.CreateUser(user, companyID)
 	if err != nil {
 		if err.Error() != common.UserExistErr {
 			err = fmt.Errorf("error in user get by id func : %w", err)

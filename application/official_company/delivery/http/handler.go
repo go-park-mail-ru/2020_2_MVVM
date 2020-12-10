@@ -33,6 +33,7 @@ func NewRest(router *gin.RouterGroup, useCase official_company.IUseCaseOfficialC
 
 func (c *CompanyHandler) Routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:company_id", c.GetCompanyHandler)
+	router.GET("/names", c.GetAllCompaniesNamesHandler)
 	router.GET("/page", c.GetCompanyListHandler)
 	router.POST("/search", c.SearchCompaniesHandler)
 	router.Use(AuthRequired)
@@ -127,6 +128,18 @@ func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 
 func (c *CompanyHandler) UpdateCompanyHandler(ctx *gin.Context) {
 	compHandlerCommon(c, ctx, compUpdate)
+}
+
+func (c *CompanyHandler) GetAllCompaniesNamesHandler(ctx *gin.Context) {
+	compList, err := c.CompUseCase.GetAllCompaniesNames()
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefCompany(compList), ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 /*

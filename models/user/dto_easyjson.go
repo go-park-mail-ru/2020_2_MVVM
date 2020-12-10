@@ -165,6 +165,8 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser1(in *jlex
 			out.Phone = string(in.String())
 		case "social_network":
 			out.SocialNetwork = string(in.String())
+		case "company":
+			out.Company = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -213,6 +215,11 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser1(out *jwr
 		const prefix string = ",\"social_network\":"
 		out.RawString(prefix)
 		out.String(string(in.SocialNetwork))
+	}
+	{
+		const prefix string = ",\"company\":"
+		out.RawString(prefix)
+		out.String(string(in.Company))
 	}
 	out.RawByte('}')
 }

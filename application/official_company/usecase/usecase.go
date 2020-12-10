@@ -101,3 +101,7 @@ func (c *CompanyUseCase) SearchCompanies(params models.CompanySearchParams) ([]m
 	}
 	return vacList, nil
 }
+
+func (c *CompanyUseCase) GetAllCompaniesNames () ([]models.BriefCompany, error) {
+	return c.repos.GetAllCompaniesNames()
+}

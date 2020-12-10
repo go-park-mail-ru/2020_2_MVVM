@@ -98,6 +98,7 @@ func (v *vacServer) SearchVacancies(ctx context.Context, params *vacancy2.Search
 		ByAsc:           params.ByAsc,
 		DaysFromNow:     int(params.DaysFromNow),
 		StartDate:       params.StartDate,
+		KeywordsGeo:     params.KeyWordsGeo,
 	}
 	vacList, err := v.vacUseCase.SearchVacancies(searchParams)
 	return vacancyMicro.ConvertToListDbModels(vacList), err

@@ -45,3 +45,15 @@ type ReqComp struct {
 	Link        string `json:"link" valid:"url~неверный формат ссылки"`
 	Avatar      string `json:"avatar" valid:"-"`
 }
+
+type BriefCompany struct {
+	ID          uuid.UUID     `gorm:"column:comp_id;default:uuid_generate_v4()" json:"id"`
+	Name        string        `gorm:"column:name;notnull" json:"name"`
+}
+
+func (v BriefCompany) TableName() string {
+	return "main.official_companies"
+}
+
+//easyjson:json
+type ListBriefCompany []BriefCompany

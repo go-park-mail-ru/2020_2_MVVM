@@ -8,6 +8,7 @@ type Register struct {
 	Email         string `json:"email" binding:"required" valid:"email"`
 	Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(7|18)~номер телефона от 7 до 18 цифр"`
 	SocialNetwork string `json:"social_network"`
+	Company       string `json:"company" valid:"optional"`
 }
 
 type Update struct {
