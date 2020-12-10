@@ -217,7 +217,7 @@ func easyjson4b608a57DecodeGithubComGoParkMailRu20202MVVMGitModelsModels2(in *jl
 			out.Name = string(in.String())
 		case "description":
 			out.Description = string(in.String())
-		case "spheres":
+		case "sphere":
 			if in.IsNull() {
 				in.Skip()
 				out.Spheres = nil
@@ -271,7 +271,7 @@ func easyjson4b608a57EncodeGithubComGoParkMailRu20202MVVMGitModelsModels2(out *j
 		out.String(string(in.Description))
 	}
 	{
-		const prefix string = ",\"spheres\":"
+		const prefix string = ",\"sphere\":"
 		out.RawString(prefix)
 		if in.Spheres == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
