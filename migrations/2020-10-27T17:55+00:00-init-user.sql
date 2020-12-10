@@ -13,7 +13,8 @@ create table users
     name varchar(128) not null,
     surname varchar(128),
     phone varchar(18),
-    social_network text
+    social_network text,
+    path_to_avatar varchar(256)
 );
 
 create table candidates

@@ -84,8 +84,13 @@ message sphereCnt {
   int32 Cnt = 1;
 }
 
-message topSpheres {
-  map<int32, int32> Cnt = 1;
+message Sphere {
+  int32 sphereIdx = 1;
+  int32 vacCnt = 2;
+}
+
+message sphereList {
+  repeated Sphere list = 1;
 }
 
 message empty {};
@@ -98,5 +103,5 @@ service Vacancy {
   rpc  SearchVacancies(searchParams) returns (vacList) {};
   rpc  AddRecommendation(addRecParams) returns (empty) {};
   rpc  GetRecommendation(getRecParams) returns (vacList) {};
-  rpc  GetVacancyTopSpheres(sphereCnt) returns (topSpheres) {};
+  rpc  GetVacancyTopSpheres(sphereCnt) returns (sphereList) {};
 };

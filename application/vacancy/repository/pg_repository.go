@@ -239,3 +239,20 @@ func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, s
 	}
 	return vacList, nil
 }
+
+func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, error) {
+	var (
+		topList []models.Sphere
+		err error
+	)
+
+	if topSpheresCnt == -1 {
+		err = p.db.Raw("select * from main.sphere order by sphere_cnt desc").Scan(&topList).Error
+	} else {
+		err = p.db.Raw("select * from main.sphere order by sphere_cnt desc limit ?", topSpheresCnt).Scan(&topList).Error
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error in add recommendation: %w", err)
+	}
+	return topList, nil
+}

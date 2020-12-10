@@ -52,6 +52,10 @@ type RespList struct {
 	Vacancies []models.Vacancy `json:"vacancyList"`
 }
 
+type RespTop struct {
+	TopSpheres []models.Sphere `json:"top_spheres"`
+}
+
 type VacRequest struct {
 	Id              string `json:"vac_id,uuid" valid:"-"`
 	Avatar          string `json:"avatar" valid:"-"`
@@ -78,9 +82,9 @@ type VacListRequest struct {
 	Start  uint   `form:"start"`
 	Limit  uint   `form:"limit" binding:"required"`
 	CompId string `form:"comp_id,uuid"`
-	Sphere *int    `form:"sphere"`
+	Sphere *int   `form:"sphere"`
 }
 
 type TopSpheres struct {
-	TopSpheresCnt *int `form:"top_spheres_cnt"`
+	TopSpheresCnt *int32 `uri:"top_spheres_cnt"`
 }

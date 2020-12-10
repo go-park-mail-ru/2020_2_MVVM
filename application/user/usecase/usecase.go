@@ -103,6 +103,9 @@ func (u *UserUseCase) UpdateUser(userNew models.User) (*models.User, error) {
 		}
 		userOld.PasswordHash = userNew.PasswordHash
 	}
+	if userNew.AvatarPath != "" {
+		userOld.AvatarPath = userNew.AvatarPath
+	}
 	newUser, err := u.repos.UpdateUser(*userOld)
 	if err != nil {
 		if err.Error() != common.UserExistErr {

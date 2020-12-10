@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser(in *jlexer.Lexer, out *Update) {
+func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser(in *jlexer.Lexer, out *Update) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -50,6 +50,8 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser(in *
 			out.Phone = string(in.String())
 		case "social_network":
 			out.SocialNetwork = string(in.String())
+		case "avatar":
+			out.Avatar = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -60,58 +62,77 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser(in *
 		in.Consumed()
 	}
 }
-//func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationUser(out *jwriter.Writer, in Update) {
-//	out.RawByte('{')
-//	first := true
-//	_ = first
-//	{
-//		const prefix string = ",\"name\":"
-//		out.RawString(prefix[1:])
-//		out.String(string(in.Name))
-//	}
-//	{
-//		const prefix string = ",\"surname\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Surname))
-//	}
-//	{
-//		const prefix string = ",\"email\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Email))
-//	}
-//	{
-//		const prefix string = ",\"new_password\":"
-//		out.RawString(prefix)
-//		out.String(string(in.NewPassword))
-//	}
-//	{
-//		const prefix string = ",\"old_password\":"
-//		out.RawString(prefix)
-//		out.String(string(in.OldPassword))
-//	}
-//	{
-//		const prefix string = ",\"phone\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Phone))
-//	}
-//	{
-//		const prefix string = ",\"social_network\":"
-//		out.RawString(prefix)
-//		out.String(string(in.SocialNetwork))
-//	}
-//	out.RawByte('}')
-//}
+func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser(out *jwriter.Writer, in Update) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"surname\":"
+		out.RawString(prefix)
+		out.String(string(in.Surname))
+	}
+	{
+		const prefix string = ",\"email\":"
+		out.RawString(prefix)
+		out.String(string(in.Email))
+	}
+	{
+		const prefix string = ",\"new_password\":"
+		out.RawString(prefix)
+		out.String(string(in.NewPassword))
+	}
+	{
+		const prefix string = ",\"old_password\":"
+		out.RawString(prefix)
+		out.String(string(in.OldPassword))
+	}
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix)
+		out.String(string(in.Phone))
+	}
+	{
+		const prefix string = ",\"social_network\":"
+		out.RawString(prefix)
+		out.String(string(in.SocialNetwork))
+	}
+	{
+		const prefix string = ",\"avatar\":"
+		out.RawString(prefix)
+		out.String(string(in.Avatar))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v Update) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-//func (v Update) MarshalEasyJSON(w *jwriter.Writer) {
-//	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationUser(w, v)
-//}
+func (v Update) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *Update) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser(&r, v)
+	return r.Error()
+}
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Update) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser(l, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser(l, v)
 }
-func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser1(in *jlexer.Lexer, out *Register) {
+func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser1(in *jlexer.Lexer, out *Register) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -154,54 +175,68 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser1(in 
 		in.Consumed()
 	}
 }
-//func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationUser1(out *jwriter.Writer, in Register) {
-//	out.RawByte('{')
-//	first := true
-//	_ = first
-//	{
-//		const prefix string = ",\"user_type\":"
-//		out.RawString(prefix[1:])
-//		out.String(string(in.UserType))
-//	}
-//	{
-//		const prefix string = ",\"password\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Password))
-//	}
-//	{
-//		const prefix string = ",\"name\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Name))
-//	}
-//	{
-//		const prefix string = ",\"surname\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Surname))
-//	}
-//	{
-//		const prefix string = ",\"email\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Email))
-//	}
-//	{
-//		const prefix string = ",\"phone\":"
-//		out.RawString(prefix)
-//		out.String(string(in.Phone))
-//	}
-//	{
-//		const prefix string = ",\"social_network\":"
-//		out.RawString(prefix)
-//		out.String(string(in.SocialNetwork))
-//	}
-//	out.RawByte('}')
-//}
+func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser1(out *jwriter.Writer, in Register) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"user_type\":"
+		out.RawString(prefix[1:])
+		out.String(string(in.UserType))
+	}
+	{
+		const prefix string = ",\"password\":"
+		out.RawString(prefix)
+		out.String(string(in.Password))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
+		out.String(string(in.Name))
+	}
+	{
+		const prefix string = ",\"surname\":"
+		out.RawString(prefix)
+		out.String(string(in.Surname))
+	}
+	{
+		const prefix string = ",\"email\":"
+		out.RawString(prefix)
+		out.String(string(in.Email))
+	}
+	{
+		const prefix string = ",\"phone\":"
+		out.RawString(prefix)
+		out.String(string(in.Phone))
+	}
+	{
+		const prefix string = ",\"social_network\":"
+		out.RawString(prefix)
+		out.String(string(in.SocialNetwork))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v Register) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser1(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-//func (v Register) MarshalEasyJSON(w *jwriter.Writer) {
-//	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationUser1(w, v)
-//}
+func (v Register) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsUser1(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *Register) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser1(&r, v)
+	return r.Error()
+}
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Register) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationUser1(l, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsUser1(l, v)
 }

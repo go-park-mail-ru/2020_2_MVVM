@@ -13,6 +13,7 @@ type User struct {
 	PasswordHash  []byte    `gorm:"column:password_hash;notnull" json:"-"`
 	Phone         *string   `gorm:"column:phone" json:"phone"`
 	SocialNetwork *string   `gorm:"column:social_network" json:"social_network"`
+	AvatarPath    string    `gorm:"column:path_to_avatar" json:"avatar"`
 }
 
 func (e Employer) TableName() string {

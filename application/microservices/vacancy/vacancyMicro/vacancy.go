@@ -17,10 +17,6 @@ type gRPCVacClient struct {
 	ctx    context.Context
 }
 
-func (g *gRPCVacClient) GetVacancyTopSpheres(spheresCnt int) error {
-	panic("implement me")
-}
-
 func ConvertToDbModel(pbModel *vacancy.Vac) *models.Vacancy {
 	if pbModel == nil {
 		return nil
@@ -56,8 +52,9 @@ func ConvertToListPbModels(pbModels *vacancy.VacList) []models.Vacancy {
 	if pbModels == nil {
 		return nil
 	}
-	for _, pbModel := range pbModels.List {
-		vacList = append(vacList, *ConvertToDbModel(pbModel))
+	vacList = make([]models.Vacancy, len(pbModels.List))
+	for i, pbModel := range pbModels.List {
+		vacList[i] = *ConvertToDbModel(pbModel)
 	}
 	return vacList
 }
@@ -67,10 +64,34 @@ func ConvertToListDbModels(dbModels []models.Vacancy) *vacancy.VacList {
 		return &vacancy.VacList{}
 	}
 	var pbModels = new(vacancy.VacList)
-	for _, dbModel := range dbModels {
-		pbModels.List = append(pbModels.List, ConvertToPbModel(&dbModel))
+	pbModels.List = make([]*vacancy.Vac, len(dbModels))
+	for i, dbModel := range dbModels {
+		pbModels.List[i] = ConvertToPbModel(&dbModel)
 	}
 	return pbModels
+}
+
+func ConvertSphToPbModels(dbModels []models.Sphere) *vacancy.SphereList {
+	if dbModels == nil {
+		return &vacancy.SphereList{}
+	}
+	pbList := new(vacancy.SphereList)
+	pbList.List = make([]*vacancy.Sphere, len(dbModels))
+	for i, e := range dbModels {
+		pbList.List[i] = &vacancy.Sphere{SphereIdx: e.Sph, VacCnt: e.VacCnt}
+	}
+	return pbList
+}
+
+func ConvertSphToDbModels(pbModels *vacancy.SphereList) []models.Sphere {
+	if pbModels == nil {
+		return nil
+	}
+	dbList := make([]models.Sphere, len(pbModels.List))
+	for i, e := range pbModels.List {
+		dbList[i] = models.Sphere{Sph: e.SphereIdx, VacCnt: e.VacCnt}
+	}
+	return dbList
 }
 
 func (g *gRPCVacClient) CreateVacancy(vacancy models.Vacancy) (*models.Vacancy, error) {
@@ -165,9 +186,17 @@ func (g *gRPCVacClient) AddRecommendation(userId uuid.UUID, sphere int) error {
 	return err
 }
 
-func (g gRPCVacClient) GetRecommendation(userId uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
+func (g *gRPCVacClient) GetRecommendation(userId uuid.UUID, start int, limit int) ([]models.Vacancy, error) {
 	vacList, err := g.client.GetRecommendation(g.ctx, &vacancy.GetRecParams{UserId: userId.String(), Start: int32(start), Limit: int32(limit)})
 	return ConvertToListPbModels(vacList), err
+}
+
+func (g *gRPCVacClient) GetVacancyTopSpheres(sphereCnt int32) ([]models.Sphere, error) {
+	topSpheres, err := g.client.GetVacancyTopSpheres(g.ctx, &vacancy.SphereCnt{Cnt: sphereCnt})
+	if err != nil {
+		return nil, err
+	}
+	return ConvertSphToDbModels(topSpheres), err
 }
 
 func NewVacClient(host string, port int, logger common.Logger) (VacClient, error) {

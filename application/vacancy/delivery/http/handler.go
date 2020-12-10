@@ -42,7 +42,8 @@ func NewRest(router *gin.RouterGroup,
 func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
 	router.GET("/comp", v.GetCompVacancyListHandler)
-	router.GET("/top", v.GetVacancyTopSpheres)
+	router.GET("/top/:top_spheres_cnt", v.GetVacancyTopSpheres)
+	router.GET("/top", v.GetVacancyTopSpheresAll)
 	router.GET("/page", v.GetVacancyListHandler)
 	router.POST("/search", v.SearchVacanciesHandler)
 	router.Use(AuthRequired)
@@ -154,18 +155,35 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 	}
 }
 
+func (v *VacancyHandler) GetVacancyTopSpheresAll(ctx *gin.Context) {
+	topSphereHandlerCommon(v, ctx, vacancy.TopAll)
+}
+
 func (v *VacancyHandler) GetVacancyTopSpheres(ctx *gin.Context) {
 	var (
-		req        vacancy2.TopSpheres
-		//topSpheres map[int]int
+		req    vacancy2.TopSpheres
+		topCnt int32 = vacancy.TopDefaultCnt
 	)
 
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
+	if err := ctx.ShouldBindUri(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
-	//topSpheres = v.vacancyClient.
-	//var resp = make(map[int]int, 5)
+	if *req.TopSpheresCnt > 0 {
+		topCnt = *req.TopSpheresCnt
+	}
+	topSphereHandlerCommon(v, ctx, topCnt)
+}
+
+func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
+	topSpheres, err := v.vacancyClient.GetVacancyTopSpheres(topCnt)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespTop{TopSpheres: topSpheres}, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {

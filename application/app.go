@@ -10,10 +10,6 @@ import (
 	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
 	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
-	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
-	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/middlewares"
 	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
 	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
@@ -30,6 +26,10 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
+	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
@@ -108,12 +108,12 @@ func NewApp(config Config) *App {
 	}
 
 	authCookieConfig := common.AuthCookieConfig{
-		Key:    "session",
-		Path:   "/",
+		Key:  "session",
+		Path: "/",
 		//Domain: "localhost", // for postman
-		Domain:   "studhunt.ru",
+		Domain: "studhunt.ru",
 		MaxAge: int((time.Hour * 12).Seconds()),
-		Secure:   true,
+		Secure: true,
 		//Secure:   false, // for postman
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,

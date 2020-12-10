@@ -10,6 +10,8 @@ const (
 	ByCompId = 2
 	ByVacId = 3
 	Recommendation = 4
+	TopDefaultCnt = 6
+	TopAll = -1
 )
 
 type IUseCaseVacancy interface {
@@ -20,4 +22,5 @@ type IUseCaseVacancy interface {
 	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
 	AddRecommendation(uuid.UUID, int) error
 	GetRecommendation(uuid.UUID, int, int) ([]models.Vacancy, error)
+	GetVacancyTopSpheres(int32) ([]models.Sphere, error)
 }

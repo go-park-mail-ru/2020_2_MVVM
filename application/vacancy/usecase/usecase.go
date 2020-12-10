@@ -129,3 +129,8 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 	}
 	return vacList[0:end], err
 }
+
+
+func (v VacancyUseCase) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, error) {
+	return v.repos.GetVacancyTopSpheres(topSpheresCnt)
+}

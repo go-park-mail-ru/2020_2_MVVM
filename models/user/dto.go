@@ -18,4 +18,5 @@ type Update struct {
 	OldPassword   string `json:"old_password" valid:"stringlength(5|25)~длина пароля должна быть от 5 до 25 символов."`
 	Phone         string `json:"phone" valid:"numeric~номер телефона должен состоять только из цифр.,stringlength(4|18)~номер телефона от 4 до 18 цифр"`
 	SocialNetwork string `json:"social_network"`
+	Avatar        string `json:"avatar"`
 }

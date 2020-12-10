@@ -1,6 +1,6 @@
+-- +migrate Up
 set search_path to main;
 
--- +migrate Up
 create table if not exists sphere
 (
     sphere_idx int not null,
@@ -22,7 +22,7 @@ begin
         end if;
     elseif TG_OP = 'DELETE' then
         if EXISTS(select 1 from main.sphere where sphere_idx = old.sphere) then
-            delete from main.sphere where sphere_idx = old.sphere;
+            update main.sphere set sphere_cnt = sphere_cnt - 1 where sphere_idx = old.sphere;
         end if;
     end if;
     return new;

@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"net/url"
+	"path"
 )
 
 type UserHandler struct {
@@ -20,6 +21,8 @@ type UserHandler struct {
 	cookieConfig   common.AuthCookieConfig
 	SessionBuilder common.SessionBuilder
 }
+
+const userPath = "user/"
 
 func NewRest(router *gin.RouterGroup,
 	useCase user.UseCase,
@@ -246,7 +249,10 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 }
 
 func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
-	var req user2.Update
+	var (
+		req user2.Update
+		avatarPath string
+	)
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
@@ -255,7 +261,11 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-
+	file, errImg := common.GetImageFromBase64(req.Avatar)
+	if errImg != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
+		return
+	}
 	session := u.SessionBuilder.Build(ctx)
 	userIDFromSession := session.GetUserID()
 	userID, errSession := uuid.Parse(userIDFromSession.String())
@@ -263,8 +273,12 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
+	avatarName := userPath + userID.String()
+	if file != nil {
+		avatarPath = common.DOMAIN + path.Join(common.ImgDir, avatarName)
+	}
 	userUpdate, err := u.UserUseCase.UpdateUser(models.User{ID: userID, Name: req.Name, Surname: req.Surname,
-		Phone: &req.Phone, Email: req.Email, SocialNetwork: &req.SocialNetwork})
+		Phone: &req.Phone, Email: req.Email, SocialNetwork: &req.SocialNetwork, AvatarPath: avatarPath})
 	if err != nil {
 		if errMsg := err.Error(); errMsg == common.WrongPasswd {
 			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
@@ -272,6 +286,11 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		}
 		return
+	}
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
 	}
 	resp := models.RespUser{User: userUpdate}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
