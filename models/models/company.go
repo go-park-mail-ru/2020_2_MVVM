@@ -40,7 +40,7 @@ type RespList struct {
 type ReqComp struct {
 	Name        string `json:"name" binding:"required" valid:"stringlength(4|30)~название компании должно быть от 4 до 30 символов."`
 	Description string `json:"description" binding:"required" valid:"-"`
-	Spheres     []int  `json:"spheres" valid:"-"`
+	Spheres     []int  `json:"sphere" valid:"-"`
 	AreaSearch  string `json:"area_search" valid:"stringlength(4|128)~длина названия региона от 4 до 128 смиволов"`
 	Link        string `json:"link" valid:"url~неверный формат ссылки"`
 	Avatar      string `json:"avatar" valid:"-"`
