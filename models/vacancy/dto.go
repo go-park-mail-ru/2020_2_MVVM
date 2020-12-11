@@ -53,6 +53,8 @@ type RespList struct {
 }
 
 type RespTop struct {
+	AllVacCnt  uint64          `json:"all_vac_cnt"`
+	NewVacCnt  uint64          `json:"new_vac_cnt"`
 	TopSpheres []models.Sphere `json:"top_spheres"`
 }
 

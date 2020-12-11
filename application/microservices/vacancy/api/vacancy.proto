@@ -94,6 +94,16 @@ message sphereList {
   repeated Sphere list = 1;
 }
 
+message VacTopCnt {
+  uint64 NewVacCnt = 1;
+  uint64 AllVacCnt = 2;
+}
+
+message TopInfo {
+  sphereList SphereInfo = 1;
+  VacTopCnt  VacInfo = 2;
+}
+
 message empty {};
 
 service Vacancy {
@@ -104,5 +114,5 @@ service Vacancy {
   rpc  SearchVacancies(searchParams) returns (vacList) {};
   rpc  AddRecommendation(addRecParams) returns (empty) {};
   rpc  GetRecommendation(getRecParams) returns (vacList) {};
-  rpc  GetVacancyTopSpheres(sphereCnt) returns (sphereList) {};
+  rpc  GetVacancyTopSpheres(sphereCnt) returns (TopInfo) {};
 };

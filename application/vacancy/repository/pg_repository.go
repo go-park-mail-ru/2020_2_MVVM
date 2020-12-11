@@ -243,10 +243,12 @@ func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, s
 	return vacList, nil
 }
 
-func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, error) {
+func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, *models.VacTopCnt, error) {
 	var (
-		topList []models.Sphere
-		err error
+		topList   []models.Sphere
+		allVacCnt uint64
+		newVacCnt uint64
+		err       error
 	)
 
 	if topSpheresCnt == -1 {
@@ -254,8 +256,15 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 	} else {
 		err = p.db.Raw("select * from main.sphere order by sphere_cnt desc limit ?", topSpheresCnt).Scan(&topList).Error
 	}
-	if err != nil {
-		return nil, fmt.Errorf("error in add recommendation: %w", err)
+	currentDate := time.Now().Format("2006-01-02")
+	if err == nil {
+		err = p.db.Raw("select sum(sphere_cnt) from main.sphere").Scan(&allVacCnt).Error
 	}
-	return topList, nil
+	if err == nil {
+		err = p.db.Raw("select count(*) from main.vacancy where date_create = ?", currentDate).Scan(&newVacCnt).Error
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("error in add recommendation: %w", err)
+	}
+	return topList, &models.VacTopCnt{NewVacCnt: newVacCnt, AllVacCnt: allVacCnt}, nil
 }

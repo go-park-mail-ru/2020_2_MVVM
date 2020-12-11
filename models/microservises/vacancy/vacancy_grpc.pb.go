@@ -24,7 +24,7 @@ type VacancyClient interface {
 	SearchVacancies(ctx context.Context, in *SearchParams, opts ...grpc.CallOption) (*VacList, error)
 	AddRecommendation(ctx context.Context, in *AddRecParams, opts ...grpc.CallOption) (*Empty, error)
 	GetRecommendation(ctx context.Context, in *GetRecParams, opts ...grpc.CallOption) (*VacList, error)
-	GetVacancyTopSpheres(ctx context.Context, in *SphereCnt, opts ...grpc.CallOption) (*SphereList, error)
+	GetVacancyTopSpheres(ctx context.Context, in *SphereCnt, opts ...grpc.CallOption) (*TopInfo, error)
 }
 
 type vacancyClient struct {
@@ -98,8 +98,8 @@ func (c *vacancyClient) GetRecommendation(ctx context.Context, in *GetRecParams,
 	return out, nil
 }
 
-func (c *vacancyClient) GetVacancyTopSpheres(ctx context.Context, in *SphereCnt, opts ...grpc.CallOption) (*SphereList, error) {
-	out := new(SphereList)
+func (c *vacancyClient) GetVacancyTopSpheres(ctx context.Context, in *SphereCnt, opts ...grpc.CallOption) (*TopInfo, error) {
+	out := new(TopInfo)
 	err := c.cc.Invoke(ctx, "/api.Vacancy/GetVacancyTopSpheres", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ type VacancyServer interface {
 	SearchVacancies(context.Context, *SearchParams) (*VacList, error)
 	AddRecommendation(context.Context, *AddRecParams) (*Empty, error)
 	GetRecommendation(context.Context, *GetRecParams) (*VacList, error)
-	GetVacancyTopSpheres(context.Context, *SphereCnt) (*SphereList, error)
+	GetVacancyTopSpheres(context.Context, *SphereCnt) (*TopInfo, error)
 	mustEmbedUnimplementedVacancyServer()
 }
 
@@ -147,7 +147,7 @@ func (UnimplementedVacancyServer) AddRecommendation(context.Context, *AddRecPara
 func (UnimplementedVacancyServer) GetRecommendation(context.Context, *GetRecParams) (*VacList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRecommendation not implemented")
 }
-func (UnimplementedVacancyServer) GetVacancyTopSpheres(context.Context, *SphereCnt) (*SphereList, error) {
+func (UnimplementedVacancyServer) GetVacancyTopSpheres(context.Context, *SphereCnt) (*TopInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVacancyTopSpheres not implemented")
 }
 func (UnimplementedVacancyServer) mustEmbedUnimplementedVacancyServer() {}

@@ -29,6 +29,11 @@ type Vacancy struct {
 	Avatar          string    `gorm:"column:path_to_avatar" json:"avatar"`
 }
 
+type VacTopCnt struct {
+	AllVacCnt uint64
+	NewVacCnt uint64
+}
+
 type VacancySearchParams struct {
 	KeyWords        string   `json:"keywords"`
 	SalaryMin       int      `json:"salary_min"`
@@ -46,7 +51,6 @@ type VacancySearchParams struct {
 	StartDate       string   `json:"start_date"`
 	KeywordsGeo     string   `json:"keywordsGeo"` //for main
 }
-
 
 func (v Vacancy) TableName() string {
 	return "main.vacancy"

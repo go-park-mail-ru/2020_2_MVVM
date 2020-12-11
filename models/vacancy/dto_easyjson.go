@@ -418,6 +418,10 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsVacancy3(in *j
 			continue
 		}
 		switch key {
+		case "all_vac_cnt":
+			out.AllVacCnt = uint64(in.Uint64())
+		case "new_vac_cnt":
+			out.NewVacCnt = uint64(in.Uint64())
 		case "top_spheres":
 			if in.IsNull() {
 				in.Skip()
@@ -456,8 +460,18 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsVacancy3(out *
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"top_spheres\":"
+		const prefix string = ",\"all_vac_cnt\":"
 		out.RawString(prefix[1:])
+		out.Uint64(uint64(in.AllVacCnt))
+	}
+	{
+		const prefix string = ",\"new_vac_cnt\":"
+		out.RawString(prefix)
+		out.Uint64(uint64(in.NewVacCnt))
+	}
+	{
+		const prefix string = ",\"top_spheres\":"
+		out.RawString(prefix)
 		if in.TopSpheres == nil && (out.Flags&jwriter.NilSliceAsEmpty) == 0 {
 			out.RawString("null")
 		} else {

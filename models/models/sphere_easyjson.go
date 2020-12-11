@@ -38,7 +38,7 @@ func easyjson5d94b7ebDecodeGithubComGoParkMailRu20202MVVMGitModelsModels(in *jle
 		switch key {
 		case "sphere_idx":
 			out.Sph = int32(in.Int32())
-		case "vac_cnt":
+		case "sph_vac_cnt":
 			out.VacCnt = int32(in.Int32())
 		default:
 			in.SkipRecursive()
@@ -60,7 +60,7 @@ func easyjson5d94b7ebEncodeGithubComGoParkMailRu20202MVVMGitModelsModels(out *jw
 		out.Int32(int32(in.Sph))
 	}
 	{
-		const prefix string = ",\"vac_cnt\":"
+		const prefix string = ",\"sph_vac_cnt\":"
 		out.RawString(prefix)
 		out.Int32(int32(in.VacCnt))
 	}

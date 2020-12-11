@@ -20,12 +20,17 @@ func NewVacServer(vacUseCase vacancy.IUseCaseVacancy) vacancy2.VacancyServer {
 	return &vacServer{vacUseCase: vacUseCase}
 }
 
-func (v *vacServer) GetVacancyTopSpheres(ctx context.Context, sphereCnt *vacancy2.SphereCnt) (*vacancy2.SphereList, error) {
-	topSpheres, err := v.vacUseCase.GetVacancyTopSpheres(sphereCnt.Cnt)
+func (v *vacServer) GetVacancyTopSpheres(ctx context.Context, sphereCnt *vacancy2.SphereCnt) (*vacancy2.TopInfo, error) {
+	spheresInfo, vacInfo, err := v.vacUseCase.GetVacancyTopSpheres(sphereCnt.Cnt)
 	if err != nil {
 		return nil, err
 	}
-	return vacancyMicro.ConvertSphToPbModels(topSpheres), err
+	vacPb := vacancy2.VacTopCnt{}
+	if vacInfo != nil {
+		vacPb.AllVacCnt = vacInfo.AllVacCnt
+		vacPb.NewVacCnt = vacInfo.NewVacCnt
+	}
+	return &vacancy2.TopInfo{SphereInfo: vacancyMicro.ConvertSphToPbModels(spheresInfo), VacInfo: &vacPb}, err
 }
 
 func (v *vacServer) CreateVacancy(ctx context.Context, req *vacancy2.Vac) (*vacancy2.Vac, error) {

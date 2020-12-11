@@ -14,7 +14,6 @@ create or replace function update_sphere()
 $BODY$
 begin
     if TG_OP = 'INSERT' then
-        raise notice 'exists:%', EXISTS(select 1 from main.sphere where sphere_idx = new.sphere);
         if EXISTS(select 1 from main.sphere where sphere_idx = new.sphere) then
             update main.sphere set sphere_cnt = sphere_cnt + 1 where sphere_idx = new.sphere;
         else
@@ -38,7 +37,11 @@ create trigger update_top_spheres
 execute procedure update_sphere();
 -- +migrate StatementEnd
 
+-- +migrate Up notransaction
+create index if not exists date_idx on main.vacancy (date_create);
+
 -- +migrate Down
 drop trigger if exists update_top_spheres on main.vacancy;
 drop function if exists main.update_sphere();
 drop table if exists main.sphere;
+drop index main.date_idx;

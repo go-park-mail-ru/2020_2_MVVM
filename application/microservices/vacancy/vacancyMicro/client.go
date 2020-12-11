@@ -15,5 +15,5 @@ type VacClient interface {
 	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
 	AddRecommendation(uuid.UUID, int) error
 	GetRecommendation(uuid.UUID, int, int) ([]models.Vacancy, error)
-	GetVacancyTopSpheres(int32) ([]models.Sphere, error)
+	GetVacancyTopSpheres(int32) ([]models.Sphere, *models.VacTopCnt, error)
 }

@@ -192,12 +192,17 @@ func (g *gRPCVacClient) GetRecommendation(userId uuid.UUID, start int, limit int
 	return ConvertToListPbModels(vacList), err
 }
 
-func (g *gRPCVacClient) GetVacancyTopSpheres(sphereCnt int32) ([]models.Sphere, error) {
-	topSpheres, err := g.client.GetVacancyTopSpheres(g.ctx, &vacancy.SphereCnt{Cnt: sphereCnt})
+func (g *gRPCVacClient) GetVacancyTopSpheres(sphereCnt int32) ([]models.Sphere, *models.VacTopCnt, error) {
+	topInfo, err := g.client.GetVacancyTopSpheres(g.ctx, &vacancy.SphereCnt{Cnt: sphereCnt})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return ConvertSphToDbModels(topSpheres), err
+	vacInfo := models.VacTopCnt{}
+	if topInfo.VacInfo != nil {
+		vacInfo.NewVacCnt = topInfo.VacInfo.NewVacCnt
+		vacInfo.AllVacCnt = topInfo.VacInfo.AllVacCnt
+	}
+	return ConvertSphToDbModels(topInfo.SphereInfo), &vacInfo, err
 }
 
 func NewVacClient(host string, port int, logger common.Logger) (VacClient, error) {

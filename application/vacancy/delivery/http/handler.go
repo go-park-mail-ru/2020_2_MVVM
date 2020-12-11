@@ -176,12 +176,12 @@ func (v *VacancyHandler) GetVacancyTopSpheres(ctx *gin.Context) {
 }
 
 func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
-	topSpheres, err := v.vacancyClient.GetVacancyTopSpheres(topCnt)
+	spheresInfo, vacInfo, err := v.vacancyClient.GetVacancyTopSpheres(topCnt)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespTop{TopSpheres: topSpheres}, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespTop{TopSpheres: spheresInfo, NewVacCnt: vacInfo.NewVacCnt, AllVacCnt: vacInfo.AllVacCnt}, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
