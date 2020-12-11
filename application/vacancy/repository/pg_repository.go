@@ -34,9 +34,11 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		return nil, err
 	}
 	if compId := employer.CompanyID; compId != uuid.Nil {
-		avatarPath := common.DOMAIN + path.Join(common.ImgDir, "company", compId.String())
-		if _, err := os.Stat(avatarPath); err == nil {
-			vac.Avatar = avatarPath
+		fileDir, _ := os.Getwd()
+		avatarName := path.Join(common.ImgDir, "company", compId.String())
+		imgPath := path.Join(fileDir, avatarName)
+		if _, err = os.Stat(imgPath); err == nil {
+			vac.Avatar = common.DOMAIN + avatarName
 		}
 		vac.DateCreate = time.Now().Format("2006-01-02")
 		vac.CompID = compId
@@ -246,11 +248,18 @@ func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, s
 func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, *models.VacTopCnt, error) {
 	var (
 		topList   []models.Sphere
+		vacInfo   models.VacTopCnt
 		allVacCnt uint64
 		newVacCnt uint64
+		notEmpty  = true
 		err       error
 	)
 
+	check := p.db.Raw("select exists(select 1 top from main.vacancy)").Row()
+	_ = check.Scan(&notEmpty)
+	if !notEmpty {
+		return topList, &vacInfo, nil
+	}
 	if topSpheresCnt == -1 {
 		err = p.db.Raw("select * from main.sphere order by sphere_cnt desc").Scan(&topList).Error
 	} else {
@@ -266,5 +275,7 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 	if err != nil {
 		return nil, nil, fmt.Errorf("error in add recommendation: %w", err)
 	}
-	return topList, &models.VacTopCnt{NewVacCnt: newVacCnt, AllVacCnt: allVacCnt}, nil
+	vacInfo.NewVacCnt = newVacCnt
+	vacInfo.AllVacCnt = allVacCnt
+	return topList, &vacInfo, nil
 }
