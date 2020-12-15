@@ -81,7 +81,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	var (
 		file       io.Reader
 		avatarName string
-		errImg     error
+		errImg     *common.Err
 	)
 	session := r.SessionBuilder.Build(ctx)
 	candID := session.GetCandID()
