@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
 	"net/http"
+	"time"
 )
 
 type ResponseHandler struct {
@@ -62,7 +63,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
 		return
 	}
-
+	response.DateCreate = time.Now().Format(time.RFC3339)
 	response.Initial = userType
 	pResponse, err := r.UsecaseResponse.Create(*response)
 	if err != nil {
