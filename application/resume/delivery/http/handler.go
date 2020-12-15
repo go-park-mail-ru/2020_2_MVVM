@@ -9,8 +9,10 @@ import (
 	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 	"github.com/mailru/easyjson"
+	"io"
 	"net/http"
 	"path"
+	"strings"
 )
 
 type ResumeHandler struct {
@@ -76,6 +78,11 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
+	var (
+		file       io.Reader
+		avatarName string
+		errImg     error
+	)
 	session := r.SessionBuilder.Build(ctx)
 	candID := session.GetCandID()
 	if candID == uuid.Nil {
@@ -95,15 +102,16 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	}
 	template.CandID = candID
 	template.ResumeID = uuid.New()
-
-	file, errImg := common.GetImageFromBase64(template.Avatar)
-	if errImg != nil {
-		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.String())
-		return
-	}
-	avatarName := resumePath + template.ResumeID.String()
-	if file != nil {
-		template.Avatar = common.DOMAIN + path.Join(common.ImgDir, avatarName)
+	if !strings.Contains(template.Avatar, "http") {
+		file, errImg = common.GetImageFromBase64(template.Avatar)
+		if errImg != nil {
+			common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
+			return
+		}
+		avatarName = resumePath + template.ResumeID.String()
+		if file != nil {
+			template.Avatar = common.DOMAIN + path.Join(common.ImgDir, avatarName)
+		}
 	}
 	result, err := r.UseCaseResume.Create(*template)
 	if err != nil {
@@ -170,7 +178,6 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 			}
 		}
 	}
-
 
 	resp := resume2.Response{
 		Educations:       result.Education,
