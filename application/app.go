@@ -108,8 +108,8 @@ func NewApp(config Config) *App {
 	}
 
 	authCookieConfig := common.AuthCookieConfig{
-		Key:  "session",
-		Path: "/",
+		Key:    "session",
+		Path:   "/",
 		//Domain: "localhost", // for postman
 		Domain: "studhunt.ru",
 		MaxAge: int((time.Hour * 12).Seconds()),

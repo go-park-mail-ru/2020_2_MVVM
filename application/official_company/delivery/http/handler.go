@@ -62,7 +62,8 @@ func (c *CompanyHandler) GetCompanyHandler(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: comp}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 
@@ -80,7 +81,8 @@ func (c *CompanyHandler) GetUserCompanyHandler(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: comp}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 
@@ -105,7 +107,8 @@ func (c *CompanyHandler) GetCompanyListHandler(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.RespList{Companies: compList}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 
@@ -122,7 +125,8 @@ func (c *CompanyHandler) SearchCompaniesHandler(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.RespList{Companies: compList}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 
@@ -138,7 +142,8 @@ func (c *CompanyHandler) GetAllCompaniesNamesHandler(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefCompany(compList), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 
@@ -215,7 +220,8 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 		}
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: compNew}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
 

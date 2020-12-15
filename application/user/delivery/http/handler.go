@@ -47,6 +47,7 @@ func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFu
 		router.POST("/logout", u.LogoutHandler)
 		router.GET("/me", u.GetCurrentUserHandler)
 		router.PUT("/", u.UpdateUserHandler)
+		router.DELETE("/", u.DeleteUserHandler)
 	}
 }
 
@@ -307,4 +308,18 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
+}
+
+func (u *UserHandler) DeleteUserHandler(ctx *gin.Context) {
+	session := u.SessionBuilder.Build(ctx)
+	userId := session.GetUserID()
+	if userId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+		return
+	}
+	if err := u.UserUseCase.DeleteUser(userId); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	u.LogoutHandler(ctx)
 }
