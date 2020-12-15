@@ -25,7 +25,7 @@ create table resume
     place text null,
     area_search text,
     path_to_avatar varchar(256),
-    date_create date not null
+    date_create timestamp default current_timestamp
 );
 
 -- +migrate Down

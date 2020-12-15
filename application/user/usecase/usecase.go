@@ -76,6 +76,10 @@ func (u *UserUseCase) CreateUser(user models.User, companyID *uuid.UUID) (*model
 	return userNew, nil
 }
 
+func (u *UserUseCase) DeleteUser(id uuid.UUID) error {
+	return u.repos.DeleteUser(id)
+}
+
 func (u *UserUseCase) UpdateUser(userNew models.User) (*models.User, error) {
 	userOld, err := u.GetUserByID(userNew.ID.String())
 	if err != nil {
@@ -116,3 +120,4 @@ func (u *UserUseCase) UpdateUser(userNew models.User) (*models.User, error) {
 	}
 	return newUser, nil
 }
+

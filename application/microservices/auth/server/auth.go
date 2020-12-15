@@ -10,8 +10,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type authServer struct {
@@ -43,11 +41,14 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 		Password: cred.Password,
 	})
 
+	//if err != nil {
+	//	if err.Error() == common.AuthErr {
+	//		return nil, status.Error(codes.AlreadyExists, err.Error())
+	//	}
+	//	return nil, status.Error(codes.InvalidArgument, err.Error())
+	//}
 	if err != nil {
-		if err.Error() == common.AuthErr {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	// gather session information
@@ -56,47 +57,54 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 	}
 	if user.UserType == common.Candidate {
 		cand, err := a.usecase.GetCandidateByID(user.ID.String())
+		//if err != nil {
+		//	return nil, status.Error(codes.Internal, err.Error())
+		//}
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, err
 		}
 		s.CandID = cand.ID
 	} else if user.UserType == common.Employer {
 		empl, err := a.usecase.GetEmployerByID(user.ID.String())
+		//if err != nil {
+		//	return nil, status.Error(codes.Internal, err.Error())
+		//}
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, err
 		}
 		s.EmplID = empl.ID
 	} else {
-		return nil, status.Error(codes.Internal, "Failed to determine user type")
+		//return nil, status.Error(codes.Internal, "Failed to determine user type")
+		return nil, errors.New("Failed to determine user type")
 	}
 
 	sessionID, err := uuid.NewRandom()
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 	err = a.srepo.Add(sessionID.String(), s)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
-	fmt.Print("Login ok")
+	//fmt.Print("Login ok")
 
 	return convertSessionInfo(sessionID.String(), &s), nil
 }
 
 func (a *authServer) Check(ctx context.Context, workload *auth.SessionID) (*auth.SessionInfo, error) {
 	if workload == nil {
-		return nil, errors.Errorf("Incorrect session id format")
+		return nil, errors.New("Incorrect session id format")
 	}
 	sessionInfo, err := a.srepo.GetSession(workload.SessionID)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 	return convertSessionInfo(workload.SessionID, sessionInfo), nil
 }
 
 func (a *authServer) Logout(ctx context.Context, workload *auth.SessionID) (*auth.Empty, error) {
 	if workload == nil {
-		return nil, errors.Errorf("Incorrect session id format")
+		return nil, errors.New("Incorrect session id format")
 	}
 	err := a.srepo.Delete(workload.SessionID)
 	return &auth.Empty{}, err

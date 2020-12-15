@@ -40,7 +40,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		if _, err = os.Stat(imgPath); err == nil {
 			vac.Avatar = common.DOMAIN + avatarName
 		}
-		vac.DateCreate = time.Now().Format("2006-01-02")
+		vac.DateCreate = time.Now().Format(time.RFC3339)
 		vac.CompID = compId
 		company.ID = compId
 	} else {
@@ -71,14 +71,14 @@ func (p *pgRepository) GetVacancyById(id uuid.UUID) (*models.Vacancy, error) {
 }
 
 func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
-	oldVac, err := p.GetVacancyById(newVac.ID)
-	if err != nil {
+	var empId string
+	if err := p.db.Raw("select empl_id from main.vacancy where vac_id = ?", newVac.ID).Scan(&empId).Error; err != nil {
 		return nil, fmt.Errorf("error in select vacancy with id: %s : error: %w", newVac.ID.String(), err)
 	}
-	if oldVac.EmpID != newVac.EmpID {
+	if empId != newVac.EmpID.String() {
 		return nil, fmt.Errorf("this user can't update this vacancy")
 	}
-	if err := p.db.Model(&oldVac).Updates(newVac).Error; err != nil {
+	if err := p.db.Model(&newVac).Updates(newVac).Error; err != nil {
 		return nil, fmt.Errorf("can't update vacancy with id:%s", newVac.ID)
 	}
 	return &newVac, nil
@@ -115,7 +115,7 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 
 	err := p.db.Table("main.vacancy").Scopes(func(q *gorm.DB) *gorm.DB {
 		if params.StartDate != "" {
-			q = q.Where("date_create >= (?)", params.StartDate)
+			q = q.Where("date(date_create) >= (?)", params.StartDate)
 		}
 		if len(params.Sphere) != 0 {
 			q = q.Where("sphere IN (?)", params.Sphere)
@@ -147,10 +147,8 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy)
-		} else {
-			return q.Order("date_create desc")
 		}
-		return q
+		return q.Order("date_create desc")
 	}).Find(&vacList).Error
 
 	if err != nil {
@@ -270,7 +268,7 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 		err = p.db.Raw("select sum(sphere_cnt) from main.sphere").Scan(&allVacCnt).Error
 	}
 	if err == nil {
-		err = p.db.Raw("select count(*) from main.vacancy where date_create = ?", currentDate).Scan(&newVacCnt).Error
+		err = p.db.Raw("select count(*) from main.vacancy where date(date_create) = ?", currentDate).Scan(&newVacCnt).Error
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("error in add recommendation: %w", err)
@@ -278,4 +276,12 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 	vacInfo.NewVacCnt = newVacCnt
 	vacInfo.AllVacCnt = allVacCnt
 	return topList, &vacInfo, nil
+}
+
+func (p *pgRepository) DeleteVacancy(vacId uuid.UUID, empId uuid.UUID) error {
+	err := p.db.Table("main.vacancy").Delete(&models.Vacancy{ID: vacId}).Where("empl_id = ?", empId).Error
+	if err != nil {
+		return fmt.Errorf("error in delete vacancy with id: %s, err: %w", vacId, err)
+	}
+	return nil
 }

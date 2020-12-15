@@ -120,8 +120,15 @@ func (p *pgStorage) CreateUser(user models.User, companyID *uuid.UUID) (*models.
 func (p *pgStorage) UpdateUser(userNew models.User) (*models.User, error) {
 	err := p.db.Save(&userNew).Error
 	if err != nil {
-		err = fmt.Errorf("error in updating user with id %s, : %w", userNew.ID.String(), err)
-		return nil, err
+		return nil, fmt.Errorf("error in updating user with id %s, : %w", userNew.ID.String(), err)
 	}
 	return &userNew, nil
+}
+
+func (p *pgStorage) DeleteUser(id uuid.UUID) error {
+	err := p.db.Table("main.users").Delete(&models.User{ID: id}).Error
+	if err != nil {
+		return fmt.Errorf("error in delete user with id %s, : %w", id, err)
+	}
+	return nil
 }

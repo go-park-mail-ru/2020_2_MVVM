@@ -16,4 +16,5 @@ type VacClient interface {
 	AddRecommendation(uuid.UUID, int) error
 	GetRecommendation(uuid.UUID, int, int) ([]models.Vacancy, error)
 	GetVacancyTopSpheres(int32) ([]models.Sphere, *models.VacTopCnt, error)
+	DeleteVacancy(id uuid.UUID, empId uuid.UUID) error
 }

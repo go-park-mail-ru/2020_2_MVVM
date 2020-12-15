@@ -19,7 +19,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(in *jlexer.Lexer, out *RespNotifications) {
+func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse(in *jlexer.Lexer, out *RespNotifications) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -98,7 +98,7 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(
 		in.Consumed()
 	}
 }
-func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(out *jwriter.Writer, in RespNotifications) {
+func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse(out *jwriter.Writer, in RespNotifications) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -150,27 +150,27 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(
 // MarshalJSON supports json.Marshaler interface
 func (v RespNotifications) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(&w, v)
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v RespNotifications) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(w, v)
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *RespNotifications) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(&r, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *RespNotifications) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse(l, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse(l, v)
 }
-func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(in *jlexer.Lexer, out *ReqNotify) {
+func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(in *jlexer.Lexer, out *ReqNotify) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -242,7 +242,7 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1
 		in.Consumed()
 	}
 }
-func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(out *jwriter.Writer, in ReqNotify) {
+func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(out *jwriter.Writer, in ReqNotify) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -297,23 +297,23 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1
 // MarshalJSON supports json.Marshaler interface
 func (v ReqNotify) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(&w, v)
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ReqNotify) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(w, v)
+	easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ReqNotify) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(&r, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ReqNotify) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitApplicationResponse1(l, v)
+	easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(l, v)
 }

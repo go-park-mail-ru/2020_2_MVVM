@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"time"
 )
 
 type Response struct {
@@ -11,7 +10,7 @@ type Response struct {
 	VacancyID  uuid.UUID `gorm:"column:vacancy_id; type:uuid" json:"vacancy_id"`
 	Initial    string    `gorm:"column:initial" json:"initial"`
 	Status     string    `gorm:"column:status" json:"status"`
-	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`
+	DateCreate string    `gorm:"column:date_create" json:"date_create"`
 }
 
 func (r Response) TableName() string {
@@ -30,7 +29,7 @@ type ResponseWithTitle struct {
 	CompanyName string    `json:"company_name"`
 	Initial     string    `json:"initial"`
 	Status      string    `json:"status"`
-	DateCreate  time.Time `json:"date_create"`
+	DateCreate  string    `json:"date_create"`
 }
 
 //easyjson:json

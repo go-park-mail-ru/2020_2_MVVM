@@ -17,7 +17,7 @@ create table official_companies
     link text null,
     count_vacancy int default 0,
     path_to_avatar varchar(256),
-    date_create date default current_date
+    date_create timestamp default current_timestamp
 );
 
 -- +migrate Down
