@@ -135,9 +135,7 @@ func easyjson39b3a2f5DecodeGithubComGoParkMailRu20202MVVMGitModelsModels(in *jle
 				*out.AreaSearch = string(in.String())
 			}
 		case "date_create":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.DateCreate).UnmarshalJSON(data))
-			}
+			out.DateCreate = string(in.String())
 		case "education":
 			if in.IsNull() {
 				in.Skip()
@@ -316,7 +314,7 @@ func easyjson39b3a2f5EncodeGithubComGoParkMailRu20202MVVMGitModelsModels(out *jw
 	{
 		const prefix string = ",\"date_create\":"
 		out.RawString(prefix)
-		out.Raw((in.DateCreate).MarshalJSON())
+		out.String(string(in.DateCreate))
 	}
 	{
 		const prefix string = ",\"education\":"

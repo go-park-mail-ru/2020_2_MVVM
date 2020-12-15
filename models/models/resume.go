@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"time"
 )
 
 type Resume struct {
@@ -22,7 +21,7 @@ type Resume struct {
 	Place                *string                `gorm:"column:place" json:"place" valid:"-"`
 	ExperienceMonth      *int                   `gorm:"column:experience_month" json:"experience_month" valid:"-"`
 	AreaSearch           *string                `gorm:"column:area_search" json:"area_search" valid:"-"`
-	DateCreate           time.Time              `gorm:"column:date_create" json:"date_create" valid:"-"`
+	DateCreate           string                 `gorm:"column:date_create" json:"date_create" valid:"-"`
 	Education            []Education            `gorm:"-;" json:"education" valid:"-"`
 	ExperienceCustomComp []ExperienceCustomComp `gorm:"foreignKey:ResumeID" json:"custom_experience" valid:"-"`
 	Avatar               string                 `gorm:"column:path_to_avatar" json:"avatar" valid:"-"`
