@@ -48,7 +48,8 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 	{
 		router.GET("/mine", r.GetMineResume)
 		router.POST("/", r.CreateResume)
-		router.POST("/update", r.UpdateResume)
+		router.PUT("/", r.UpdateResume)
+		router.DELETE("/resume/:resume_id", r.DeleteResume)
 
 		router.GET("/favorite/:resume_id", r.GetFavorite)
 		router.POST("/favorite/by/id/:resume_id", r.AddFavorite)
@@ -198,14 +199,18 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 }
 
 func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
+	var (
+		file       io.Reader
+		avatarName string
+		errImg     *common.Err
+		template models.Resume
+	)
 	session := r.SessionBuilder.Build(ctx)
 	candID := session.GetCandID()
 	if candID == uuid.Nil {
 		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
 		return
 	}
-
-	var template models.Resume
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &template); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
@@ -216,20 +221,23 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 		return
 	}
 	template.CandID = candID
-
-	file, errImg := common.GetImageFromBase64(template.Avatar)
-	if errImg != nil {
-		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
-		return
+	if !strings.Contains(template.Avatar, "http") {
+		file, errImg = common.GetImageFromBase64(template.Avatar)
+		if errImg != nil {
+			common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
+			return
+		}
+		avatarName = resumePath + template.ResumeID.String()
+		if file != nil {
+			template.Avatar = common.DOMAIN + path.Join(common.ImgDir, avatarName)
+		}
 	}
-
 	result, err := r.UseCaseResume.Update(template)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
-
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -401,5 +409,26 @@ func (r *ResumeHandler) GetFavorite(ctx *gin.Context) {
 			ctx.Writer); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
+	}
+}
+
+func (r *ResumeHandler) DeleteResume(ctx *gin.Context) {
+	var req struct {
+		ResId string `uri:"resume_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	ResId, _ := uuid.Parse(req.ResId)
+	session := r.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+		return
+	}
+	if err := r.UseCaseResume.DeleteResume(ResId, candId); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
 	}
 }
