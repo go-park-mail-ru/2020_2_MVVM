@@ -43,11 +43,14 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 		Password: cred.Password,
 	})
 
+	//if err != nil {
+	//	if err.Error() == common.AuthErr {
+	//		return nil, status.Error(codes.AlreadyExists, err.Error())
+	//	}
+	//	return nil, status.Error(codes.InvalidArgument, err.Error())
+	//}
 	if err != nil {
-		if err.Error() == common.AuthErr {
-			return nil, status.Error(codes.AlreadyExists, err.Error())
-		}
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, err
 	}
 
 	// gather session information
@@ -56,14 +59,20 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 	}
 	if user.UserType == common.Candidate {
 		cand, err := a.usecase.GetCandidateByID(user.ID.String())
+		//if err != nil {
+		//	return nil, status.Error(codes.Internal, err.Error())
+		//}
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, err
 		}
 		s.CandID = cand.ID
 	} else if user.UserType == common.Employer {
 		empl, err := a.usecase.GetEmployerByID(user.ID.String())
+		//if err != nil {
+		//	return nil, status.Error(codes.Internal, err.Error())
+		//}
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, err
 		}
 		s.EmplID = empl.ID
 	} else {
