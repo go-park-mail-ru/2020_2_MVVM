@@ -44,8 +44,6 @@ func easyjson39b3a2f5DecodeGithubComGoParkMailRu20202MVVMGitModelsModels(in *jle
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.CandID).UnmarshalText(data))
 			}
-		case "Candidate":
-			(out.Candidate).UnmarshalEasyJSON(in)
 		case "title":
 			out.Title = string(in.String())
 		case "salary_min":
@@ -215,11 +213,6 @@ func easyjson39b3a2f5EncodeGithubComGoParkMailRu20202MVVMGitModelsModels(out *jw
 		const prefix string = ",\"cand_id\":"
 		out.RawString(prefix)
 		out.RawText((in.CandID).MarshalText())
-	}
-	{
-		const prefix string = ",\"Candidate\":"
-		out.RawString(prefix)
-		(in.Candidate).MarshalEasyJSON(out)
 	}
 	{
 		const prefix string = ",\"title\":"

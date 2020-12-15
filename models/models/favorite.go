@@ -15,6 +15,11 @@ func (r FavoritesForEmpl) TableName() string {
 	return "main.favorite_for_empl"
 }
 
+//easyjson:json
+type FavoriteID struct {
+	FavoriteID *uuid.UUID `json:"favorite_id"`
+}
+
 type FavoritesForCand struct {
 	tableName struct{} `gorm:"column:main.favorite_for_cand;discard_unknown_columns"`
 

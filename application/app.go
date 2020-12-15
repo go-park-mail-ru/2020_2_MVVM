@@ -26,6 +26,9 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
+	ChatHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/delivery/http"
+	RepositoryChat "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/repository"
+	chatUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/usecase"
 	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
 	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
@@ -144,9 +147,13 @@ func NewApp(config Config) *App {
 
 	ResumeHandler.NewRest(api.Group("/resume"), resume, customExperience, &sessionBuilder, authMiddleware)
 
+	chatRep := RepositoryChat.NewPgRepository(db)
+	chat := chatUseCase.NewUsecase(log.Info, log.Error, chatRep)
+	ChatHandler.NewRest(api.Group("/chat"), chat, &sessionBuilder, authMiddleware)
+
 	responseRep := RepositoryResponse.NewPgRepository(db, vacancyRep)
 	response := ResponseUseCase.NewUsecase(log.Info, log.Error, resume, *vacancy, company, responseRep)
-	ResponseHandler.NewRest(api.Group("/response"), response, &sessionBuilder, authMiddleware)
+	ResponseHandler.NewRest(api.Group("/response"), response, chat, &sessionBuilder, authMiddleware)
 
 	app := App{
 		config:   config,

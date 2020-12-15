@@ -2,7 +2,6 @@ package resume
 
 import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
-	"github.com/google/uuid"
 )
 
 type SearchParams struct {
@@ -28,5 +27,4 @@ type Response struct {
 	Resume           models.Resume                 `json:"resume"`
 	Educations       []models.Education            `json:"education"`
 	CustomExperience []models.ExperienceCustomComp `json:"custom_experience"`
-	IsFavorite       *uuid.UUID                    `json:"is_favorite"`
 }

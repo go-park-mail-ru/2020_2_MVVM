@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
@@ -14,15 +15,18 @@ import (
 
 type ResponseHandler struct {
 	UsecaseResponse response.IUseCaseResponse
+	UsecaseChat     chat.IUseCaseChat
 	SessionBuilder  common.SessionBuilder
 }
 
 func NewRest(router *gin.RouterGroup,
 	usecaseResponse response.IUseCaseResponse,
+	usecaseChat chat.IUseCaseChat,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc) *ResponseHandler {
 	rest := &ResponseHandler{
 		UsecaseResponse: usecaseResponse,
+		UsecaseChat:     usecaseChat,
 		SessionBuilder:  sessionBuilder,
 	}
 	rest.routes(router, AuthRequired)
@@ -44,7 +48,7 @@ func (r *ResponseHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handl
 func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	response := new(models.Response)
 
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  response); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, response); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -71,6 +75,8 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 		return
 	}
 
+	_, err = r.UsecaseChat.Create(*pResponse)
+
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
@@ -78,7 +84,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 
 func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	response := new(models.Response)
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  response); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, response); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
@@ -252,7 +258,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
 		return
 	}
-	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}

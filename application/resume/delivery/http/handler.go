@@ -46,8 +46,9 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 	{
 		router.GET("/mine", r.GetMineResume)
 		router.POST("/", r.CreateResume)
-		router.PUT("/", r.UpdateResume)
+		router.POST("/update", r.UpdateResume)
 
+		router.GET("/favorite/:resume_id", r.GetFavorite)
 		router.POST("/favorite/by/id/:resume_id", r.AddFavorite)
 		router.DELETE("/favorite/by/id/:favorite_id", r.RemoveFavorite)
 		router.GET("/myfavorites", r.GetAllFavoritesResume)
@@ -122,7 +123,6 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	resp := resume2.Response{
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
-		IsFavorite:       nil,
 	}
 	result.Education = nil
 	result.ExperienceCustomComp = nil
@@ -153,29 +153,9 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		return
 	}
 
-	var isFavorite *uuid.UUID = nil
-
-	session := r.SessionBuilder.Build(ctx)
-
-	if session != nil {
-		emplID := session.GetEmplID()
-		if emplID != uuid.Nil {
-			favorite, err := r.UseCaseResume.GetFavoriteByResume(emplID, result.ResumeID)
-			if err != nil {
-				ctx.AbortWithError(http.StatusInternalServerError, err)
-				return
-			}
-			if favorite != nil {
-				isFavorite = &favorite.FavoriteID
-			}
-		}
-	}
-
-
 	resp := resume2.Response{
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
-		IsFavorite:       isFavorite,
 	}
 
 	result.Education = nil
@@ -251,7 +231,6 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	resp := resume2.Response{
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
-		IsFavorite:       nil,
 	}
 	result.Education = nil
 	result.ExperienceCustomComp = nil
@@ -376,5 +355,43 @@ func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(emplFavoriteResume), ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (r *ResumeHandler) GetFavorite(ctx *gin.Context) {
+	var request struct {
+		ResumeID string `uri:"resume_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	resumeID, _ := uuid.Parse(request.ResumeID)
+	favorite := new(models.FavoritesForEmpl)
+
+	var err error
+	session := r.SessionBuilder.Build(ctx)
+
+	emplID := session.GetEmplID()
+	if emplID != uuid.Nil {
+		favorite, err = r.UseCaseResume.GetFavoriteByResume(emplID, resumeID)
+		if err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	if favorite.FavoriteID == uuid.Nil {
+		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.FavoriteID{FavoriteID: nil}, ctx.Writer); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	} else {
+		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.FavoriteID{FavoriteID: &favorite.FavoriteID},
+			ctx.Writer); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
 	}
 }

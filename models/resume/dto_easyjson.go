@@ -5,7 +5,6 @@ package resume
 import (
 	json "encoding/json"
 	models "github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
-	uuid "github.com/google/uuid"
 	easyjson "github.com/mailru/easyjson"
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
@@ -547,18 +546,6 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResume2(in *jl
 				}
 				in.Delim(']')
 			}
-		case "is_favorite":
-			if in.IsNull() {
-				in.Skip()
-				out.IsFavorite = nil
-			} else {
-				if out.IsFavorite == nil {
-					out.IsFavorite = new(uuid.UUID)
-				}
-				if data := in.UnsafeBytes(); in.Ok() {
-					in.AddError((*out.IsFavorite).UnmarshalText(data))
-				}
-			}
 		default:
 			in.SkipRecursive()
 		}
@@ -608,15 +595,6 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResume2(out *j
 				(v24).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
-		}
-	}
-	{
-		const prefix string = ",\"is_favorite\":"
-		out.RawString(prefix)
-		if in.IsFavorite == nil {
-			out.RawString("null")
-		} else {
-			out.RawText((*in.IsFavorite).MarshalText())
 		}
 	}
 	out.RawByte('}')
