@@ -40,7 +40,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		if _, err = os.Stat(imgPath); err == nil {
 			vac.Avatar = common.DOMAIN + avatarName
 		}
-		vac.DateCreate = time.Now().Format("2006-01-02")
+		vac.DateCreate = time.Now().Format(time.RFC3339)
 		vac.CompID = compId
 		company.ID = compId
 	} else {
@@ -115,7 +115,7 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 
 	err := p.db.Table("main.vacancy").Scopes(func(q *gorm.DB) *gorm.DB {
 		if params.StartDate != "" {
-			q = q.Where("date_create >= (?)", params.StartDate)
+			q = q.Where("date(date_create) >= (?)", params.StartDate)
 		}
 		if len(params.Sphere) != 0 {
 			q = q.Where("sphere IN (?)", params.Sphere)
@@ -268,7 +268,7 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 		err = p.db.Raw("select sum(sphere_cnt) from main.sphere").Scan(&allVacCnt).Error
 	}
 	if err == nil {
-		err = p.db.Raw("select count(*) from main.vacancy where date_create = ?", currentDate).Scan(&newVacCnt).Error
+		err = p.db.Raw("select count(*) from main.vacancy where date(date_create) = ?", currentDate).Scan(&newVacCnt).Error
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("error in add recommendation: %w", err)

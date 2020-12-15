@@ -36,7 +36,7 @@ func (p pgRepository) GetRecommendedVacCnt(candId uuid.UUID, startDate string) (
 	}
 	for curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
-		err = p.db.Raw("select count(*) from main.vacancy where date_create >= ? and sphere in ?", startDate, arr).Scan(&temp).Error
+		err = p.db.Raw("select count(*) from main.vacancy where date(date_create) >= ? and sphere in ?", startDate, arr).Scan(&temp).Error
 		cnt += temp
 		if err != nil {
 			err = fmt.Errorf("error in getRecommended vacancies: %w", err)
@@ -63,7 +63,7 @@ func (p pgRepository) GetRecommendedVacancies(candId uuid.UUID, start int, limit
 	)
 	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
-		err := p.db.Table("main.vacancy").Where("date_create >= ? and sphere in ?", startDate, arr).
+		err := p.db.Table("main.vacancy").Where("date(date_create) >= ? and sphere in ?", startDate, arr).
 			Order("date_create desc").Limit(limit).Offset(start).Find(&list).Error
 		vacList = append(vacList, list...)
 		if err != nil {

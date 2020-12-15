@@ -43,7 +43,7 @@ func NewUseCase(infoLogger *logger.Logger,
 
 func (u *ResumeUseCase) Create(template models.Resume) (*models.Resume, error) {
 	// create resume
-	template.DateCreate = time.Now()
+	template.DateCreate = time.Now().Format(time.RFC3339)
 	if template.Sphere == nil {
 		template.Sphere = &common.DefaultSphere
 	}
