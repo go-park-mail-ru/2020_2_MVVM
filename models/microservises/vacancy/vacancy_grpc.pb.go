@@ -25,6 +25,7 @@ type VacancyClient interface {
 	AddRecommendation(ctx context.Context, in *AddRecParams, opts ...grpc.CallOption) (*Empty, error)
 	GetRecommendation(ctx context.Context, in *GetRecParams, opts ...grpc.CallOption) (*VacList, error)
 	GetVacancyTopSpheres(ctx context.Context, in *SphereCnt, opts ...grpc.CallOption) (*TopInfo, error)
+	DeleteVacancy(ctx context.Context, in *UserVac, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type vacancyClient struct {
@@ -107,6 +108,15 @@ func (c *vacancyClient) GetVacancyTopSpheres(ctx context.Context, in *SphereCnt,
 	return out, nil
 }
 
+func (c *vacancyClient) DeleteVacancy(ctx context.Context, in *UserVac, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/api.Vacancy/DeleteVacancy", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VacancyServer is the server API for Vacancy service.
 // All implementations must embed UnimplementedVacancyServer
 // for forward compatibility
@@ -119,6 +129,7 @@ type VacancyServer interface {
 	AddRecommendation(context.Context, *AddRecParams) (*Empty, error)
 	GetRecommendation(context.Context, *GetRecParams) (*VacList, error)
 	GetVacancyTopSpheres(context.Context, *SphereCnt) (*TopInfo, error)
+	DeleteVacancy(context.Context, *UserVac) (*Empty, error)
 	mustEmbedUnimplementedVacancyServer()
 }
 
@@ -149,6 +160,9 @@ func (UnimplementedVacancyServer) GetRecommendation(context.Context, *GetRecPara
 }
 func (UnimplementedVacancyServer) GetVacancyTopSpheres(context.Context, *SphereCnt) (*TopInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetVacancyTopSpheres not implemented")
+}
+func (UnimplementedVacancyServer) DeleteVacancy(context.Context, *UserVac) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteVacancy not implemented")
 }
 func (UnimplementedVacancyServer) mustEmbedUnimplementedVacancyServer() {}
 
@@ -307,6 +321,24 @@ func _Vacancy_GetVacancyTopSpheres_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Vacancy_DeleteVacancy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserVac)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VacancyServer).DeleteVacancy(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Vacancy/DeleteVacancy",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VacancyServer).DeleteVacancy(ctx, req.(*UserVac))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Vacancy_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "api.Vacancy",
 	HandlerType: (*VacancyServer)(nil),
@@ -342,6 +374,10 @@ var _Vacancy_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetVacancyTopSpheres",
 			Handler:    _Vacancy_GetVacancyTopSpheres_Handler,
+		},
+		{
+			MethodName: "DeleteVacancy",
+			Handler:    _Vacancy_DeleteVacancy_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

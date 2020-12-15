@@ -13,7 +13,7 @@ create table response
     initial users_types not null,
     status status_response default 'sent',
     unread bool default true,
-    date_create date not null,
+    date_create timestamp default current_timestamp,
     constraint response_unique unique (vacancy_id, resume_id)
 
 );

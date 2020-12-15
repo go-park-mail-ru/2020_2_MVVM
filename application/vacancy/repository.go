@@ -17,4 +17,5 @@ type RepositoryVacancy interface {
 	GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, error)
 	GetPreferredSalary(uuid.UUID) (*float64, error)
 	GetVacancyTopSpheres(int32) ([]models.Sphere, *models.VacTopCnt, error)
+	DeleteVacancy(id uuid.UUID, empId uuid.UUID) error
 }

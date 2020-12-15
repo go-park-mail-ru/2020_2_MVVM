@@ -106,13 +106,19 @@ message TopInfo {
 
 message empty {};
 
+message userVac {
+  string vacId = 1;
+  string empId = 2;
+}
+
 service Vacancy {
-  rpc CreateVacancy(vac) returns (vac) {};
-  rpc UpdateVacancy(vac) returns (vac) {};
+  rpc  CreateVacancy(vac) returns (vac) {};
+  rpc  UpdateVacancy(vac) returns (vac) {};
   rpc  GetVacancy(vacId) returns (vac) {};
   rpc  GetVacancyList(vacListParams) returns (vacList) {};
   rpc  SearchVacancies(searchParams) returns (vacList) {};
   rpc  AddRecommendation(addRecParams) returns (empty) {};
   rpc  GetRecommendation(getRecParams) returns (vacList) {};
   rpc  GetVacancyTopSpheres(sphereCnt) returns (TopInfo) {};
+  rpc  DeleteVacancy(userVac) returns (empty) {};
 };

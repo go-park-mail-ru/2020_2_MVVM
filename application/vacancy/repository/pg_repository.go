@@ -71,14 +71,14 @@ func (p *pgRepository) GetVacancyById(id uuid.UUID) (*models.Vacancy, error) {
 }
 
 func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, error) {
-	oldVac, err := p.GetVacancyById(newVac.ID)
-	if err != nil {
+	var empId string
+	if err := p.db.Raw("select empl_id from main.vacancy where vac_id = ?", newVac.ID).Scan(&empId).Error; err != nil {
 		return nil, fmt.Errorf("error in select vacancy with id: %s : error: %w", newVac.ID.String(), err)
 	}
-	if oldVac.EmpID != newVac.EmpID {
+	if empId != newVac.EmpID.String() {
 		return nil, fmt.Errorf("this user can't update this vacancy")
 	}
-	if err := p.db.Model(&oldVac).Updates(newVac).Error; err != nil {
+	if err := p.db.Model(&newVac).Updates(newVac).Error; err != nil {
 		return nil, fmt.Errorf("can't update vacancy with id:%s", newVac.ID)
 	}
 	return &newVac, nil
@@ -147,10 +147,8 @@ func (p *pgRepository) SearchVacancies(params models.VacancySearchParams) ([]mod
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy)
-		} else {
-			return q.Order("date_create desc")
 		}
-		return q
+		return q.Order("date_create desc")
 	}).Find(&vacList).Error
 
 	if err != nil {
@@ -278,4 +276,12 @@ func (p *pgRepository) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Spher
 	vacInfo.NewVacCnt = newVacCnt
 	vacInfo.AllVacCnt = allVacCnt
 	return topList, &vacInfo, nil
+}
+
+func (p *pgRepository) DeleteVacancy(vacId uuid.UUID, empId uuid.UUID) error {
+	err := p.db.Table("main.vacancy").Delete(&models.Vacancy{ID: vacId}).Where("empl_id = ?", empId).Error
+	if err != nil {
+		return fmt.Errorf("error in delete vacancy with id: %s, err: %w", vacId, err)
+	}
+	return nil
 }

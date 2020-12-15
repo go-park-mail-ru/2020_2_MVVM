@@ -56,7 +56,6 @@ func (u *UseCaseResponse) Create(response models.Response) (*models.Response, er
 			return nil, err
 		}
 	}
-	response.DateCreate = time.Now()
 	response.Status = "sent"
 	return u.strg.Create(response)
 }

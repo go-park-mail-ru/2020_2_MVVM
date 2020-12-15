@@ -87,6 +87,12 @@ func (v *vacServer) GetRecommendation(ctx context.Context, params *vacancy2.GetR
 	return vacancyMicro.ConvertToListDbModels(vacList), err
 }
 
+func (v *vacServer) DeleteVacancy(ctx context.Context, userVac *vacancy2.UserVac) (*vacancy2.Empty, error) {
+	empId, _ := uuid.Parse(userVac.EmpId)
+	vacId, _ := uuid.Parse(userVac.VacId)
+	return &vacancy2.Empty{}, v.vacUseCase.DeleteVacancy(vacId, empId)
+}
+
 func (v *vacServer) SearchVacancies(ctx context.Context, params *vacancy2.SearchParams) (*vacancy2.VacList, error) {
 	searchParams := models.VacancySearchParams{
 		KeyWords:        params.KeyWords,

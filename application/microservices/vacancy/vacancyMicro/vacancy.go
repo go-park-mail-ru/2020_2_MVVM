@@ -205,6 +205,11 @@ func (g *gRPCVacClient) GetVacancyTopSpheres(sphereCnt int32) ([]models.Sphere, 
 	return ConvertSphToDbModels(topInfo.SphereInfo), &vacInfo, err
 }
 
+func (g *gRPCVacClient) DeleteVacancy(id uuid.UUID, empId uuid.UUID) error {
+	_, err := g.client.DeleteVacancy(g.ctx, &vacancy.UserVac{EmpId: empId.String(), VacId: id.String()})
+	return err
+}
+
 func NewVacClient(host string, port int, logger common.Logger) (VacClient, error) {
 	gConn, err := grpc.Dial(
 		host+":"+strconv.Itoa(port),

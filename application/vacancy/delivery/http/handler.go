@@ -50,6 +50,7 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	{
 		router.GET("/mine", v.GetUserVacancyListHandler)
 		router.PUT("/", v.UpdateVacancyHandler)
+		router.DELETE("/:vacancy_id", v.DeleteVacancyHandler)
 		router.POST("/", v.CreateVacancyHandler)
 		router.GET("/recommendation", v.GetRecommendationUserVacancy)
 	}
@@ -173,6 +174,27 @@ func (v *VacancyHandler) GetVacancyTopSpheres(ctx *gin.Context) {
 		topCnt = *req.TopSpheresCnt
 	}
 	topSphereHandlerCommon(v, ctx, topCnt)
+}
+
+func (v *VacancyHandler) DeleteVacancyHandler(ctx *gin.Context) {
+	var req struct {
+		VacID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(req.VacID)
+	session := v.SessionBuilder.Build(ctx)
+	empId := session.GetEmplID()
+	if empId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+		return
+	}
+	if err := v.vacancyClient.DeleteVacancy(vacId, empId); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
 }
 
 func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
