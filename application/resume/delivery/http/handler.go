@@ -392,7 +392,7 @@ func (r *ResumeHandler) GetFavorite(ctx *gin.Context) {
 		}
 	}
 
-	if favorite.FavoriteID == uuid.Nil {
+	if favorite == nil || favorite.FavoriteID == uuid.Nil {
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.FavoriteID{FavoriteID: nil}, ctx.Writer); err != nil {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
