@@ -4,8 +4,8 @@ import (
 	"database/sql/driver"
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -125,6 +125,9 @@ func TestCreate(t *testing.T) {
 	r := makeDummies().Resume
 
 	// Ok flow
+
+	//'INSERT INTO "main"."resume" ("cand_id","title","salary_min","salary_max","description","skills","gender","education_level","career_level","place","experience_month","area_search","date_create","path_to_avatar","cand_name","cand_surname","cand_email","resume_id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING "resume_id"',
+
 	queryCandidate := "SELECT .* FROM (.*).\"candidates\" LEFT JOIN (.*).\"users\" (.*) WHERE " +
 		"\"candidates\".\"cand_id\" = (.*) ORDER BY \"candidates\".\"cand_id\" LIMIT 1"
 	mock.ExpectQuery(queryCandidate).
@@ -132,7 +135,8 @@ func TestCreate(t *testing.T) {
 		WillReturnRows(makeCandRow(r.Candidate))
 	mock.ExpectQuery("INSERT INTO (.*).\"resume\" .*").
 		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Description, r.Skills, r.Gender, r.EducationLevel,
-			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.ResumeID).
+			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.CandName,
+			r.CandSurname, r.CandEmail, r.ResumeID).
 		WillReturnRows(sqlmock.NewRows([]string{"resume_id"}).AddRow(r.ResumeID))
 
 	result, err := repo.Create(r)
@@ -171,7 +175,8 @@ func TestUpdate(t *testing.T) {
 		WillReturnRows(makeCandRow(r.Candidate))
 	mock.ExpectQuery("INSERT INTO (.*).\"resume\" .*").
 		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Description, r.Skills, r.Gender, r.EducationLevel,
-			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.ResumeID).
+			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.CandName,
+			r.CandSurname, r.CandEmail, r.ResumeID).
 		WillReturnRows(sqlmock.NewRows([]string{"resume_id"}).AddRow(r.ResumeID))
 
 	result, err := repo.Create(r)
@@ -413,7 +418,7 @@ func TestGetFavoriteForResume(t *testing.T) {
 	repo, mock := beforeTest(t)
 	dummies := makeDummies()
 
-	mock.ExpectQuery("SELECT \\* FROM (.*).\"favorite_for_empl\" WHERE " +
+	mock.ExpectQuery("SELECT \\* FROM (.*).\"favorite_for_empl\" WHERE "+
 		"empl_id = (.*) AND resume_id = (.*) .* LIMIT 1").
 		WithArgs(dummies.Employer.ID, dummies.Resume.ResumeID).
 		WillReturnRows(makeFavoriteEmplRow(dummies.FavoriteEmpl))

@@ -78,7 +78,6 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	fmt.Print("Login ok")
 
 	return convertSessionInfo(sessionID.String(), &s), nil
 }

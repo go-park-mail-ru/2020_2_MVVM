@@ -265,6 +265,9 @@ func TestCreateResume(t *testing.T) {
 		Skills: "asdasd ad asd ads",
 		Title: "!@#DSAD",
 		Description: "MYSUPERJOBFPREFSD!",
+		CandEmail: "email@mail.ru",
+		CandName: "myname",
+		CandSurname: "mysurname",
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
@@ -321,6 +324,9 @@ func TestUpdateResume(t *testing.T) {
 		Skills: "asdasd ad asd ads",
 		Title: "!@#DSAD",
 		Description: "MYSUPERJOBFPREFSD!",
+		CandEmail: "email@mail.ru",
+		CandName: "myname",
+		CandSurname: "mysurname",
 	}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
