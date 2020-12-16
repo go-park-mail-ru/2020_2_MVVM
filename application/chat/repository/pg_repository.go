@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type pgRepository struct {
@@ -49,6 +50,21 @@ func (p *pgRepository) Create(response models.Response) (*models.Chat, error) {
 		err = fmt.Errorf("error in inserting chat: %w", err)
 		return nil, err
 	}
+
+	mes := models.Message{
+		MessageID:  uuid.UUID{},
+		ChatID:     chat.ChatID,
+		Sender:     "technical",
+		Message:    "Костыль",
+		IsRead:     false,
+	}
+	mes.DateCreate = time.Now()
+	err = p.db.Create(&mes).Error
+	if err != nil {
+		err = fmt.Errorf("error in inserting message: %w", err)
+		return nil, err
+	}
+
 	return &chat, nil
 }
 
