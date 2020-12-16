@@ -9,4 +9,5 @@ type IUseCaseChat interface {
 	Create(response models.Response) (*models.Chat, error)
 	GetByID(chatID uuid.UUID, start uint, limit uint) ([]models.Message, error)
 	CreateMessage(mes models.Message, sender uuid.UUID) (*models.Message, error)
+	ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error)
 }

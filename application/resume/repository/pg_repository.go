@@ -164,14 +164,15 @@ func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resu
 	return brief, nil
 }
 
-func (p *PGRepository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+func (p *PGRepository) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoriteID, error) {
+	favoriteID := new(models.FavoriteID)
 	err := p.db.Create(&favoriteForEmpl).Error
-	//_, err := p.db.Model(&favoriteForEmpl).Returning("*").Insert()
+	favoriteID.FavoriteID = &favoriteForEmpl.FavoriteID
 	if err != nil {
 		err = fmt.Errorf("error in inserting favorite resume: %w", err)
 		return nil, err
 	}
-	return &favoriteForEmpl, nil
+	return favoriteID, nil
 }
 
 func (p *PGRepository) RemoveFavorite(favoriteForEmpl uuid.UUID) error {

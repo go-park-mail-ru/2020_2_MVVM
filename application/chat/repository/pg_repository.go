@@ -3,9 +3,11 @@ package repository
 import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"time"
 )
 
 type pgRepository struct {
@@ -41,13 +43,28 @@ func (p *pgRepository) Create(response models.Response) (*models.Chat, error) {
 	chat.CandID = cand.UserID
 
 	err = p.db.Create(&chat).Error
-	if err.Error() == "ERROR: duplicate key value violates unique constraint \"chat_unique\" (SQLSTATE 23505)" {
-		return nil, nil
-	}
 	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"chat_unique\" (SQLSTATE 23505)" {
+			return nil, nil
+		}
 		err = fmt.Errorf("error in inserting chat: %w", err)
 		return nil, err
 	}
+
+	mes := models.Message{
+		MessageID:  uuid.UUID{},
+		ChatID:     chat.ChatID,
+		Sender:     "technical",
+		Message:    "Костыль",
+		IsRead:     false,
+	}
+	mes.DateCreate = time.Now()
+	err = p.db.Create(&mes).Error
+	if err != nil {
+		err = fmt.Errorf("error in inserting message: %w", err)
+		return nil, err
+	}
+
 	return &chat, nil
 }
 
@@ -86,4 +103,34 @@ func (p *pgRepository) CreateMessage(mes models.Message, sender uuid.UUID) (*mod
 		return nil, err
 	}
 	return &mes, nil
+}
+
+
+func (p *pgRepository) ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error) {
+	var listChats []models.BriefChat
+
+	userForWhere := "user_id_"
+	userForJoin := "user_id_"
+	if userType == common.Candidate {
+		userForWhere += "cand = ?"
+		userForJoin += "empl"
+	} else {
+		userForWhere += "empl = ?"
+		userForJoin += "cand"
+	}
+
+	query := fmt.Sprintf(`select DISTINCT ON(chat.chat_id) m.chat_id, message, 
+								name, surname, path_to_avatar, sender, date_create
+			from main.chat
+			join main.message m on chat.chat_id = m.chat_id
+			join main.users u on u.user_id = chat.%s
+			where %s
+			order by chat.chat_id, date_create desc`, userForJoin, userForWhere)
+
+	err := p.db.Raw(query, userID).Scan(&listChats).Error
+	if err != nil {
+		err = fmt.Errorf("error in select messages: %w", err)
+		return nil, err
+	}
+	return listChats, nil
 }
