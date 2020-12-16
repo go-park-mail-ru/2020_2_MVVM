@@ -41,3 +41,7 @@ func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*mode
 	mes.DateCreate = time.Now()
 	return u.strg.CreateMessage(mes, sender)
 }
+
+func (u *UseCaseChat) ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error) {
+	return u.strg.ListChats(userID, userType)
+}

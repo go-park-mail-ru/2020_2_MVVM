@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -41,10 +42,10 @@ func (p *pgRepository) Create(response models.Response) (*models.Chat, error) {
 	chat.CandID = cand.UserID
 
 	err = p.db.Create(&chat).Error
-	if err.Error() == "ERROR: duplicate key value violates unique constraint \"chat_unique\" (SQLSTATE 23505)" {
-		return nil, nil
-	}
 	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"chat_unique\" (SQLSTATE 23505)" {
+			return nil, nil
+		}
 		err = fmt.Errorf("error in inserting chat: %w", err)
 		return nil, err
 	}
@@ -86,4 +87,31 @@ func (p *pgRepository) CreateMessage(mes models.Message, sender uuid.UUID) (*mod
 		return nil, err
 	}
 	return &mes, nil
+}
+
+
+func (p *pgRepository) ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error) {
+	var listChats []models.BriefChat
+
+	str := "user_id_"
+	if userType == common.Candidate {
+		str += "cand = ?"
+	} else {
+		str += "empl = ?"
+	}
+
+	query := fmt.Sprintf(`select DISTINCT ON(chat.chat_id) m.chat_id, message, 
+								name, surname, path_to_avatar, sender, date_create
+			from main.chat
+			join main.message m on chat.chat_id = m.chat_id
+			join main.users u on u.user_id = chat.user_id_cand or u.user_id = chat.user_id_empl
+			where %s
+			order by chat.chat_id, date_create desc`, str)
+
+	err := p.db.Raw(query, userID).Scan(&listChats).Error
+	if err != nil {
+		err = fmt.Errorf("error in select messages: %w", err)
+		return nil, err
+	}
+	return listChats, nil
 }

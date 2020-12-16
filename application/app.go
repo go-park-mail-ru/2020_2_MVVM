@@ -115,9 +115,9 @@ func NewApp(config Config) *App {
 		Path:   "/",
 		//Domain: "localhost", // for postman
 		Domain: "studhunt.ru",
-		MaxAge: int((time.Hour * 12).Seconds()),
-		Secure: true,
 		//Secure:   false, // for postman
+		Secure: true,
+		MaxAge: int((time.Hour * 12).Seconds()),
 		HttpOnly: true,
 		SameSite: http.SameSiteNoneMode,
 		//SameSite: http.SameSiteStrictMode, prevent csrf

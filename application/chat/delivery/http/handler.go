@@ -31,7 +31,7 @@ func (r *ChatHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFu
 	router.Use(AuthRequired)
 	{
 		router.GET("/by/id/:chat_id", r.GetChatByID)
-		//router.GET("/list", r.ListChats)
+		router.GET("/list", r.ListChats)
 		router.POST("/send", r.CreateMessage)
 	}
 }
@@ -84,9 +84,9 @@ func (r *ChatHandler) CreateMessage(ctx *gin.Context)  {
 	candID := session.GetCandID()
 	emplID := session.GetEmplID()
 	if candID != uuid.Nil && emplID == uuid.Nil {
-		sender = "candidate"
+		sender = common.Candidate
 	} else if candID == uuid.Nil && emplID != uuid.Nil {
-		sender = "employer"
+		sender = common.Employer
 	} else {
 		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
 		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
@@ -104,22 +104,34 @@ func (r *ChatHandler) CreateMessage(ctx *gin.Context)  {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
-//
-//func (r *ChatHandler) ListChats(ctx *gin.Context) {
-//	session := r.SessionBuilder.Build(ctx)
-//	var sender string
-//	senderID := session.GetUserID()
-//	candID := session.GetCandID()
-//	emplID := session.GetEmplID()
-//	if candID != uuid.Nil && emplID == uuid.Nil {
-//		sender = "candidate"
-//	} else if candID == uuid.Nil && emplID != uuid.Nil {
-//		sender = "employer"
-//	} else {
-//		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
-//		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
-//		return
-//	}
-//}
+
+func (r *ChatHandler) ListChats(ctx *gin.Context) {
+	session := r.SessionBuilder.Build(ctx)
+	var userType string
+	userID := session.GetUserID()
+	candID := session.GetCandID()
+	emplID := session.GetEmplID()
+	if candID != uuid.Nil && emplID == uuid.Nil {
+		userType = common.Candidate
+	} else if candID == uuid.Nil && emplID != uuid.Nil {
+		userType = common.Employer
+	} else {
+		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
+		//ctx.AbortWithError(http.StatusMethodNotAllowed, err)
+		return
+	}
+	listChats, err := r.UsecaseChat.ListChats(userID, userType)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefChat(listChats), ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+}
 
 

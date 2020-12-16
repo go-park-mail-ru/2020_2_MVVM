@@ -136,7 +136,7 @@ func (u *ResumeUseCase) List(start, limit uint) ([]models.BriefResumeInfo, error
 	return DoBriefRespResume(r)
 }
 
-func (u *ResumeUseCase) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoritesForEmpl, error) {
+func (u *ResumeUseCase) AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoriteID, error) {
 	return u.strg.AddFavorite(favoriteForEmpl)
 }
 
