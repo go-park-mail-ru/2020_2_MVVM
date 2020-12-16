@@ -109,20 +109,23 @@ func (p *pgRepository) CreateMessage(mes models.Message, sender uuid.UUID) (*mod
 func (p *pgRepository) ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error) {
 	var listChats []models.BriefChat
 
-	str := "user_id_"
+	userForWhere := "user_id_"
+	userForJoin := "user_id_"
 	if userType == common.Candidate {
-		str += "cand = ?"
+		userForWhere += "cand = ?"
+		userForJoin += "empl"
 	} else {
-		str += "empl = ?"
+		userForWhere += "empl = ?"
+		userForJoin += "cand"
 	}
 
 	query := fmt.Sprintf(`select DISTINCT ON(chat.chat_id) m.chat_id, message, 
 								name, surname, path_to_avatar, sender, date_create
 			from main.chat
 			join main.message m on chat.chat_id = m.chat_id
-			join main.users u on u.user_id = chat.user_id_cand or u.user_id = chat.user_id_empl
+			join main.users u on u.user_id = chat.%s
 			where %s
-			order by chat.chat_id, date_create desc`, str)
+			order by chat.chat_id, date_create desc`, userForJoin, userForWhere)
 
 	err := p.db.Raw(query, userID).Scan(&listChats).Error
 	if err != nil {
