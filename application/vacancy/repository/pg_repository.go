@@ -81,7 +81,7 @@ func (p *pgRepository) UpdateVacancy(newVac models.Vacancy) (*models.Vacancy, er
 	if err := p.db.Model(&newVac).Updates(newVac).Error; err != nil {
 		return nil, fmt.Errorf("can't update vacancy with id:%s", newVac.ID)
 	}
-	return &newVac, nil
+	return p.GetVacancyById(newVac.ID)
 }
 
 func (p *pgRepository) GetVacancyList(start uint, limit uint, id uuid.UUID, entityType int) ([]models.Vacancy, error) {
