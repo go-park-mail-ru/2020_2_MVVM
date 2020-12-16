@@ -237,6 +237,14 @@ func (p *PGRepository) GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesF
 	return &favorite, nil
 }
 
+func (p *PGRepository) Delete(resId uuid.UUID, candId uuid.UUID) error {
+	err := p.db.Table("main.resume").Delete(&models.Resume{ResumeID: resId}).Where("cand_id = ?", candId).Error
+	if err != nil {
+		return fmt.Errorf("error in delete resume with id: %s, err: %w", resId, err)
+	}
+	return nil
+}
+
 //func (p *PGRepository) SelectCandidate (candID uuid.UUID) (*models.Candidate, error) {
 //	//var user models.Candidate
 //	//err := p.db.Model(&user).

@@ -10,6 +10,7 @@ type Repository interface {
 	Create(resume models.Resume) (*models.Resume, error)
 	Drop(resume models.Resume) error
 	Update(resume models.Resume) (*models.Resume, error)
+	Delete(resId uuid.UUID, candId uuid.UUID) error
 	Search(searchParams *resume.SearchParams) ([]models.Resume, error)
 	GetById(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)

@@ -77,18 +77,11 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	if resume.Sphere == nil {
 		resume.Sphere = &common.DefaultSphere
 	}
-	err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
-	if err != nil {
-		return nil, err
-	}
-	//err = u.educationUseCase.DropAllFromResume(resume.ResumeID)
+	//err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
 	//if err != nil {
 	//	return nil, err
 	//}
-
-	result, err := u.strg.Update(resume)
-	//err = u.createExperienceAndEducation(resume, resume)
-	return result, err
+	return u.strg.Update(resume)
 }
 
 func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error) {
@@ -179,4 +172,8 @@ func DoBriefRespResume(resumes []models.Resume) ([]models.BriefResumeInfo, error
 		briefRespResumes = append(briefRespResumes, *brief)
 	}
 	return briefRespResumes, nil
+}
+
+func (u *ResumeUseCase) DeleteResume(resId uuid.UUID, candId uuid.UUID) error {
+	return u.strg.Delete(resId, candId)
 }
