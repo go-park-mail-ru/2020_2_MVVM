@@ -31,5 +31,5 @@ create table message
 -- +migrate Down
 
 drop table main.message;
-drop type sender_types;
+drop type main.sender_types;
 drop table main.chat;

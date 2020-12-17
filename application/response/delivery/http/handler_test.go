@@ -92,20 +92,20 @@ func TestCreateResponse(t *testing.T) {
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(ID).Once()
-	td.mockUseCase.On("Create", response).Return(&response, nil).Once()
+	td.mockUseCase.On("CreateChatAndTechChat", response).Return(&response, nil).Once()
 
 	response2 := response
 	response2.Initial = common.Candidate
 	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
-	td.mockUseCase.On("Create", response2).Return(&response2, nil).Once()
+	td.mockUseCase.On("CreateChatAndTechChat", response2).Return(&response2, nil).Once()
 
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 
 	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
-	td.mockUseCase.On("Create", response2).Return(nil, assert.AnError).Once()
+	td.mockUseCase.On("CreateChatAndTechChat", response2).Return(nil, assert.AnError).Once()
 
 	testUrls := []string{
 		responseUrlGroup,

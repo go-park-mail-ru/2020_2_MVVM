@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	EmptyFieldErr = "Обязательные поля не заполнены."
-	SessionErr    = "Ошибка авторизации. Попробуйте авторизоваться повторно."
-	AuthRequiredErr = "Необходима авторизация."
-	DataBaseErr   = "Что-то пошло не так. Попробуйте позже."
-	UserExistErr  = "Пользователь уже существует."
-	AuthErr       = "Пользователь с такими данными не зарегистрирован."
-	WrongPasswd   = "Неверное имя пользователя или пароль."
-	EmpHaveComp   = "Работодатель может являться представителем только одной компании."
+	EmptyFieldErr    = "Обязательные поля не заполнены."
+	SessionErr       = "Ошибка авторизации. Попробуйте авторизоваться повторно."
+	AuthRequiredErr  = "Необходима авторизация."
+	DataBaseErr      = "Что-то пошло не так. Попробуйте позже."
+	UserExistErr     = "Пользователь уже существует."
+	AuthErr          = "Пользователь с такими данными не зарегистрирован."
+	WrongPasswd      = "Неверное имя пользователя или пароль."
+	EmpHaveComp      = "Работодатель может являться представителем только одной компании."
 	NoRecommendation = "Для этого пользователя еще нет рекомендаций."
 )
 
@@ -58,7 +58,7 @@ func NewErr(code int, message string, meta interface{}) Err {
 
 func WriteErrResponse(ctx *gin.Context, code int, message string) {
 	resp := models.RespError{
-		Err:   message,
+		Err: message,
 	}
 	ctx.Status(code)
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {

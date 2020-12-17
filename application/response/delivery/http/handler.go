@@ -76,7 +76,12 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 		return
 	}
 
-	_, err = r.UsecaseChat.Create(*pResponse)
+	_, err = r.UsecaseChat.CreateChatAndTechMes(*pResponse)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
@@ -106,6 +111,13 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 
 	response.Initial = userType
 	pResponse, err := r.UsecaseResponse.UpdateStatus(*response, userType)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+	_, err = r.UsecaseChat.CreateTechMesToUpdate(*pResponse)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		//ctx.AbortWithError(http.StatusInternalServerError, err)

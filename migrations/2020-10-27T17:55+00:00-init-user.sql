@@ -38,3 +38,4 @@ create table employers
 -- +migrate Down
 
 drop table main.employers, main.candidates, main.users;
+drop type main.users_types;

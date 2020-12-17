@@ -26,15 +26,38 @@ func NewUsecase(infoLogger *logger.Logger,
 	return &usecase
 }
 
-func (u *UseCaseChat) Create(response models.Response) (*models.Chat, error) {
-	return u.strg.Create(response)
+func (u *UseCaseChat) CreateChatAndTechMes(response models.Response) (*models.Chat, error) {
+	return u.strg.CreateChatAndTechChat(response)
 }
 
-func (u *UseCaseChat) GetByID(chatID uuid.UUID, start uint, limit uint) ([]models.Message, error) {
-	if limit == 0 {
-		limit = 20
+func (u *UseCaseChat) CreateTechMesToUpdate(response models.Response) (*models.Chat, error) {
+	return u.strg.CreateTechMesToUpdate(response)
+}
+
+func (u *UseCaseChat) GetChatHistory(chatID uuid.UUID, utype string, from *time.Time, to *time.Time, offset *uint, limit *uint) (models.ChatHistory, error) {
+	history := models.ChatHistory{ChatID: chatID}
+
+	// load messages
+	messages, err := u.strg.MessagesForChat(chatID, from, to, offset, limit)
+	if err != nil {
+		return models.ChatHistory{}, err
 	}
-	return u.strg.GetById(chatID, start, limit)
+	if err = u.strg.MarkMessagesAsRead(chatID, utype, from, to, offset, limit); err != nil {
+		return models.ChatHistory{}, err
+	}
+
+	// load technical messages
+	techMessages, err := u.strg.TechnicalMessagesForChat(chatID, from, to, offset, limit)
+	if err != nil {
+		return models.ChatHistory{}, err
+	}
+	if err = u.strg.MarkTechnicalMessagesAsRead(chatID, utype, from, to, offset, limit); err != nil {
+		return models.ChatHistory{}, err
+	}
+
+	history.TechnicalMessages = *techMessages
+	history.Dialog = *messages
+	return history, err
 }
 
 func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*models.Message, error) {
@@ -42,6 +65,6 @@ func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*mode
 	return u.strg.CreateMessage(mes, sender)
 }
 
-func (u *UseCaseChat) ListChats(userID uuid.UUID, userType string) ([]models.BriefChat, error) {
+func (u *UseCaseChat) ListChats(userID uuid.UUID, userType string) ([]models.ChatSummary, error) {
 	return u.strg.ListChats(userID, userType)
 }

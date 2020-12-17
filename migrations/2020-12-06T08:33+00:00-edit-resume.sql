@@ -10,6 +10,7 @@ ALTER TABLE resume
 
 -- +migrate Down
 
+set search_path to main;
 ALTER TABLE resume
     DROP COLUMN cand_name RESTRICT,
     DROP COLUMN cand_surname RESTRICT,

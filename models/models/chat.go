@@ -19,41 +19,63 @@ func (r Chat) TableName() string {
 type Message struct {
 	MessageID  uuid.UUID `gorm:"column:message_id;primaryKey;default:uuid_generate_v4()" json:"message_id"`
 	ChatID     uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
-	Sender     string    `gorm:"column:sender; type:uuid" json:"sender"`
-	Message    string    `gorm:"column:message; type:uuid" json:"message"`
-	IsRead     bool      `gorm:"column:is_read; type:uuid" json:"is_read"`
-	DateCreate time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
+	Sender     string    `gorm:"column:sender;" json:"sender"`
+	Message    string    `gorm:"column:message;" json:"message"`
+	IsRead     bool      `gorm:"column:is_read;" json:"is_read"`
+	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`
 }
 
 func (r Message) TableName() string {
 	return "main.message"
 }
 
-//easyjson:json
-type ListMessage []Message
-
-type BriefChat struct {
-	ChatID     uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
-	Sender     string    `gorm:"column:sender; type:uuid" json:"sender"`
-	Message    string    `gorm:"column:message; type:uuid" json:"message"`
-	IsRead     bool      `gorm:"column:is_read; type:uuid" json:"is_read"`
-	DateCreate time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
-	Name       string    `gorm:"column:name" json:"name"`
-	Surname    string    `gorm:"column:surname" json:"surname"`
-	//UserType string `gorm:"column:date_create; type:uuid" json:"date_create"`
-	PathToAvatar string `gorm:"column:path_to_avatar" json:"avatar"`
+type MessageBrief struct {
+	Sender     string    `json:"sender"`
+	Message    string    `json:"message"`
+	IsRead     bool      `gorm:"column:is_read;" json:"is_read"`
+	DateCreate time.Time `json:"date_create"`
 }
-//easyjson:json
-type ListBriefChat []BriefChat
 
 type TechMessage struct {
-	MessageID   uuid.UUID `gorm:"column:message_id;primaryKey;default:uuid_generate_v4()" json:"message_id"`
-	ChatID      uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
-	ResumeID    uuid.UUID `json:"resume_id"`
-	ResumeName  string    `json:"resume_name"`
-	VacancyID   uuid.UUID `json:"vacancy_id"`
-	VacancyName string    `json:"vacancy_name"`
-	CompanyID   uuid.UUID `json:"company_id"`
-	CompanyName string    `json:"company_name"`
-	Status      string    `json:"status"`
+	MessageID  uuid.UUID `gorm:"column:message_id;primaryKey;default:uuid_generate_v4()" json:"message_id"`
+	ChatID     uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
+	ResponseID uuid.UUID `gorm:"column:response_id; type:uuid" json:"response_id"`
+	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`
 }
+
+func (r TechMessage) TableName() string {
+	return "main.tech_message"
+}
+
+type TechMessageBrief struct {
+	DateCreate time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
+	//IsRead          bool      `gorm:"column:is_read;" json:"is_read"`
+	ResumeID        uuid.UUID `gorm:"column:resume_id; type:uuid" json:"resume_id"`
+	ResumeTitle     string    `gorm:"column:resume_title" json:"resume_title"`
+	CompanyID       uuid.UUID `gorm:"column:company_id; type:uuid" json:"company_id"`
+	CompanyName     string    `gorm:"column:company_name" json:"company_name"`
+	VacancyID       uuid.UUID `gorm:"column:vacancy_id; type:uuid" json:"vacancy_id"`
+	VacancyTitle    string    `gorm:"column:vacancy_title" json:"vacancy_title"`
+	ResponseID      uuid.UUID `gorm:"column:response_id; type:uuid" json:"response_id"`
+	ResponseInitial string    `gorm:"column:response_initial" json:"response_initial"`
+	ResponseStatus  string    `gorm:"column:response_status" json:"response_status"`
+}
+
+type ChatHistory struct {
+	ChatID            uuid.UUID          `json:"chat_id"`
+	TechnicalMessages []TechMessageBrief `json:"technical_messages"`
+	Dialog            []MessageBrief     `json:"dialog"`
+}
+
+type ChatSummary struct {
+	ChatID      uuid.UUID   `json:"chat_id"`
+	TotalUnread uint        `json:"total_unread"`
+	Name        string      `json:"name"`
+	Surname     string      `json:"surname"`
+	Avatar      string      `json:"avatar"`
+	Type        string      `json:"type"`
+	Message     interface{} `json:"message"`
+}
+
+//easyjson:json
+type ListChatSummary []ChatSummary

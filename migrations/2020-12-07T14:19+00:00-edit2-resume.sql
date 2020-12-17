@@ -7,5 +7,7 @@ ALTER TABLE resume
 
 -- +migrate Down
 
+set search_path to main;
+
 ALTER TABLE resume
     DROP COLUMN sphere RESTRICT;
