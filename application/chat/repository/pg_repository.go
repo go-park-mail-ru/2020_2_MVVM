@@ -125,7 +125,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, userType string) ([]models.Br
 			join main.message m on chat.chat_id = m.chat_id
 			join main.users u on u.user_id = chat.%s
 			where %s
-			order by chat.chat_id, date_create desc`, userForJoin, userForWhere)
+			order by chat.chat_id, date_create asc`, userForJoin, userForWhere)
 
 	err := p.db.Raw(query, userID).Scan(&listChats).Error
 	if err != nil {
