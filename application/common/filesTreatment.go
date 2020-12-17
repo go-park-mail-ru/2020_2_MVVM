@@ -14,7 +14,7 @@ import (
 
 const (
 	ImgDir          = "static"
-	MaxImgSize      = 32 << 14 // ~512 Kb
+	MaxImgSize      = 32 << 15 // ~1024 Kb
 	MaxImgHeight    = 1250     //px
 	MaxImgWidth     = 1250     //px
 	UploadFileError = -1
@@ -23,7 +23,7 @@ const (
 	JpegMime        = "image/jpeg"
 	base64pngTitle  = 22
 	base64jpegTitle = 23
-	someWentWrong = "Что-то пошло не так, попробуйте позже."
+	someWentWrong   = "Что-то пошло не так, попробуйте позже."
 )
 
 func AddOrUpdateUserFile(data io.Reader, imgName string) *Err {
