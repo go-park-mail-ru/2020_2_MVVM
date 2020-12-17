@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/session"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
@@ -32,7 +31,6 @@ func convertSessionInfo(sessionID string, basic *common.BasicSession) *auth.Sess
 }
 
 func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.SessionInfo, error) {
-	fmt.Print("Login")
 	if cred == nil {
 		return nil, errors.Errorf("Incorrect credentials format")
 	}
