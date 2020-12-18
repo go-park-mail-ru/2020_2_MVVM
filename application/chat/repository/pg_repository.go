@@ -19,19 +19,6 @@ func NewPgRepository(db *gorm.DB) chat.ChatRepository {
 }
 
 func (p *pgRepository) MessagesForChat(chatID uuid.UUID, from *time.Time, to *time.Time, offset *uint, limit *uint) (*[]models.MessageBrief, error) {
-	// Find dates that matches provided limit
-	//var dates []time.Time
-	//err := p.db.Raw(`with merged as (
-	//		SELECT date_create FROM main.message
-	//		UNION ALL
-	//		SELECT date_create FROM main.tech_message
-	//		ORDER BY date_create
-	//	)
-	//	SELECT date_create
-	//	FROM (select *, row_number() over() as rownum from merged) as s
-	//	WHERE rownum = ? or rownum = ?;`, start + 1, start + 1 + limit).
-	//	Scan(&dates).Error
-
 	var messages []models.MessageBrief
 	query := p.db.Table("main.message").Where("chat_id = ?", chatID).
 		Select("sender", "message", "is_read", "date_create").
@@ -51,11 +38,6 @@ func (p *pgRepository) MessagesForChat(chatID uuid.UUID, from *time.Time, to *ti
 
 	err := query.Scan(&messages).Error
 
-	//err := p.db.Raw(`select sender, message, is_read, date_create
-	//	from main.message
-	//	where chat_id = ?
-	//	order by date_create limit ?;`, chatID, limit,
-	//).Scan(&messages).Error
 	return &messages, err
 }
 
@@ -100,7 +82,7 @@ func (p *pgRepository) TechnicalMessagesForChat(chatID uuid.UUID, from *time.Tim
 
 	query := p.db.Table("main.tech_message as m").
 		Select("m.date_create", "m.response_id",
-			"r.initial", "r.status",
+			"r.initial as response_initial", "m.response_status as response_status",
 			"v.title as vacancy_title", "v.vac_id as vacancy_id",
 			"r2.resume_id", "r2.title as resume_title",
 			"o.comp_id as company_id", "o.name as company_name").
@@ -171,18 +153,41 @@ func (p *pgRepository) MarkTechnicalMessagesAsRead(chatID uuid.UUID, utype strin
 
 func (p *pgRepository) CreateTechMesToUpdate(response models.Response) (*models.Chat, error) {
 	var chat models.Chat
-	chat.ResponseID = response.ID
-
-	err := p.db.First(&chat).Error
+	var empl models.Employer
+	err := p.db.Raw(`
+			select e.user_id
+			from main.response
+         	join main.vacancy v on response.vacancy_id = v.vac_id
+         	join main.employers e on e.empl_id = v.empl_id
+         	join main.users u on u.user_id = e.user_id
+			where response_id = ?;
+			`, response.ID).Scan(&empl).Error
 	if err != nil {
-		err = fmt.Errorf("error in fing chat: %w", err)
 		return nil, err
 	}
+	chat.EmplID = empl.UserID
+
+	var cand models.Candidate
+	err = p.db.Raw(`
+			select c.user_id
+			from main.response
+			join main.resume r using (resume_id)
+			join main.candidates c on c.cand_id = r.cand_id
+			join main.users u on u.user_id = c.user_id
+			where response_id = ?;
+			`, response.ID).Scan(&cand).Error
+	if err != nil {
+		return nil, err
+	}
+	chat.CandID = cand.UserID
+
+	err = p.db.First(&chat).Error
 
 	tech := models.TechMessage{
 		ChatID:     chat.ChatID,
 		ResponseID: response.ID,
 		DateCreate: time.Now(),
+		ResponseStatus: response.Status,
 	}
 	err = p.db.Create(&tech).Error
 	if err != nil {
@@ -193,9 +198,8 @@ func (p *pgRepository) CreateTechMesToUpdate(response models.Response) (*models.
 	return &chat, nil
 }
 
-func (p *pgRepository) CreateChatAndTechChat(response models.Response) (*models.Chat, error) {
+func (p *pgRepository) CreateChatAndTechMes(response models.Response) (*models.Chat, error) {
 	var chat models.Chat
-	chat.ResponseID = response.ID
 	var empl models.Employer
 	err := p.db.Raw(`select user_id
 				from main.employers
@@ -219,16 +223,23 @@ func (p *pgRepository) CreateChatAndTechChat(response models.Response) (*models.
 	err = p.db.Create(&chat).Error
 	if err != nil {
 		if err.Error() == "ERROR: duplicate key value violates unique constraint \"chat_unique\" (SQLSTATE 23505)" {
-			return nil, nil
+			err = p.db.Where("user_id_cand = ? and user_id_empl = ?", cand.UserID, empl.UserID).
+				First(&chat).Error
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			err = fmt.Errorf("error in inserting chat: %w", err)
+			return nil, err
 		}
-		err = fmt.Errorf("error in inserting chat: %w", err)
-		return nil, err
 	}
 	
 	tech := models.TechMessage{
 		ChatID:     chat.ChatID,
 		ResponseID: response.ID,
 		DateCreate: time.Now(),
+		ResponseStatus: response.Status,
+
 	}
 	err = p.db.Create(&tech).Error
 	if err != nil {
@@ -302,7 +313,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 	// last dialog tech messages
 	sql = fmt.Sprintf(`
 		select distinct on (tm.chat_id) tm.chat_id, tm.response_id, tm.date_create,
-                                r.initial, r.status,
+                                r.initial, tm.response_status as response_status,
                                 v.title as vacancy_title, v.vac_id as vacancy_id,
                                 r2.resume_id, r2.title as resume_title,
                                 r.initial as response_initial, r.status as response_status,
@@ -376,4 +387,46 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 		summaries = append(summaries, *val)
 	}
 	return summaries, err
+}
+
+
+func (p *pgRepository) GetTotalUnreadMes(userID uuid.UUID, userType string) (*uint, error) {
+	var typePrefix, sender string
+	if userType == common.EmplID {
+		sender = common.Candidate
+		typePrefix = "empl"
+	} else {
+		sender = common.Employer
+		typePrefix = "cand"
+	}
+
+	queryToMes := fmt.Sprintf(`
+				select 
+			SUM(CASE WHEN message.is_read = False and message.sender = '%s' THEN 1 ELSE 0 END) 
+			AS user_mes
+				from main.message
+				join main.chat c on c.chat_id = message.chat_id
+				where user_id_%s = ?`, sender, typePrefix)
+	queryToTechMes := fmt.Sprintf(`
+				select SUM(CASE WHEN tech_message.read_by_%s = False THEN 1 ELSE 0 END) AS tech_mes
+				from main.tech_message
+         		join main.chat c on c.chat_id = tech_message.chat_id
+				where user_id_%s = ?`, typePrefix, typePrefix)
+
+	var totalUnread struct {
+		UserMes uint
+		TechMes uint
+	}
+
+	err := p.db.Raw(queryToMes, userID).Scan(&totalUnread).Error
+	if err != nil {
+		return nil, err
+	}
+	err = p.db.Raw(queryToTechMes, userID).Scan(&totalUnread).Error
+	if err != nil {
+		return nil, err
+	}
+
+	total := totalUnread.UserMes + totalUnread.TechMes
+	return &total, nil
 }

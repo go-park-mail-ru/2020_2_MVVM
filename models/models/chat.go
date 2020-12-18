@@ -6,10 +6,9 @@ import (
 )
 
 type Chat struct {
-	ChatID     uuid.UUID `gorm:"column:chat_id;primaryKey;default:uuid_generate_v4()" json:"chat_id"`
-	ResponseID uuid.UUID `gorm:"column:response_id; type:uuid" json:"response_id"`
-	CandID     uuid.UUID `gorm:"column:user_id_cand; type:uuid" json:"cand_id"`
-	EmplID     uuid.UUID `gorm:"column:user_id_empl; type:uuid" json:"empl_id"`
+	ChatID uuid.UUID `gorm:"column:chat_id;primaryKey;default:uuid_generate_v4()" json:"chat_id"`
+	CandID uuid.UUID `gorm:"column:user_id_cand; type:uuid" json:"cand_id"`
+	EmplID uuid.UUID `gorm:"column:user_id_empl; type:uuid" json:"empl_id"`
 }
 
 func (r Chat) TableName() string {
@@ -37,10 +36,11 @@ type MessageBrief struct {
 }
 
 type TechMessage struct {
-	MessageID  uuid.UUID `gorm:"column:message_id;primaryKey;default:uuid_generate_v4()" json:"message_id"`
-	ChatID     uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
-	ResponseID uuid.UUID `gorm:"column:response_id; type:uuid" json:"response_id"`
-	DateCreate time.Time `gorm:"column:date_create" json:"date_create"`
+	MessageID      uuid.UUID `gorm:"column:message_id;primaryKey;default:uuid_generate_v4()" json:"message_id"`
+	ChatID         uuid.UUID `gorm:"column:chat_id; type:uuid" json:"chat_id"`
+	ResponseID     uuid.UUID `gorm:"column:response_id; type:uuid" json:"response_id"`
+	DateCreate     time.Time `gorm:"column:date_create" json:"date_create"`
+	ResponseStatus string    `gorm:"column:response_status" json:"response_status"`
 }
 
 func (r TechMessage) TableName() string {
@@ -79,3 +79,9 @@ type ChatSummary struct {
 
 //easyjson:json
 type ListChatSummary []ChatSummary
+
+//easyjson:json
+type Messager struct {
+	ListChatSummary ListChatSummary `json:"chats"`
+	ChatHistory     ChatHistory     `json:"dialog"`
+}

@@ -290,6 +290,8 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.UnreadResp, status, err = getNewResponses(r, unId, userType, req.NewRespNotifications)
 		notifications.UnreadRespCnt = uint(len(notifications.UnreadResp))
 	}
+
+
 	unId = session.GetUserID()
 	if req.OnlyVacCnt && req.VacInLastNDays != nil {
 		if daysFromNow == 0 {
@@ -300,6 +302,13 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.RecommendedVac, err = r.UsecaseResponse.GetRecommendedVacancies(unId, req.ListStart, req.ListEnd, daysFromNow)
 		notifications.RecommendedVacCnt = uint(len(notifications.RecommendedVac))
 	}
+
+
+	//unread messages flow
+	if req.UnreadMessages {
+		notifications.CountUnreadMessages, err = r.UsecaseChat.GetTotalUnreadMes(unId, userType)
+	}
+
 	if err != nil && err.Error() != common.NoRecommendation {
 		ctx.JSON(status, models.RespError{Err: common.DataBaseErr})
 		return

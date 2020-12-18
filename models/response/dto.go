@@ -6,10 +6,11 @@ import (
 )
 
 type RespNotifications struct {
-	UnreadResp        []models.ResponseWithTitle `json:"unread_resp"`
-	UnreadRespCnt     uint                       `json:"unread_resp_cnt"`
-	RecommendedVac    []models.Vacancy           `json:"recommended_vac"`
-	RecommendedVacCnt uint                       `json:"recommended_vac_cnt"`
+	UnreadResp          []models.ResponseWithTitle `json:"unread_resp"`
+	UnreadRespCnt       uint                       `json:"unread_resp_cnt"`
+	RecommendedVac      []models.Vacancy           `json:"recommended_vac"`
+	RecommendedVacCnt   uint                       `json:"recommended_vac_cnt"`
+	CountUnreadMessages *uint                      `json:"unread_messages"`
 }
 
 type ReqNotify struct {
@@ -19,5 +20,5 @@ type ReqNotify struct {
 	ListEnd              uint        `json:"vac_list_limit"`
 	NewRespNotifications []uuid.UUID `json:"watched_responses"` // nil - all responses, for useless resp deleting put uuid in list
 	OnlyRespCnt          bool        `json:"only_new_resp_cnt"` // if true -> get only count of responses notifications
-	//Chat                 map[uuid.UUID][]string `json:"unread_messages"`
+	UnreadMessages       bool        `json:"unread_messages"`   // if true -> send unread messages
 }

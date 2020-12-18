@@ -88,6 +88,16 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse(in *j
 			}
 		case "recommended_vac_cnt":
 			out.RecommendedVacCnt = uint(in.Uint())
+		case "unread_messages":
+			if in.IsNull() {
+				in.Skip()
+				out.CountUnreadMessages = nil
+			} else {
+				if out.CountUnreadMessages == nil {
+					out.CountUnreadMessages = new(uint)
+				}
+				*out.CountUnreadMessages = uint(in.Uint())
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -143,6 +153,15 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse(out *
 		const prefix string = ",\"recommended_vac_cnt\":"
 		out.RawString(prefix)
 		out.Uint(uint(in.RecommendedVacCnt))
+	}
+	{
+		const prefix string = ",\"unread_messages\":"
+		out.RawString(prefix)
+		if in.CountUnreadMessages == nil {
+			out.RawString("null")
+		} else {
+			out.Uint(uint(*in.CountUnreadMessages))
+		}
 	}
 	out.RawByte('}')
 }
@@ -232,6 +251,8 @@ func easyjson56de76c1DecodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(in *
 			}
 		case "only_new_resp_cnt":
 			out.OnlyRespCnt = bool(in.Bool())
+		case "unread_messages":
+			out.UnreadMessages = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -290,6 +311,11 @@ func easyjson56de76c1EncodeGithubComGoParkMailRu20202MVVMGitModelsResponse1(out 
 		const prefix string = ",\"only_new_resp_cnt\":"
 		out.RawString(prefix)
 		out.Bool(bool(in.OnlyRespCnt))
+	}
+	{
+		const prefix string = ",\"unread_messages\":"
+		out.RawString(prefix)
+		out.Bool(bool(in.UnreadMessages))
 	}
 	out.RawByte('}')
 }

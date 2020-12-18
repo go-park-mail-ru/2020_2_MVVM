@@ -106,9 +106,9 @@ func TestResumeCreateResume(t *testing.T) {
 	testResume.ExperienceCustomComp = []models.ExperienceCustomComp{experienceTest}
 	testResume.Education = []models.Education{educationTest}
 	testResume.DateCreate = time.Now()
-	mockRepo.On("CreateChatAndTechChat", mock.Anything).Return(&testResume, nil)
-	mockExperienceUS.On("CreateChatAndTechChat", experienceTest).Return(&experienceTest, nil)
-	mockEducationUS.On("CreateChatAndTechChat", educationTest).Return(&educationTest, nil)
+	mockRepo.On("CreateChatAndTechMes", mock.Anything).Return(&testResume, nil)
+	mockExperienceUS.On("CreateChatAndTechMes", experienceTest).Return(&experienceTest, nil)
+	mockEducationUS.On("CreateChatAndTechMes", educationTest).Return(&educationTest, nil)
 	answer, err := usecase.Create(testResume)
 
 	assert.Nil(t, err)
@@ -124,8 +124,8 @@ func TestResumeUpdateUser(t *testing.T) {
 	mockRepo.On("GetById", ID).Return(&testResume, nil)
 	mockEducationUS.On("DropAllFromResume", ID).Return(nil)
 	mockExperienceUS.On("DropAllFromResume", ID).Return(nil)
-	mockExperienceUS.On("CreateChatAndTechChat", experienceTest).Return(&experienceTest, nil)
-	mockEducationUS.On("CreateChatAndTechChat", educationTest).Return(&educationTest, nil)
+	mockExperienceUS.On("CreateChatAndTechMes", experienceTest).Return(&experienceTest, nil)
+	mockEducationUS.On("CreateChatAndTechMes", educationTest).Return(&educationTest, nil)
 	answer, err := usecase.Update(testResume)
 
 	assert.Nil(t, err)

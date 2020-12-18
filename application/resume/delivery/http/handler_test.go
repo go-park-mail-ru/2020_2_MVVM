@@ -268,8 +268,8 @@ func TestCreateResume(t *testing.T) {
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetCandID").Return(ID)
-	td.mockUseCase.On("CreateChatAndTechChat", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
-	td.mockUseCase.On("CreateChatAndTechChat", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
+	td.mockUseCase.On("CreateChatAndTechMes", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
+	td.mockUseCase.On("CreateChatAndTechMes", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
 
 	resp := resume2.Response{
 		Educations:       res.Education,

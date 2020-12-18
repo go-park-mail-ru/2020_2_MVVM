@@ -31,13 +31,48 @@ func NewRest(router *gin.RouterGroup,
 func (r *ChatHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.Use(AuthRequired)
 	{
-		router.GET("/by/id/:chat_id", r.GetChatByID)
-		router.GET("/list", r.ListChats)
+		router.GET("/by/id/:chat_id", r.HandlerGetChatByID)
+		router.GET("/list", r.HandlerListChats)
+		router.GET("/messenger/:chat_id", r.PollingMessages)
 		router.POST("/send", r.CreateMessage)
 	}
 }
 
-func (r *ChatHandler) GetChatByID(ctx *gin.Context) {
+func (r *ChatHandler) PollingMessages(ctx *gin.Context) {
+	chat := r.GetChatByID(ctx)
+	listChats := r.ListChats(ctx)
+
+	if chat != nil && listChats != nil {
+		result := models.Messager{
+			ListChatSummary: *listChats,
+			ChatHistory:     *chat,
+		}
+		if _, _, err := easyjson.MarshalToHTTPResponseWriter(result, ctx.Writer); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+}
+
+
+func (r *ChatHandler) HandlerGetChatByID(ctx *gin.Context) {
+	result := r.GetChatByID(ctx)
+	if result != nil {
+		if _, _, err := easyjson.MarshalToHTTPResponseWriter(result, ctx.Writer); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+}
+
+func (r *ChatHandler) HandlerListChats(ctx *gin.Context) {
+	result := r.ListChats(ctx)
+	if result != nil {
+		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListChatSummary(*result), ctx.Writer); err != nil {
+			ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+}
+
+func (r *ChatHandler) GetChatByID(ctx *gin.Context) *models.ChatHistory {
 	var params struct {
 		Offset *uint      `json:"offset"`
 		Limit  *uint      `json:"limit"`
@@ -47,7 +82,7 @@ func (r *ChatHandler) GetChatByID(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&params); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		return
+		return nil
 	}
 
 	var request struct {
@@ -56,13 +91,13 @@ func (r *ChatHandler) GetChatByID(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&request); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		return
+		return nil
 	}
 
 	chatID, err := uuid.Parse(request.ChatID)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		return
+		return nil
 	}
 
 	var result models.ChatHistory
@@ -75,12 +110,10 @@ func (r *ChatHandler) GetChatByID(ctx *gin.Context) {
 
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-		return
+		return nil
 	}
 
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(result, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-	}
+	return &result
 }
 
 func (r *ChatHandler) CreateMessage(ctx *gin.Context) {
@@ -116,7 +149,7 @@ func (r *ChatHandler) CreateMessage(ctx *gin.Context) {
 	}
 }
 
-func (r *ChatHandler) ListChats(ctx *gin.Context) {
+func (r *ChatHandler) ListChats(ctx *gin.Context) *[]models.ChatSummary {
 	session := r.SessionBuilder.Build(ctx)
 	var userType string
 	userID := session.GetUserID()
@@ -128,16 +161,15 @@ func (r *ChatHandler) ListChats(ctx *gin.Context) {
 		userType = common.Employer
 	} else {
 		common.WriteErrResponse(ctx, http.StatusMethodNotAllowed, common.AuthRequiredErr)
-		return
+		return nil
 	}
 	listChats, err := r.UseCaseChat.ListChats(userID, userType)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-		return
+		return nil
 	}
 
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListChatSummary(listChats), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-	}
+	return &listChats
 
 }
+

@@ -33,7 +33,7 @@ var testExperience = models.ExperienceCustomComp{
 func TestEducationCreate(t *testing.T) {
 	mockRepo, usecase := beforeTest()
 
-	mockRepo.On("CreateChatAndTechChat", testExperience).Return(&testExperience, nil)
+	mockRepo.On("CreateChatAndTechMes", testExperience).Return(&testExperience, nil)
 	answer, err := usecase.Create(testExperience)
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, testExperience)

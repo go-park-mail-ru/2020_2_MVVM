@@ -27,7 +27,7 @@ func NewUsecase(infoLogger *logger.Logger,
 }
 
 func (u *UseCaseChat) CreateChatAndTechMes(response models.Response) (*models.Chat, error) {
-	return u.strg.CreateChatAndTechChat(response)
+	return u.strg.CreateChatAndTechMes(response)
 }
 
 func (u *UseCaseChat) CreateTechMesToUpdate(response models.Response) (*models.Chat, error) {
@@ -67,4 +67,9 @@ func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*mode
 
 func (u *UseCaseChat) ListChats(userID uuid.UUID, userType string) ([]models.ChatSummary, error) {
 	return u.strg.ListChats(userID, userType)
+}
+
+
+func (u *UseCaseChat) GetTotalUnreadMes(userID uuid.UUID, userType string) (*uint, error) {
+	return u.strg.GetTotalUnreadMes(userID, userType)
 }
