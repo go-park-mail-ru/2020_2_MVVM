@@ -297,7 +297,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 					from main.message
 					group by message.chat_id) cte on cte.chat_id = main.message.chat_id
 		where main.chat.user_id_%s = ?
-		order by message.chat_id, date_create desc;
+		order by message.chat_id, date_create;
 		`, toPrefix, sender, fromPrefix)
 
 	type dialog struct {
@@ -332,7 +332,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 						from main.tech_message
 						group by tech_message.chat_id) cte on cte.chat_id = tm.chat_id
 		where c.user_id_%s = ?
-		order by tm.chat_id, date_create desc;`, toPrefix, fromPrefix, fromPrefix)
+		order by tm.chat_id, date_create;`, toPrefix, fromPrefix, fromPrefix)
 
 	type technical struct {
 		models.ChatSummary
