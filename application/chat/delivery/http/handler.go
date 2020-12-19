@@ -31,7 +31,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ChatHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.Use(AuthRequired)
 	{
-		router.POST("/by/id/:chat_id", r.HandlerGetChatByID)
+		router.GET("/by/id/:chat_id", r.HandlerGetChatByID)
 		router.GET("/list", r.HandlerListChats)
 		router.GET("/messenger/:chat_id", r.PollingMessages)
 		router.POST("/send", r.CreateMessage)
@@ -39,7 +39,7 @@ func (r *ChatHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFu
 }
 
 func (r *ChatHandler) PollingMessages(ctx *gin.Context) {
-	chat := r.GetChatByID(ctx)
+	chat := r.GetUnreadMessages(ctx)
 	listChats := r.ListChats(ctx)
 
 	if chat != nil && listChats != nil {
@@ -51,6 +51,39 @@ func (r *ChatHandler) PollingMessages(ctx *gin.Context) {
 			ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
+}
+
+
+func (r *ChatHandler) GetUnreadMessages(ctx *gin.Context) *models.ChatHistory {
+	var request struct {
+		ChatID string `uri:"chat_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return nil
+	}
+
+	chatID, err := uuid.Parse(request.ChatID)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return nil
+	}
+
+	var result models.ChatHistory
+	session := r.SessionBuilder.Build(ctx)
+	if session.GetCandID() != uuid.Nil {
+		result, err = r.UseCaseChat.GetUnreadMessages(chatID, common.Candidate)
+	} else {
+		result, err = r.UseCaseChat.GetUnreadMessages(chatID, common.Employer)
+	}
+
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return nil
+	}
+
+	return &result
 }
 
 

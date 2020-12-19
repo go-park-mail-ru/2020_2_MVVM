@@ -20,7 +20,8 @@ func NewPgRepository(db *gorm.DB) chat.ChatRepository {
 
 func (p *pgRepository) MessagesForChat(chatID uuid.UUID, from *time.Time, to *time.Time, offset *uint, limit *uint) (*[]models.MessageBrief, error) {
 	var messages []models.MessageBrief
-	query := p.db.Table("main.message").Where("chat_id = ?", chatID).
+	query := p.db.Table("main.message").
+		Where("chat_id = ?", chatID).
 		Select("sender", "message", "is_read", "date_create").
 		Order("date_create")
 	if from != nil {
@@ -429,4 +430,49 @@ func (p *pgRepository) GetTotalUnreadMes(userID uuid.UUID, userType string) (*ui
 
 	total := totalUnread.UserMes + totalUnread.TechMes
 	return &total, nil
+}
+
+func (p *pgRepository) OnlyUnreadMessagesForChat(chatID uuid.UUID, userType string) (*[]models.MessageBrief, error) {
+	var messages []models.MessageBrief
+	var sender string
+	if userType == common.Candidate {
+		sender = common.Employer
+	} else {
+		sender = common.Candidate
+	}
+	query := p.db.Table("main.message").
+		Where("chat_id = ? and sender = ? and is_read = false", chatID, sender).
+		Select("sender", "message", "is_read", "date_create").
+		Order("date_create")
+	err := query.Scan(&messages).Error
+
+	return &messages, err
+}
+
+func (p *pgRepository) OnlyUnreadTechnicalMessagesForChat(chatID uuid.UUID, userType string) (*[]models.TechMessageBrief, error) {
+	var techMessages []models.TechMessageBrief
+	var typeToTable string
+	if userType == common.Candidate {
+		typeToTable = "cand"
+	} else {
+		typeToTable = "empl"
+	}
+
+	whereQuery := fmt.Sprintf("chat_id = ? and read_by_%s = False", typeToTable)
+
+	query := p.db.Table("main.tech_message as m").
+		Select("m.date_create", "m.response_id",
+			"r.initial as response_initial", "m.response_status as response_status",
+			"v.title as vacancy_title", "v.vac_id as vacancy_id",
+			"r2.resume_id", "r2.title as resume_title",
+			"o.comp_id as company_id", "o.name as company_name").
+		Joins("inner join main.response r on r.response_id = m.response_id").
+		Joins("inner join main.vacancy v on v.vac_id = r.vacancy_id").
+		Joins("inner join main.resume r2 on r2.resume_id = r.resume_id").
+		Joins("inner join main.official_companies o on o.comp_id = v.comp_id").
+		Where(whereQuery, chatID).
+		Order("m.date_create")
+
+	err := query.Scan(&techMessages).Error
+	return &techMessages, err
 }

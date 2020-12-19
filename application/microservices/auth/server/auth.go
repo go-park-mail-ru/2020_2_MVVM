@@ -9,6 +9,8 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type authServer struct {
@@ -39,14 +41,11 @@ func (a *authServer) Login(ctx context.Context, cred *auth.Credentials) (*auth.S
 		Password: cred.Password,
 	})
 
-	//if err != nil {
-	//	if err.Error() == common.AuthErr {
-	//		return nil, status.Error(codes.AlreadyExists, err.Error())
-	//	}
-	//	return nil, status.Error(codes.InvalidArgument, err.Error())
-	//}
 	if err != nil {
-		return nil, err
+		if err.Error() == common.AuthErr {
+			return nil, status.Error(codes.AlreadyExists, err.Error())
+		}
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	// gather session information

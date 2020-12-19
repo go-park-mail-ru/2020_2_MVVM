@@ -60,6 +60,34 @@ func (u *UseCaseChat) GetChatHistory(chatID uuid.UUID, utype string, from *time.
 	return history, err
 }
 
+
+func (u *UseCaseChat) GetUnreadMessages(chatID uuid.UUID, utype string) (models.ChatHistory, error) {
+	history := models.ChatHistory{ChatID: chatID}
+
+	// load messages
+	messages, err := u.strg.OnlyUnreadMessagesForChat(chatID, utype)
+	if err != nil {
+		return models.ChatHistory{}, err
+	}
+	if err = u.strg.MarkMessagesAsRead(chatID, utype, nil, nil, nil, nil); err != nil {
+		return models.ChatHistory{}, err
+	}
+
+	// load technical messages
+	techMessages, err := u.strg.OnlyUnreadTechnicalMessagesForChat(chatID, utype)
+	if err != nil {
+		return models.ChatHistory{}, err
+	}
+	if err = u.strg.MarkTechnicalMessagesAsRead(chatID, utype, nil, nil, nil, nil); err != nil {
+		return models.ChatHistory{}, err
+	}
+
+	history.TechnicalMessages = *techMessages
+	history.Dialog = *messages
+	return history, err
+}
+
+
 func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*models.Message, error) {
 	mes.DateCreate = time.Now()
 	return u.strg.CreateMessage(mes, sender)

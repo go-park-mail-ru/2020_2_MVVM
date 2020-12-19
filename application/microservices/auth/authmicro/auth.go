@@ -2,11 +2,13 @@ package authmicro
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/microservises/auth"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"strconv"
+	"strings"
 )
 
 type gRPCAuthClient struct {
@@ -47,7 +49,7 @@ func (a *gRPCAuthClient) Login(login string, password string) (common.Session, e
 	}
 	answer, err := a.client.Login(a.ctx, usr)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(strings.Split(err.Error(), "desc = ")[1])
 	}
 
 	s := buildSession(answer)
