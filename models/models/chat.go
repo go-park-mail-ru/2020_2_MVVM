@@ -49,7 +49,6 @@ func (r TechMessage) TableName() string {
 
 type TechMessageBrief struct {
 	DateCreate time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
-	//IsRead          bool      `gorm:"column:is_read;" json:"is_read"`
 	ResumeID        uuid.UUID `gorm:"column:resume_id; type:uuid" json:"resume_id"`
 	ResumeTitle     string    `gorm:"column:resume_title" json:"resume_title"`
 	CompanyID       uuid.UUID `gorm:"column:company_id; type:uuid" json:"company_id"`

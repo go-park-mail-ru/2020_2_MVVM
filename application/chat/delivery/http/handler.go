@@ -31,7 +31,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ChatHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.Use(AuthRequired)
 	{
-		router.GET("/by/id/:chat_id", r.HandlerGetChatByID)
+		router.POST("/by/id/:chat_id", r.HandlerGetChatByID)
 		router.GET("/list", r.HandlerListChats)
 		router.GET("/messenger/:chat_id", r.PollingMessages)
 		router.POST("/send", r.CreateMessage)
@@ -80,7 +80,7 @@ func (r *ChatHandler) GetChatByID(ctx *gin.Context) *models.ChatHistory {
 		To     *time.Time `json:"to"`
 	}
 
-	if err := ctx.ShouldBindJSON(&params); err != nil {
+	if err := ctx.ShouldBindJSON(&params); err != nil && err.Error() != "EOF"{
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return nil
 	}
