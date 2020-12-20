@@ -5,7 +5,6 @@ import (
 	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -41,14 +40,14 @@ func (r *RequestPdf) GeneratePDF(pdfPath string) (bool, error) {
 	// write whole the body
 	file, err := ioutil.TempFile("/tmp", "temp-resume.*.html")
 	if err != nil {
-		panic(err)
+		return false, err
 	}
 	defer os.Remove(file.Name())
 	fileName := file.Name()
 
 	err1 := ioutil.WriteFile(fileName, []byte(r.body), 0644)
 	if err1 != nil {
-		panic(err1)
+		return false, err1
 	}
 
 	f, err := os.Open(fileName)
@@ -56,12 +55,12 @@ func (r *RequestPdf) GeneratePDF(pdfPath string) (bool, error) {
 		defer f.Close()
 	}
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
 	pdfg.AddPage(wkhtmltopdf.NewPageReader(f))
@@ -72,15 +71,12 @@ func (r *RequestPdf) GeneratePDF(pdfPath string) (bool, error) {
 
 	err = pdfg.Create()
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
 	err = pdfg.WriteFile(pdfPath)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
-
-
-
 	return true, nil
 }

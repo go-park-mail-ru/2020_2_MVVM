@@ -43,7 +43,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.GetResumeByID)
 	router.GET("/page", r.GetResumePage)
-	router.GET("/make/pdf/:resume_id", r.MakePdf)
+
 	router.POST("/search", r.SearchResume)
 	router.Use(AuthRequired)
 	{
@@ -51,6 +51,8 @@ func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handler
 		router.POST("/", r.CreateResume)
 		router.PUT("/", r.UpdateResume)
 		router.DELETE("/resume/:resume_id", r.DeleteResume)
+
+		router.GET("/make/pdf/:resume_id", r.MakePdf)
 
 		router.GET("/favorite/:resume_id", r.GetFavorite)
 		router.POST("/favorite/by/id/:resume_id", r.AddFavorite)
@@ -454,8 +456,9 @@ func (r *ResumeHandler) MakePdf(ctx *gin.Context) {
 		return
 	}
 
+	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + resumeID.String()}
 
-	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(link, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }

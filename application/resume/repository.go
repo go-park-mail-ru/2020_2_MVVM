@@ -13,6 +13,7 @@ type Repository interface {
 	Delete(resId uuid.UUID, candId uuid.UUID) error
 	Search(searchParams *resume.SearchParams) ([]models.Resume, error)
 	GetById(id uuid.UUID) (*models.Resume, error)
+	GetByIdWithCand(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
 	List(start, limit uint) ([]models.Resume, error)
 

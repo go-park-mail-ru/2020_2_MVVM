@@ -71,3 +71,7 @@ type BriefResumeInfo struct {
 
 //easyjson:json
 type ListBriefResumeInfo []BriefResumeInfo
+
+type LinkToPdf struct {
+	Link string `json:"link_to_pdf"`
+}
