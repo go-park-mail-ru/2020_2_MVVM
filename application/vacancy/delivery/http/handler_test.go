@@ -306,3 +306,4 @@ func TestGetRecommendationUserVacancy(t *testing.T) {
 		})
 	}
 }
+

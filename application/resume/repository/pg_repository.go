@@ -103,7 +103,7 @@ func (p *PGRepository) Update(resume models.Resume) (*models.Resume, error) {
 		return nil, fmt.Errorf("can't update resume with id:%s, %s", resume.ResumeID, err)
 	}
 
-	return &resume, nil
+	return p.GetById(resume.ResumeID)
 }
 
 func (p *PGRepository) Search(searchParams *resume2.SearchParams) ([]models.Resume, error) {

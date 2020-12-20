@@ -7,6 +7,7 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	response2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/response"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/general"
+	mChat "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/chat"
 	mocksCommon "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/common"
 	mResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/response"
 	"github.com/google/uuid"
@@ -27,6 +28,7 @@ type TestData struct {
 	mockUseCase     *mResponse.IUseCaseResponse
 	mockSB          *mocksCommon.SessionBuilder
 	mockSession     *mocksCommon.Session
+	mockChat 		*mChat.IUseCaseChat
 	httpStatus      []int
 }
 
@@ -46,9 +48,11 @@ func beforeTest() TestData {
 	testData.mockUseCase = new(mResponse.IUseCaseResponse)
 	testData.mockSB = new(mocksCommon.SessionBuilder)
 	testData.mockSession = new(mocksCommon.Session)
+	testData.mockChat = new(mChat.IUseCaseChat)
+
 	testData.router = gin.Default()
 	api := testData.router.Group("api/v1")
-	testData.responseHandler = NewRest(api.Group("/response"), testData.mockUseCase, testData.mockSB, func(context *gin.Context) {})
+	testData.responseHandler = NewRest(api.Group("/response"), testData.mockUseCase, testData.mockChat, testData.mockSB, func(context *gin.Context) {})
 	return testData
 }
 
@@ -89,23 +93,27 @@ func TestCreateResponse(t *testing.T) {
 		VacancyID: ID,
 		Initial:   common.Employer,
 	}
+
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(ID).Once()
-	td.mockUseCase.On("CreateChatAndTechMes", response).Return(&response, nil).Once()
+	td.mockUseCase.On("Create", mock.Anything).Return(&response, nil).Once()
+	td.mockChat.On("CreateChatAndTechMes", mock.Anything).Return( nil, nil).Once()
 
 	response2 := response
 	response2.Initial = common.Candidate
 	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
-	td.mockUseCase.On("CreateChatAndTechMes", response2).Return(&response2, nil).Once()
+	td.mockUseCase.On("Create", mock.Anything).Return(&response2, nil).Once()
+	td.mockChat.On("CreateChatAndTechMes", mock.Anything).Return( nil, nil).Once()
 
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 
 	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
-	td.mockUseCase.On("CreateChatAndTechMes", response2).Return(nil, assert.AnError).Once()
+	td.mockUseCase.On("Create", mock.Anything).Return(nil, assert.AnError).Once()
+	//td.mockUseCase.On("CreateChatAndTechMes", mock.Anything).Return(&response, nil).Once()
 
 	testUrls := []string{
 		responseUrlGroup,
@@ -152,12 +160,14 @@ func TestUpdateStatusResponse(t *testing.T) {
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(ID).Once()
 	td.mockUseCase.On("UpdateStatus", response, common.Employer).Return(&response, nil).Once()
+	td.mockChat.On("CreateTechMesToUpdate", mock.Anything).Return( nil, nil).Once()
 
 	response2 := response
 	response2.Initial = common.Candidate
 	td.mockSession.On("GetCandID").Return(ID).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
 	td.mockUseCase.On("UpdateStatus", response2, common.Candidate).Return(&response2, nil).Once()
+	td.mockChat.On("CreateTechMesToUpdate", mock.Anything).Return( nil, nil).Once()
 
 	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
 	td.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
@@ -476,3 +486,4 @@ func TestGetAllNotificationsErrors(t *testing.T) {
 		})
 	}
 }
+

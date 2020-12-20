@@ -291,7 +291,6 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		notifications.UnreadRespCnt = uint(len(notifications.UnreadResp))
 	}
 
-
 	unId = session.GetUserID()
 	if req.OnlyVacCnt && req.VacInLastNDays != nil {
 		if daysFromNow == 0 {

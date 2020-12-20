@@ -192,13 +192,8 @@ func TestCreateUserHandler(t *testing.T) {
 	}
 
 	td.mockAuth.On("Login", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&td.sessionInfo, nil)
-	td.mockUseCase.On("CreateUser", mock.Anything).Return(&userCand, nil).Once()
-	td.mockUseCase.On("CreateUser", mock.Anything).Return(nil, assert.AnError)
-
-	//reqUser := models.UserLogin{
-	//	Email:    "email@email.ru",
-	//	Password: "password",
-	//}
+	td.mockUseCase.On("CreateUser", mock.Anything, mock.Anything).Return(&userCand, nil).Once()
+	td.mockUseCase.On("CreateUser", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 
 	userEmpl := userCand
 	IDEmpl := uuid.New()
