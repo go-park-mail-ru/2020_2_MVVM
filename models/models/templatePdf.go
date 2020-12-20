@@ -116,8 +116,9 @@ func СonvertToTemplate(r Resume) ResumeTemplate {
 	if r.SalaryMin != nil {
 		if r.SalaryMax != nil {
 			t.Salary = fmt.Sprintf(`%v - %v`, *r.SalaryMin, *r.SalaryMax)
+		} else {
+			t.Salary = strconv.Itoa(*r.SalaryMin)
 		}
-		t.Salary = strconv.Itoa(*r.SalaryMin)
 	} else if r.SalaryMax != nil {
 		t.Salary = strconv.Itoa(*r.SalaryMax)
 	} else {

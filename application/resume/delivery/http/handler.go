@@ -456,7 +456,7 @@ func (r *ResumeHandler) MakePdf(ctx *gin.Context) {
 		return
 	}
 
-	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + resumeID.String()}
+	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + resumeID.String() + ".pdf"}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(link, ctx.Writer); err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
