@@ -12,6 +12,7 @@ type UseCase interface {
 	Search(searchParams resume.SearchParams) ([]models.BriefResumeInfo, error)
 
 	GetById(id uuid.UUID) (*models.Resume, error)
+
 	List(start, limit uint) ([]models.BriefResumeInfo, error)
 	GetAllUserResume(userid uuid.UUID) ([]models.BriefResumeInfo, error)
 
@@ -21,4 +22,6 @@ type UseCase interface {
 	RemoveFavorite(favorite models.FavoritesForEmpl) error
 	GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
 	DeleteResume(resId uuid.UUID, candId uuid.UUID) error
+
+	MakePdf(id uuid.UUID) error
 }

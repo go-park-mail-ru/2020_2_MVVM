@@ -43,6 +43,7 @@ func NewRest(router *gin.RouterGroup,
 func (r *ResumeHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
 	router.GET("/by/id/:resume_id", r.GetResumeByID)
 	router.GET("/page", r.GetResumePage)
+	router.GET("/make/pdf/:resume_id", r.MakePdf)
 	router.POST("/search", r.SearchResume)
 	router.Use(AuthRequired)
 	{
@@ -430,5 +431,31 @@ func (r *ResumeHandler) DeleteResume(ctx *gin.Context) {
 	if err := r.UseCaseResume.DeleteResume(ResId, candId); err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
+	}
+}
+
+func (r *ResumeHandler) MakePdf(ctx *gin.Context) {
+	var request struct {
+		ResumeID string `uri:"resume_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	resumeID, _ := uuid.Parse(request.ResumeID)
+
+	err := r.UseCaseResume.MakePdf(resumeID)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+
+
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
