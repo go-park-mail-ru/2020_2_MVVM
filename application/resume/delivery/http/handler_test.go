@@ -189,7 +189,6 @@ func TestGetResumeByID(t *testing.T) {
 	resp := resume2.Response{
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
-		IsFavorite:       &favorite.FavoriteID,
 	}
 	//res2.Candidate = nil
 	resp.Resume = res2
@@ -274,7 +273,6 @@ func TestCreateResume(t *testing.T) {
 	resp := resume2.Response{
 		Educations:       res.Education,
 		CustomExperience: res.ExperienceCustomComp,
-		IsFavorite:       nil,
 	}
 	resp.Resume = res
 
@@ -330,7 +328,6 @@ func TestUpdateResume(t *testing.T) {
 	resp := resume2.Response{
 		Educations:       res2.Education,
 		CustomExperience: res2.ExperienceCustomComp,
-		IsFavorite:       nil,
 	}
 	//res2.Candidate = nil
 	resp.Resume = res2

@@ -159,3 +159,4 @@ func TestUpdateOfficialCompany(t *testing.T) {
 	assert.Nil(t, ansWrong)
 	assert.Error(t, errNotNil)
 }
+
