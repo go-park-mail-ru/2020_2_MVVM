@@ -105,7 +105,7 @@ func TestResponseCreate(t *testing.T) {
 
 	testResponse.Initial = common.Candidate
 	mockResumeUS.On("GetById", ID).Return(&testResume, nil)
-	mockRepo.On("CreateChatAndTechMes", mock.Anything).Return(&testResponse, nil)
+	mockRepo.On("Create", mock.Anything).Return(&testResponse, nil)
 	answerCorrect, errNil := usecase.Create(testResponse)
 
 	assert.Nil(t, errNil)
@@ -119,7 +119,6 @@ func TestResponseCreate(t *testing.T) {
 
 	testResponse.Initial = common.Employer
 	mockVacancyUS.On("GetVacancy", ID).Return(&testVacacy, nil)
-	mockRepo.On("CreateChatAndTechMes", mock.Anything).Return(&testResponse, nil)
 	answerCorrect2, errNil2 := usecase.Create(testResponse)
 
 	assert.Nil(t, errNil2)
@@ -141,14 +140,13 @@ func TestResponseUpdateStatus(t *testing.T) {
 		VacancyID: ID,
 		Status:    "sent",
 	}
-
 	answerWrong, err := usecase.UpdateStatus(testResponse, "sent")
 	assert.Nil(t, answerWrong, err)
 
 	testResponse.Status = "accept"
 	testResponse.Status = common.Employer
 
-	mockRepo.On("GetChatHistory", ID).Return(&testResponse, nil)
+	mockRepo.On("GetByID", ID).Return(&testResponse, nil)
 	mockRepo.On("UpdateStatus", testResponse).Return(&testResponse, nil)
 	mockResumeUS.On("GetById", ID).Return(&testResume, nil)
 	answerCorrect, errNil := usecase.UpdateStatus(testResponse, common.Candidate)
@@ -156,7 +154,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	assert.Equal(t, *answerCorrect, testResponse)
 
 	testResponse.ResumeID = uuid.Nil
-	mockRepo.On("GetChatHistory", ID).Return(&testResponse, nil)
 	mockResumeUS.On("GetById", uuid.Nil).Return(nil, assert.AnError)
 	answerWromg2, errNotNil2 := usecase.UpdateStatus(testResponse, common.Candidate)
 	assert.Nil(t, answerWromg2)
@@ -166,7 +163,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	testResponse.Status = "accept"
 	testResponse.Status = common.Candidate
 
-	mockRepo.On("GetChatHistory", ID).Return(&testResponse, nil)
 	mockRepo.On("UpdateStatus", testResponse).Return(&testResponse, nil)
 	mockVacancyUS.On("GetVacancy", ID).Return(&testVacacy, nil)
 	answerCorrect2, errNil2 := usecase.UpdateStatus(testResponse, common.Employer)
@@ -174,7 +170,6 @@ func TestResponseUpdateStatus(t *testing.T) {
 	assert.Equal(t, *answerCorrect2, testResponse)
 
 	testResponse.VacancyID = uuid.Nil
-	mockRepo.On("GetChatHistory", ID).Return(&testResponse, nil)
 	mockVacancyUS.On("GetVacancy", uuid.Nil).Return(nil, assert.AnError)
 	answerWromg3, errNotNil3 := usecase.UpdateStatus(testResponse, common.Employer)
 	assert.Nil(t, answerWromg3)

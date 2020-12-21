@@ -259,6 +259,9 @@ func TestCreateResume(t *testing.T) {
 		ResumeID:  ID,
 		CandID: ID,
 		Candidate: cand,
+		CandEmail: "a@a.ru",
+		CandName: "test",
+		CandSurname: "test",
 		Gender: "male",
 		Skills: "asdasd ad asd ads",
 		Title: "!@#DSAD",
@@ -267,40 +270,38 @@ func TestCreateResume(t *testing.T) {
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetCandID").Return(ID)
-	td.mockUseCase.On("CreateChatAndTechMes", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
-	td.mockUseCase.On("CreateChatAndTechMes", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
+	td.mockUseCase.On("Create", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
+	td.mockUseCase.On("Create", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError).Once()
 
 	resp := resume2.Response{
 		Educations:       res.Education,
 		CustomExperience: res.ExperienceCustomComp,
 	}
 	resp.Resume = res
-
 	testParamsForPost := []interface{}{
 		res,
 		nil,
 		res,
 	}
-	//testExpectedBody := []interface{}{
-	//	resp,
-	//	common.EmptyFieldErr,
-	//	common.DataBaseErr,
-	//}
+	testExpectedBody := []interface{}{
+		resp,
+		common.EmptyFieldErr,
+		common.DataBaseErr,
+	}
+
 	for i := range testParamsForPost {
 		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
 			w, err := general.PerformRequest(td.router, http.MethodPost, resumeUrlGroup, testParamsForPost[i])
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}
-
-			assert.Equal(t, td.httpStatus[i], w.Code)
-			// Из-за генерации resumeID в handler-e невозможно сравнить структуры.
-			//if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
-			//	t.Fatal(err)
-			//}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 }
+
 
 func TestUpdateResume(t *testing.T) {
 	td := beforeTest()
@@ -313,6 +314,9 @@ func TestUpdateResume(t *testing.T) {
 		ResumeID:  ID,
 		CandID: ID,
 		Candidate: cand,
+		CandEmail: "a@a.ru",
+		CandName: "test",
+		CandSurname: "test",
 		Gender: "male",
 		Skills: "asdasd ad asd ads",
 		Title: "!@#DSAD",
@@ -321,8 +325,8 @@ func TestUpdateResume(t *testing.T) {
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetCandID").Return(ID)
-	td.mockUseCase.On("Update", res).Return(&res, nil).Once()
-	td.mockUseCase.On("Update", res).Return(nil, assert.AnError)
+	td.mockUseCase.On("Update", mock.AnythingOfType("models.Resume")).Return(&res, nil).Once()
+	td.mockUseCase.On("Update", mock.AnythingOfType("models.Resume")).Return(nil, assert.AnError)
 
 	res2 := res
 	resp := resume2.Response{
@@ -358,10 +362,11 @@ func TestAddFavorite(t *testing.T) {
 
 	ID := uuid.New()
 	favoriteForEmpl := models.FavoritesForEmpl{EmplID: ID, ResumeID: ID}
+	favoriteId := models.FavoriteID{}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetEmplID").Return(ID)
-	td.mockUseCase.On("AddFavorite", favoriteForEmpl).Return(&favoriteForEmpl, nil).Once()
+	td.mockUseCase.On("AddFavorite", favoriteForEmpl).Return(&favoriteId, nil).Once()
 
 	favoriteForEmplInvalid := models.FavoritesForEmpl{EmplID: ID, ResumeID: uuid.Nil}
 	td.mockUseCase.On("AddFavorite", favoriteForEmplInvalid).Return(nil, assert.AnError).Once()
@@ -373,7 +378,7 @@ func TestAddFavorite(t *testing.T) {
 		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, uuid.Nil),
 	}
 
-	testExpectedBody := []interface{}{favoriteForEmpl, common.EmptyFieldErr, common.DataBaseErr}
+	testExpectedBody := []interface{}{favoriteId, common.EmptyFieldErr, common.DataBaseErr}
 	for i := range testUrls {
 		t.Run("test responses on different urls for getVacancyList handler", func(t *testing.T) {
 			w, err := general.PerformRequest(td.router, http.MethodPost, testUrls[i], nil)
@@ -456,3 +461,4 @@ func TestGetAllFavoritesResume(t *testing.T) {
 		})
 	}
 }
+

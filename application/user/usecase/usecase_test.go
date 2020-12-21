@@ -4,7 +4,7 @@ import (
 	"github.com/apsdehal/go-logger"
 	UserRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/user/repository"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
+	mocks "github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/user"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -52,15 +52,15 @@ func TestUserCreateUser(t *testing.T) {
 		Surname:  "surname",
 		Email:    "email@mail.ru",
 	}
-
-	mockRepo.On("CreateUser", user).Return(&user, nil)
-	answer, err := usecase.CreateUser(user)
+	compId := uuid.New()
+	mockRepo.On("CreateUser", user, &compId).Return(&user, nil)
+	answer, err := usecase.CreateUser(user, &compId)
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, user)
 
 	user.Email = ""
-	mockRepo.On("CreateUser", user).Return(nil, assert.AnError)
-	answerNotCorrect, errNotNil := usecase.CreateUser(user)
+	mockRepo.On("CreateUser", user, &compId).Return(nil, assert.AnError)
+	answerNotCorrect, errNotNil := usecase.CreateUser(user, &compId)
 	assert.Nil(t, answerNotCorrect)
 	assert.Error(t, errNotNil)
 	user.Email = "email"
