@@ -116,28 +116,29 @@ func TestCreateUser(t *testing.T) {
 
 	// OK flow
 	// 1 - insert user
+	id := uuid.New()
 	query := "INSERT INTO (.*).\"users\" (.*) VALUES (.*) RETURNING \"user_id\""
 	duser := dummies.User
 	argsUser := []driver.Value{duser.UserType, duser.Name, duser.Surname, duser.Email, duser.PasswordHash, duser.Phone,
-		duser.SocialNetwork, duser.ID}
+		duser.SocialNetwork, duser.AvatarPath, duser.ID}
 	mock.ExpectQuery(query).
 		WithArgs(argsUser...).
 		WillReturnRows(sqlmock.NewRows([]string{"user_id"}).AddRow(duser.ID))
 
-	// 2 - insert candidate/employer
+	//2 - insert candidate/employer
 	mock.ExpectQuery("INSERT INTO (.*).\"(candidates|employers)\" (.*)").
-		WithArgs(dummies.Candidate.UserID).
+		WithArgs(dummies.Candidate.UserID, id).
 		WillReturnRows(sqlmock.NewRows([]string{"empl_id"}).AddRow(dummies.Employer.ID))
 
-	user, err := repo.CreateUser(dummies.User)
+	user, err := repo.CreateUser(dummies.User, &id)
 	assert.Nil(t, err)
 	assert.Equal(t, *user, dummies.User)
 
-	// Error flow
-	error := errors.New("test error")
-	mock.ExpectQuery(query).WithArgs(argsUser).WillReturnError(error)
+	//Error flow
+	errN := errors.New("test error")
+	mock.ExpectQuery(query).WithArgs(argsUser).WillReturnError(errN)
 
-	user, err = repo.CreateUser(dummies.User)
+	user, err = repo.CreateUser(dummies.User, &id)
 	assert.Nil(t, user)
 	assert.Error(t, err)
 }
@@ -150,7 +151,7 @@ func TestUpdateUser(t *testing.T) {
 	query := "UPDATE (.*).\"users\" SET (.*) WHERE \"user_id\" = (.*)"
 	duser := dummies.User
 	argsUser := []driver.Value{duser.UserType, duser.Name, duser.Surname, duser.Email, duser.PasswordHash, duser.Phone,
-		duser.SocialNetwork, duser.ID}
+		duser.SocialNetwork, duser.AvatarPath, duser.ID}
 	mock.ExpectExec(query).
 		WithArgs(argsUser...).
 		WillReturnResult(sqlmock.NewResult(1, 1))

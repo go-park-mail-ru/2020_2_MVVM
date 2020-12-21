@@ -72,7 +72,7 @@ func makeDummies() Dummies {
 			Description: "WILL WORK FOR FOOD",
 			Skills:      "NONE",
 			Gender:      "female",
-			DateCreate:  time.Now(),
+			DateCreate:  time.Now().String(),
 			Avatar:      "nowhere.png",
 		},
 		Candidate: models.Candidate{

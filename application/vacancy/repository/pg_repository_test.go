@@ -92,15 +92,20 @@ func TestUpdateVacancy(t *testing.T) {
 	dummies := makeDummies()
 
 	// OK flow
-	query := "SELECT \\* FROM \"main\".\"vacancy\" WHERE vac_id = (.*) LIMIT 1"
+	query := "select empl_id from main.vacancy where vac_id = (.*)"
 	mock.ExpectQuery(query).
 		WithArgs(dummies.Vacancy.ID).
-		WillReturnRows(makeVacRow(dummies.Vacancy))
+		WillReturnRows(sqlmock.NewRows([]string{"empl_id"}).AddRow(&dummies.Vacancy.EmpID))
 
 	query2 := "UPDATE \"main\".\"vacancy\" SET (.*) WHERE \"vac_id\" = (.*)"
 	mock.ExpectExec(query2).
 		WithArgs(dummies.ID, dummies.ID, dummies.ID, dummies.Vacancy.ID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	query3 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE vac_id = (.*) LIMIT 1"
+	mock.ExpectQuery(query3).
+		WithArgs(dummies.Vacancy.ID).
+		WillReturnRows(makeVacRow(dummies.Vacancy))
 
 	result, err := repo.UpdateVacancy(dummies.Vacancy)
 	assert.Nil(t, err)
@@ -135,12 +140,12 @@ func TestGetVacancyList(t *testing.T) {
 	var limit uint = 2
 
 	// all
-	query := "SELECT \\* FROM \"main\".\"vacancy\" ORDER BY date_create LIMIT 2"
+	query := "SELECT \\* FROM \"main\".\"vacancy\" ORDER BY date_create desc LIMIT 2"
 	mock.ExpectQuery(query).
 		WithArgs().
 		WillReturnRows(makeVacRow(dummies.Vacancy))
 
-	result, err := repo.GetVacancyList(start, limit, dummies.Vacancy.ID, -1)
+	result, err := repo.GetVacancyList(start, limit, dummies.Vacancy.ID, vacancy.TopAll)
 	assert.Nil(t, err)
 	assert.Equal(t, result, dummies.ListVac)
 
