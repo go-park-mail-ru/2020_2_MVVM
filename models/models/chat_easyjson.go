@@ -624,10 +624,6 @@ func easyjson9b8f5552DecodeGithubComGoParkMailRu20202MVVMGitModelsModels6(in *jl
 			out.Surname = string(in.String())
 		case "avatar":
 			out.Avatar = string(in.String())
-		case "AvatarCand":
-			out.AvatarCand = string(in.String())
-		case "AvatarEmpl":
-			out.AvatarEmpl = string(in.String())
 		case "type":
 			out.Type = string(in.String())
 		case "message":
@@ -676,16 +672,6 @@ func easyjson9b8f5552EncodeGithubComGoParkMailRu20202MVVMGitModelsModels6(out *j
 		const prefix string = ",\"avatar\":"
 		out.RawString(prefix)
 		out.String(string(in.Avatar))
-	}
-	{
-		const prefix string = ",\"AvatarCand\":"
-		out.RawString(prefix)
-		out.String(string(in.AvatarCand))
-	}
-	{
-		const prefix string = ",\"AvatarEmpl\":"
-		out.RawString(prefix)
-		out.String(string(in.AvatarEmpl))
 	}
 	{
 		const prefix string = ",\"type\":"

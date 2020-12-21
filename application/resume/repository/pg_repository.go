@@ -115,9 +115,17 @@ func (p *PGRepository) Update(resume models.Resume) (*models.Resume, error) {
 	for i := range resume.ExperienceCustomComp {
 		resume.ExperienceCustomComp[i].CandID = candidate.ID
 	}
-	if err := p.db.Model(&resume).Where("resume_id = ?", resume.ResumeID).Updates(resume).Error; err != nil {
+	if err := p.db.Model(&resume).
+		Where("resume_id = ?", resume.ResumeID).
+		Updates(resume).
+		Error; err != nil {
 		return nil, fmt.Errorf("can't update resume with id:%s, %s", resume.ResumeID, err)
 	}
+
+	//for i := range resume.ExperienceCustomComp {
+	//	resume.ExperienceCustomComp[i].ResumeID = resume.ResumeID
+	//	err = p.db.Create(&resume.ExperienceCustomComp[i]).Error
+	//}
 
 	return p.GetById(resume.ResumeID)
 }
@@ -254,7 +262,10 @@ func (p *PGRepository) GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesF
 }
 
 func (p *PGRepository) Delete(resId uuid.UUID, candId uuid.UUID) error {
-	err := p.db.Table("main.resume").Delete(&models.Resume{ResumeID: resId}).Where("cand_id = ?", candId).Error
+	err := p.db.Table("main.resume").
+		Delete(&models.Resume{ResumeID: resId}).
+		Where("cand_id = ?", candId).
+		Error
 	if err != nil {
 		return fmt.Errorf("error in delete resume with id: %s, err: %w", resId, err)
 	}
