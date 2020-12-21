@@ -50,6 +50,22 @@ func (p *PGRepository) GetById(id uuid.UUID) (*models.Resume, error) {
 	return &r, nil
 }
 
+func (p *PGRepository) GetByIdWithCand(id uuid.UUID) (*models.Resume, error) {
+	var r models.Resume
+	err := p.db.
+		Preload(clause.Associations).
+		Preload("Candidate").
+		Preload("Candidate.User").
+		First(&r, id).
+		Error
+
+	if err != nil {
+		err = fmt.Errorf("error in select resume with id: %s : error: %w", id, err)
+		return nil, err
+	}
+	return &r, nil
+}
+
 func (p *PGRepository) List(start, limit uint) ([]models.Resume, error) {
 	var brief []models.Resume
 	err := p.db.

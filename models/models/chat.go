@@ -48,7 +48,7 @@ func (r TechMessage) TableName() string {
 }
 
 type TechMessageBrief struct {
-	DateCreate time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
+	DateCreate      time.Time `gorm:"column:date_create; type:uuid" json:"date_create"`
 	ResumeID        uuid.UUID `gorm:"column:resume_id; type:uuid" json:"resume_id"`
 	ResumeTitle     string    `gorm:"column:resume_title" json:"resume_title"`
 	CompanyID       uuid.UUID `gorm:"column:company_id; type:uuid" json:"company_id"`
@@ -67,11 +67,13 @@ type ChatHistory struct {
 }
 
 type ChatSummary struct {
-	ChatID      uuid.UUID   `json:"chat_id"`
-	TotalUnread uint        `json:"total_unread"`
-	Name        string      `json:"name"`
-	Surname     string      `json:"surname"`
-	Avatar      string      `json:"avatar"`
+	ChatID      uuid.UUID `json:"chat_id"`
+	TotalUnread uint      `json:"total_unread"`
+	Name        string    `json:"name"`
+	Surname     string    `json:"surname"`
+	Avatar      string    `json:"avatar"`
+	AvatarCand  string
+	AvatarEmpl  string
 	Type        string      `json:"type"`
 	Message     interface{} `json:"message"`
 }

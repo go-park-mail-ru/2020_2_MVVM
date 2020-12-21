@@ -183,16 +183,20 @@ func (p *pgRepository) CreateTechMesToUpdate(response models.Response) (*models.
 	chat.CandID = cand.UserID
 
 	err = p.db.First(&chat).Error
+	if err != nil {
+		err = fmt.Errorf("error in select chat: %w", err)
+		return nil, err
+	}
 
 	tech := models.TechMessage{
-		ChatID:     chat.ChatID,
-		ResponseID: response.ID,
-		DateCreate: time.Now(),
+		ChatID:         chat.ChatID,
+		ResponseID:     response.ID,
+		DateCreate:     time.Now(),
 		ResponseStatus: response.Status,
 	}
 	err = p.db.Create(&tech).Error
 	if err != nil {
-		err = fmt.Errorf("error in inserting message: %w", err)
+		err = fmt.Errorf("error in inserting tech message: %w", err)
 		return nil, err
 	}
 
@@ -234,13 +238,12 @@ func (p *pgRepository) CreateChatAndTechMes(response models.Response) (*models.C
 			return nil, err
 		}
 	}
-	
-	tech := models.TechMessage{
-		ChatID:     chat.ChatID,
-		ResponseID: response.ID,
-		DateCreate: time.Now(),
-		ResponseStatus: response.Status,
 
+	tech := models.TechMessage{
+		ChatID:         chat.ChatID,
+		ResponseID:     response.ID,
+		DateCreate:     time.Now(),
+		ResponseStatus: response.Status,
 	}
 	err = p.db.Create(&tech).Error
 	if err != nil {
@@ -297,7 +300,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 					from main.message
 					group by message.chat_id) cte on cte.chat_id = main.message.chat_id
 		where main.chat.user_id_%s = ?
-		order by message.chat_id, date_create;
+		order by message.chat_id, date_create desc;
 		`, toPrefix, sender, fromPrefix)
 
 	type dialog struct {
@@ -305,8 +308,8 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 		models.MessageBrief
 	}
 
-	var mes []dialog
-	err := p.db.Raw(sql, userID).Scan(&mes).Error
+	var dialogMes []dialog
+	err := p.db.Raw(sql, userID).Scan(&dialogMes).Error
 	if err != nil {
 		return nil, err
 	}
@@ -319,7 +322,8 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
                                 r2.resume_id, r2.title as resume_title,
                                 r.initial as response_initial, r.status as response_status,
                                 o.comp_id as company_id, o.name as company_name,
-								u.name, u.surname, u.path_to_avatar, total_unread, 'technical' as type
+								u.name, u.surname, u.path_to_avatar as avatar_cand,
+								o.path_to_avatar as avatar_empl, total_unread, 'technical' as type
 		from main.tech_message as tm
 			inner join main.response r on r.response_id = tm.response_id
 			inner join main.vacancy v on v.vac_id = r.vacancy_id
@@ -332,7 +336,7 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 						from main.tech_message
 						group by tech_message.chat_id) cte on cte.chat_id = tm.chat_id
 		where c.user_id_%s = ?
-		order by tm.chat_id, date_create;`, toPrefix, fromPrefix, fromPrefix)
+		order by tm.chat_id, date_create desc;`, toPrefix, fromPrefix, fromPrefix)
 
 	type technical struct {
 		models.ChatSummary
@@ -347,39 +351,47 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 
 	// pool them together
 	result := make(map[uuid.UUID]*models.ChatSummary)
-	for _, m := range mes {
+	for _, m := range dialogMes {
 		result[m.ChatID] = &models.ChatSummary{
 			ChatID:      m.ChatID,
 			TotalUnread: m.TotalUnread,
 			Name:        m.Name,
 			Surname:     m.Surname,
-			Avatar:      m.Avatar,
 			Type:        m.Type,
 			Message:     m.MessageBrief,
 		}
+		if utype == common.Candidate{
+			result[m.ChatID].Avatar = m.AvatarCand
+		} else {
+			result[m.ChatID].Avatar = m.AvatarEmpl
+		}
 	}
 
-	for _, m := range techmes {
-		summary := models.ChatSummary{
-			ChatID:      m.ChatID,
-			TotalUnread: m.TotalUnread,
-			Name:        m.Name,
-			Surname:     m.Surname,
-			Avatar:      m.Avatar,
-			Type:        m.Type,
-			Message:     m.TechMessageBrief,
+	for _, techm := range techmes {
+		techSummary := models.ChatSummary{
+			ChatID:      techm.ChatID,
+			TotalUnread: techm.TotalUnread,
+			Name:        techm.Name,
+			Surname:     techm.Surname,
+			Type:        techm.Type,
+			Message:     techm.TechMessageBrief,
+		}
+		if utype == common.Candidate{
+			techSummary.Avatar = techm.AvatarCand
+		} else {
+			techSummary.Avatar = techm.AvatarEmpl
 		}
 
-		val, ok := result[m.ChatID]
+		dialogm, ok := result[techm.ChatID]
 		if ok {
-			created := val.Message.(models.MessageBrief).DateCreate
-			totalUnread := result[m.ChatID].TotalUnread + summary.TotalUnread
-			if created.After(m.DateCreate) {
-				result[m.ChatID] = &summary
+			dialogmDate := dialogm.Message.(models.MessageBrief).DateCreate
+			totalUnread := result[techm.ChatID].TotalUnread + techSummary.TotalUnread
+			if techm.DateCreate.After(dialogmDate) {
+				result[techm.ChatID] = &techSummary //techSummary - tech, (dialogm, dialogmDate) - user, techm - tech
 			}
-			result[m.ChatID].TotalUnread = totalUnread
+			result[techm.ChatID].TotalUnread = totalUnread
 		} else {
-			result[m.ChatID] = &summary
+			result[techm.ChatID] = &techSummary
 		}
 	}
 
@@ -389,7 +401,6 @@ func (p *pgRepository) ListChats(userID uuid.UUID, utype string) ([]models.ChatS
 	}
 	return summaries, err
 }
-
 
 func (p *pgRepository) GetTotalUnreadMes(userID uuid.UUID, userType string) (*uint, error) {
 	var typePrefix, sender string

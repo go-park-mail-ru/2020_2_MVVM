@@ -5,13 +5,11 @@ import (
 	"github.com/apsdehal/go-logger"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/makePdf/pdfGenerator"
-	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
-	"strconv"
-
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/makePdf/pdfGenerator"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	resume2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 	"strings"
 	"time"
@@ -181,7 +179,7 @@ func (u *ResumeUseCase) DeleteResume(resId uuid.UUID, candId uuid.UUID) error {
 }
 
 func (u *ResumeUseCase) MakePdf(id uuid.UUID) error {
-	r, err := u.strg.GetById(id)
+	r, err := u.strg.GetByIdWithCand(id)
 	if err != nil {
 		err = fmt.Errorf("error in resume get by id func : %w", err)
 		return err
@@ -196,7 +194,7 @@ func (u *ResumeUseCase) MakePdf(id uuid.UUID) error {
 	outputPath := fmt.Sprintf(`static/pdf/%s.pdf`, id.String())
 
 	//html template data
-	template := convertToTemplate(*r)
+	template := models.СonvertToTemplate(*r)
 
 	if err := pgf.ParseTemplate(templatePath, template); err == nil {
 		_, err := pgf.GeneratePDF(outputPath)
@@ -212,97 +210,3 @@ func (u *ResumeUseCase) MakePdf(id uuid.UUID) error {
 	return nil
 }
 
-type ExperienceTemplate struct {
-	NameJob  string
-	Position string
-	Begin    string
-	Finish   string
-	Duties   string
-}
-
-type resumeTemplate struct {
-	Avatar          string
-	Name            string
-	Surname         string
-	AreaSearch      string
-	Phone           string
-	Email           string
-	Sphere          string
-	Experience      string
-	Education       string
-	Salary          string
-	Description     string
-	ExperienceItems []ExperienceTemplate
-	Skills          string
-}
-
-func convertToTemplate(r models.Resume) resumeTemplate {
-	t := resumeTemplate{
-		Avatar:      r.Avatar,
-		Name:        r.CandName,
-		Surname:     r.CandSurname,
-		Email:       r.Candidate.User.Email,
-		Description: r.Description,
-		Skills:      r.Skills,
-	}
-	if r.AreaSearch != nil {
-		t.AreaSearch = *(r.AreaSearch)
-	} else {
-		t.AreaSearch = ""
-	}
-	if r.Candidate.User.Phone != nil {
-		t.Phone = *(r.Candidate.User.Phone)
-	} else {
-		t.Phone = ""
-	}
-	if r.Sphere != nil {
-		t.Sphere = strconv.Itoa(*r.Sphere)
-	} else {
-		t.Sphere = ""
-	}
-	if r.ExperienceMonth != nil {
-		t.Experience = strconv.Itoa(*r.ExperienceMonth)
-	} else {
-		t.Experience = ""
-	}
-	if r.EducationLevel != nil {
-		t.Education = *(r.EducationLevel)
-	} else {
-		t.Education = ""
-	}
-	if r.SalaryMin != nil {
-		if r.SalaryMax != nil {
-			t.Salary = fmt.Sprintf(`%v - %v`, *r.SalaryMin, *r.SalaryMax)
-		}
-		t.Salary = strconv.Itoa(*r.SalaryMin)
-	} else if r.SalaryMax != nil {
-		t.Salary = strconv.Itoa(*r.SalaryMax)
-	} else {
-		t.Salary = ""
-	}
-
-	var exp []ExperienceTemplate
-	for _, val := range r.ExperienceCustomComp {
-		expItem := ExperienceTemplate{NameJob: val.NameJob,
-			Begin: fmt.Sprintf(val.Begin.Format("2006-01-02"))}
-		if val.Position != nil {
-			expItem.Position = *(val.Position)
-		} else {
-			expItem.Position = ""
-		}
-		if val.Duties != nil {
-			expItem.Duties = *(val.Duties)
-		} else {
-			expItem.Duties = ""
-		}
-		if val.Finish != nil {
-			expItem.Finish = fmt.Sprintf(val.Finish.Format("2006-01-02"))
-		} else {
-			expItem.Finish = "по настоящее время"
-		}
-		exp = append(exp, expItem)
-	}
-	t.ExperienceItems = exp
-
-	return t
-}

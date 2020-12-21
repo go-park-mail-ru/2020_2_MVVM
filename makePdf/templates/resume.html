@@ -9,10 +9,9 @@
     <div class="info-left">
         {{if not (eq "" $.Avatar) }}
         <div class="photo">
-            <img src="{{ .Avatar }}" alt="альтернативный текст">
+            <img class="image" src="{{ .Avatar }}">
         </div>
         {{end}}
-
 
         <div class="personal-info">
             <div class="info-type">Личные данные</div>
@@ -173,19 +172,25 @@
     }
 
     .root {
-        width: 650px;
+        width: 100%;
         margin: 0;
         font-family: Roboto, sans-serif;
         background: #8b91dd;
+        min-height: 1390px;
     }
 
     .photo {
         width: 150px;
         height: 150px;
-        background: #fb236a;
         margin: auto;
         border-radius: 100px;
         border: 2px solid white;
+    }
+
+    .image {
+        width: 100%;
+        height: 100%;
+        border-radius: 100px;
     }
 
     .info-type {
@@ -203,7 +208,7 @@
 
     .info-left {
         display: inline-block;
-        width: 200px;
+        width: 251px;
         padding-top: 30px;
         vertical-align: top;
     }
@@ -211,11 +216,12 @@
     .info-right {
         display: inline-block;
         padding-top: 30px;
-        width: 405px;
+        width: 700px;
         padding-left: 20px;
         padding-right: 20px;
         line-height: 20px;
         background: white;
+        min-height: 1390px;
     }
 
     .personal-info__icon {
