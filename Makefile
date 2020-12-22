@@ -1,8 +1,9 @@
 .PHONY: build
 build:
-	go build -o auth ./application/microservices/auth/cmd
-	go build -o vacancy ./application/microservices/vacancy/cmd
-	go build -o app ./cmd/api
+	mkdir build
+	go build -o build/auth ./application/microservices/auth/cmd
+	go build -o build/vacancy ./application/microservices/vacancy/cmd
+	go build -o build/app ./cmd/api
 
 
 #.PHONY: migrate
