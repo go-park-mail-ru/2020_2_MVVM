@@ -41,6 +41,8 @@ var testResume = models.Resume{
 	CandID:    ID,
 	Candidate: candidate,
 	Title:     "ID",
+	CandName: "ID",
+	CandSurname: "ID",
 }
 var briefResume = models.BriefResumeInfo{
 	ResumeID: ID,

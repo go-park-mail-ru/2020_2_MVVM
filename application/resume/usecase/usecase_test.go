@@ -116,30 +116,36 @@ func TestResumeCreateResume(t *testing.T) {
 }
 
 func TestResumeUpdateUser(t *testing.T) {
-	mockRepo, _, _, _, usecase := beforeTest(t)
+	mockRepo, _, _, expUsecase, usecase := beforeTest(t)
 
 	testResume.ExperienceCustomComp = []models.ExperienceCustomComp{experienceTest}
 	testResume.Education = []models.Education{educationTest}
-	mockRepo.On("Update", mock.Anything).Return(&testResume, nil)
-	mockRepo.On("GetById", ID).Return(&testResume, nil)
+	mockRepo.On("Update", mock.Anything).Return(&testResume, nil).Once()
+	expUsecase.On("DropAllFromResume", mock.Anything).Return(nil).Once()
+	mockRepo.On("GetById", ID).Return(&testResume, nil).Once()
 	answer, err := usecase.Update(testResume)
 
 	assert.Nil(t, err)
 	assert.Equal(t, *answer, testResume)
 
-	mockRepo.On("GetById", uuid.Nil).Return(nil, assert.AnError)
+	mockRepo.On("GetById", uuid.Nil).Return(nil, assert.AnError).Once()
 	testResume.ResumeID = uuid.Nil
 	answerWrong, errNotNil := usecase.Update(testResume)
 	assert.Nil(t, answerWrong)
 	assert.Error(t, errNotNil)
 
 	testResume.ResumeID = ID
-	mockRepo.On("GetById", ID).Return(&testResume, nil)
+	mockRepo.On("GetById", ID).Return(&testResume, nil).Twice()
 	newTestResume := testResume
 	newTestResume.CandID = uuid.Nil
 	answerWrong2, errNotNil2 := usecase.Update(newTestResume)
 	assert.Nil(t, answerWrong2)
 	assert.Error(t, errNotNil2)
+
+	expUsecase.On("DropAllFromResume", mock.Anything).Return(assert.AnError)
+	answer, err = usecase.Update(testResume)
+	assert.Nil(t, answer)
+	assert.Error(t, err)
 }
 
 func TestResumeSearch(t *testing.T) {
