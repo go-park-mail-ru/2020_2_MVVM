@@ -12,6 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-redis/redis/v8 v8.4.0
 	github.com/golang/protobuf v1.4.3
+	github.com/golangci/golangci-lint v1.31.0 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/jinzhu/copier v0.0.0-20190625015134-976e0346caa8
 	github.com/lib/pq v1.3.0
@@ -19,7 +20,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/rowdyroad/go-simple-logger v0.0.0-20191211005020-b2f8b6fb4880 // indirect
 	github.com/rowdyroad/go-yaml-config v0.0.0-20200117233205-1189970f36fb
 	github.com/stretchr/testify v1.6.1
@@ -31,7 +32,6 @@ require (
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4 // indirect
 	google.golang.org/grpc v1.33.2
 	google.golang.org/protobuf v1.25.0
-	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gorm.io/driver/postgres v1.0.5
 	gorm.io/gorm v1.20.7
 )

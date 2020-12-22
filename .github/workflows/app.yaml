@@ -18,8 +18,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-#    - name: Tests
-#      run: go test ./...
+    - name: Tests
+      run: go test ./...
+
+    - name: Linter golangci
+      run: golangci-lint run --disable-all -E errcheck
 
     - name: Build
       run: make build

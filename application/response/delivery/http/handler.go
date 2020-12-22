@@ -84,7 +84,7 @@ func (r *ResponseHandler) CreateResponse(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -125,7 +125,7 @@ func (r *ResponseHandler) UpdateStatus(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(pResponse, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -157,7 +157,7 @@ func (r *ResponseHandler) handlerGetAllResponses(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListResponseWithTitle(responses), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -176,7 +176,7 @@ func (r *ResponseHandler) handlerGetAllResumeWithoutResponse(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(resumes), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -194,7 +194,7 @@ func (r *ResponseHandler) handlerGetAllVacancyWithoutResponse(ctx *gin.Context) 
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListVacancy(vacancies), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -314,6 +314,6 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(&notifications, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }

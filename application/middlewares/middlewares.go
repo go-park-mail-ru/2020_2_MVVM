@@ -53,7 +53,7 @@ func Recovery(log *logger.Logger) gin.HandlerFunc {
 					err2 = fmt.Errorf("%v", v)
 				}
 				err2 = fmt.Errorf("error: %s : %w ", string(debug.Stack()), err2)
-				c.AbortWithError(http.StatusInternalServerError, err2)
+				_ = c.AbortWithError(http.StatusInternalServerError, err2)
 			}
 		}()
 		c.Next()
@@ -138,7 +138,7 @@ func AuthRequired(config common.AuthCookieConfig, client authmicro.AuthClient) g
 		}
 		sessionInfo, err := client.Check(sessionID)
 		if err != nil {
-			c.AbortWithError(http.StatusUnauthorized, errors.Errorf("Failed to parse session id"))
+			_ = c.AbortWithError(http.StatusUnauthorized, errors.Errorf("Failed to parse session id"))
 			return
 		}
 		c.Set("session", sessionInfo)

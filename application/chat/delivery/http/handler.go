@@ -48,7 +48,7 @@ func (r *ChatHandler) PollingMessages(ctx *gin.Context) {
 			ChatHistory:     *chat,
 		}
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(result, ctx.Writer); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 }
@@ -91,7 +91,7 @@ func (r *ChatHandler) HandlerGetChatByID(ctx *gin.Context) {
 	result := r.GetChatByID(ctx)
 	if result != nil {
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(result, ctx.Writer); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 }
@@ -100,7 +100,7 @@ func (r *ChatHandler) HandlerListChats(ctx *gin.Context) {
 	result := r.ListChats(ctx)
 	if result != nil {
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListChatSummary(*result), ctx.Writer); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 }
@@ -178,7 +178,7 @@ func (r *ChatHandler) CreateMessage(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(newMes, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
