@@ -150,17 +150,17 @@ func TestGetVacancyList(t *testing.T) {
 	assert.Equal(t, result, dummies.ListVac)
 
 	//employer
-	query2 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE empl_id = (.*) ORDER BY date_create LIMIT 2"
+	query2 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE empl_id = (.*) ORDER BY date_create desc LIMIT 2"
 	mock.ExpectQuery(query2).
 		WithArgs(dummies.ID).
 		WillReturnRows(makeVacRow(dummies.Vacancy))
 
-	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, 1)
+	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, vacancy.ByEmpId)
 	assert.Nil(t, err)
 	assert.Equal(t, result, dummies.ListVac)
 
 	//company
-	query3 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE comp_id = (.*) ORDER BY date_create LIMIT 2"
+	query3 := "SELECT \\* FROM \"main\".\"vacancy\" WHERE comp_id = (.*) ORDER BY date_create desc LIMIT 2"
 	mock.ExpectQuery(query3).
 		WithArgs(dummies.ID).
 		WillReturnRows(makeVacRow(dummies.Vacancy))

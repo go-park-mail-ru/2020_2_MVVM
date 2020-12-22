@@ -360,7 +360,7 @@ func TestGetRecommendedVacCnt(t *testing.T) {
 	pairs := []vacancy2.Pair{pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair,
 		pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair}
 	vacMock.On("GetPreferredSpheres", ID).Return(pairs, nil).Twice()
-	query := "select count(.*) from main.vacancy where date_create >= (.*) and sphere in .*"
+	query := "select count(.*) from main.vacancy where date(.*) >= (.*) and sphere in .*"
 	var count uint = 0
 	startDate := "20-20-2020"
 	step := 2
@@ -404,7 +404,7 @@ func TestGetRecommendedVacancies(t *testing.T) {
 		pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair, pair}
 	vacMock.On("GetPreferredSpheres", ID).Return(pairs, nil).Once()
 
-	query := "SELECT \\* FROM \"main\".\"vacancy\" WHERE date_create >= (.*) and sphere in (.*) LIMIT (.*)"
+	query := "SELECT \\* FROM \"main\".\"vacancy\" WHERE date(.*) >= (.*) and sphere in (.*) LIMIT (.*)"
 
 	startDate := "20-20-2020"
 	step := 2

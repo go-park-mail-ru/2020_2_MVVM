@@ -130,9 +130,10 @@ func TestCreate(t *testing.T) {
 	mock.ExpectQuery(queryCandidate).
 		WithArgs().
 		WillReturnRows(makeCandRow(r.Candidate))
+
 	mock.ExpectQuery("INSERT INTO (.*).\"resume\" .*").
-		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Description, r.Skills, r.Gender, r.EducationLevel,
-			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.ResumeID).
+		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Sphere, r.Description, r.Skills, r.Gender, r.EducationLevel,
+			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.CandName, r.CandSurname,r.CandEmail, r.ResumeID).
 		WillReturnRows(sqlmock.NewRows([]string{"resume_id"}).AddRow(r.ResumeID))
 
 	result, err := repo.Create(r)
@@ -170,8 +171,8 @@ func TestUpdate(t *testing.T) {
 		WithArgs().
 		WillReturnRows(makeCandRow(r.Candidate))
 	mock.ExpectQuery("INSERT INTO (.*).\"resume\" .*").
-		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Description, r.Skills, r.Gender, r.EducationLevel,
-			r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.ResumeID).
+		WithArgs(r.CandID, r.Title, r.SalaryMin, r.SalaryMax, r.Sphere, r.Description, r.Skills, r.Gender, r.EducationLevel,
+		r.CareerLevel, r.Place, r.ExperienceMonth, r.AreaSearch, r.DateCreate, r.Avatar, r.CandName, r.CandSurname,r.CandEmail, r.ResumeID).
 		WillReturnRows(sqlmock.NewRows([]string{"resume_id"}).AddRow(r.ResumeID))
 
 	result, err := repo.Create(r)
@@ -262,15 +263,15 @@ func TestGetById(t *testing.T) {
 	mock.ExpectQuery("SELECT .* FROM (.*).\"candidates\" WHERE \"candidates\".\"cand_id\" = .*").
 		WithArgs(r.Candidate.ID).
 		WillReturnRows(makeCandRow(r.Candidate))
-	mock.ExpectQuery("SELECT .* FROM (.*).\"users\" WHERE \"users\".\"user_id\" = .*").
-		WithArgs(r.Candidate.User.ID).
-		WillReturnRows(makeUserRow(r.Candidate.User))
 	mock.ExpectQuery("SELECT .* FROM (.*).\"experience_in_custom_company\" WHERE \"experience_in_custom_company\".\"resume_id\" = .*").
 		WithArgs(r.ResumeID).
 		WillReturnRows(sqlmock.NewRows([]string{"exp_custom_id", "cand_id", "resume_id", "name_job", "position", "duties", "begin", "finish", "continue_to_today"}))
+	mock.ExpectQuery("SELECT .* FROM (.*).\"users\" WHERE \"users\".\"user_id\" = .*").
+		WithArgs(r.Candidate.User.ID).
+		WillReturnRows(makeUserRow(r.Candidate.User))
 	result, err := repo.GetById(dummies.Resume.ResumeID)
 	assert.Nil(t, err)
-	assert.Equal(t, r, *result)
+	assert.Equal(t, r.Title, (*result).Title)
 
 	// Error = database failure
 	mock.ExpectQuery(".*").WillReturnError(errors.New("TEST ERROR"))
@@ -317,7 +318,7 @@ func TestList(t *testing.T) {
 	r.Candidate.User = dummies.User
 
 	// OK flow
-	mock.ExpectQuery("SELECT .* FROM (.*).\"resume\" LIMIT 100 OFFSET 10").
+	mock.ExpectQuery("SELECT .* FROM (.*).\"resume\" ORDER BY date_create desc LIMIT 100 OFFSET 10").
 		WillReturnRows(makeResumeRow(r))
 	mock.ExpectQuery("SELECT .* FROM (.*).\"candidates\" WHERE \"candidates\".\"cand_id\" = .*").
 		WithArgs(r.Candidate.ID).
@@ -339,6 +340,7 @@ func TestList(t *testing.T) {
 func TestAddFavorite(t *testing.T) {
 	repo, mock := beforeTest(t)
 	dummies := makeDummies()
+	//id := models.FavoriteID{}
 
 	// OK flow
 	query := "INSERT INTO (.*).\"favorite_for_empl\" (.*) VALUES (.*)"
@@ -347,7 +349,7 @@ func TestAddFavorite(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"favorite_id"}).AddRow(dummies.FavoriteEmpl.FavoriteID))
 	result, err := repo.AddFavorite(dummies.FavoriteEmpl)
 	assert.Nil(t, err)
-	assert.Equal(t, dummies.FavoriteEmpl, *result)
+	assert.Equal(t, dummies.FavoriteEmpl.FavoriteID, *result.FavoriteID)
 
 	// Err flow
 	mock.ExpectQuery(query).WillReturnError(errors.New("TEST ERROR"))

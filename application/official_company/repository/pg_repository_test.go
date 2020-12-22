@@ -197,4 +197,3 @@ func TestSearch(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }
-
