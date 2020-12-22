@@ -48,8 +48,8 @@ jobs:
 
     - name: Configs
       run: |
-      'mkdir configs'
-      'echo "MAIN_CONFIG" > configs/config.yaml'
+        mkdir configs
+        echo "MAIN_CONFIG" > configs/config.yaml
       shell: bash
       env:
         MAIN_CONFIG: ${{secrets.MAIN_CONFIG}}
