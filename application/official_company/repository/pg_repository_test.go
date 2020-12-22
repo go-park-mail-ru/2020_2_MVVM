@@ -179,8 +179,8 @@ func TestSearch(t *testing.T) {
 
 	// OK flow
 	query := "SELECT .* FROM (.*).\"official_companies\" WHERE " +
-		"count_company >= (.*) AND area_search IN (.*) AND " +
-		"LOWER(.*) LIKE (.*) AND spheres @> (.*) ORDER BY name"
+		"count_vacancy >= (.*) AND area_search IN (.*) AND " +
+		"LOWER(.*) LIKE (.*) AND spheres && (.*) ORDER BY name"
 
 	mock.ExpectQuery(query).
 		WithArgs().
