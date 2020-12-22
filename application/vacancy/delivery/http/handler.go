@@ -82,7 +82,7 @@ func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 		}
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vac}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -130,7 +130,7 @@ func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
 		}
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -152,7 +152,7 @@ func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -204,7 +204,7 @@ func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespTop{TopSpheres: spheresInfo, NewVacCnt: vacInfo.NewVacCnt, AllVacCnt: vacInfo.AllVacCnt}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -259,7 +259,7 @@ func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
 		}
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -291,6 +291,6 @@ func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }

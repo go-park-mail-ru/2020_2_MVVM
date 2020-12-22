@@ -64,7 +64,7 @@ func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
 
 	resp := models.RespUser{User: userById}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -88,7 +88,7 @@ func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 
 	resp := models.RespUser{User: user}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -99,18 +99,18 @@ func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		//ctx.AbortWithError(http.StatusBadRequest, err)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetCandByID(req.UserID)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		//_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	resp := models.RespUser{User: user}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -121,18 +121,18 @@ func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		//ctx.AbortWithError(http.StatusBadRequest, err)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	user, err := u.UserUseCase.GetEmplByID(req.UserID)
 	if err != nil {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
-		//ctx.AbortWithError(http.StatusInternalServerError, err)
+		//_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 	resp := models.RespUser{User: user}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -173,7 +173,7 @@ func (u *UserHandler) LoginHandler(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -196,7 +196,7 @@ func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -256,7 +256,7 @@ func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
 	}
 	resp := models.RespUser{User: userNew}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -301,12 +301,12 @@ func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
 	}
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 	resp := models.RespUser{User: userUpdate}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 

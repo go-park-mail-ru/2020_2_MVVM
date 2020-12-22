@@ -62,7 +62,7 @@ func WriteErrResponse(ctx *gin.Context, code int, message string) {
 	}
 	ctx.Status(code)
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 

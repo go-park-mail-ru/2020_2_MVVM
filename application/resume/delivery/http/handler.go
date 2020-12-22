@@ -77,7 +77,7 @@ func (r *ResumeHandler) GetMineResume(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(result), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -140,7 +140,7 @@ func (r *ResumeHandler) CreateResume(ctx *gin.Context) {
 	resp.Resume = *result
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -174,7 +174,7 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 	resp.Resume = *result
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -196,7 +196,7 @@ func (r *ResumeHandler) GetResumePage(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(resumes), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -242,7 +242,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	}
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, resumePath+result.ResumeID.String()); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 
@@ -255,7 +255,7 @@ func (r *ResumeHandler) UpdateResume(ctx *gin.Context) {
 	resp.Resume = *result
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -270,7 +270,7 @@ func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	searchParams.StartLimit = request
 	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
-		//ctx.AbortWithError(http.StatusBadRequest, err)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 	if err := common.ReqValidation(&searchParams); err != nil {
@@ -279,13 +279,13 @@ func (r *ResumeHandler) SearchResume(ctx *gin.Context) {
 	}
 	found, err := r.UseCaseResume.Search(searchParams)
 	if err != nil {
-		//ctx.AbortWithError(http.StatusBadRequest, err)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
 		common.WriteErrResponse(ctx, http.StatusBadRequest, common.DataBaseErr)
 		return
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(found), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -321,7 +321,7 @@ func (r *ResumeHandler) AddFavorite(ctx *gin.Context) {
 	//}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(*favorite, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -352,7 +352,7 @@ func (r *ResumeHandler) RemoveFavorite(ctx *gin.Context) {
 	}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -372,7 +372,7 @@ func (r *ResumeHandler) GetAllFavoritesResume(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefResumeInfo(emplFavoriteResume), ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }
 
@@ -397,19 +397,19 @@ func (r *ResumeHandler) GetFavorite(ctx *gin.Context) {
 	if emplID != uuid.Nil {
 		favorite, err = r.UseCaseResume.GetFavoriteByResume(emplID, resumeID)
 		if err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 	}
 
 	if favorite == nil || favorite.FavoriteID == uuid.Nil {
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.FavoriteID{FavoriteID: nil}, ctx.Writer); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	} else {
 		if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.FavoriteID{FavoriteID: &favorite.FavoriteID},
 			ctx.Writer); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 }
@@ -458,6 +458,6 @@ func (r *ResumeHandler) MakePdf(ctx *gin.Context) {
 	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + resumeID.String() + ".pdf"}
 
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(link, ctx.Writer); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }

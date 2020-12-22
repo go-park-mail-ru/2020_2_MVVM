@@ -216,7 +216,7 @@ func compHandlerCommon(c *CompanyHandler, ctx *gin.Context, treatmentType int) {
 	}
 	if file != nil {
 		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 		}
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.Resp{Company: compNew}, ctx.Writer); err != nil {
