@@ -21,8 +21,11 @@ jobs:
     - name: Tests
       run: go test ./...
 
-    - name: Linter golangci
-      run: golangci-lint run --disable-all -E errcheck
+#    - name: Linter golangci
+#      uses: golangci/golangci-lint-action@v2
+#      with:
+#        version: v1.29
+#        run: golangci-lint run --disable-all -E errcheck
 
     - name: Build
       run: make build
