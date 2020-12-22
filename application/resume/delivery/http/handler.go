@@ -164,6 +164,8 @@ func (r *ResumeHandler) GetResumeByID(ctx *gin.Context) {
 		return
 	}
 
+	result.Title = "kek"
+
 	resp := resume2.Response{
 		Educations:       result.Education,
 		CustomExperience: result.ExperienceCustomComp,
