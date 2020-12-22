@@ -45,6 +45,13 @@ jobs:
         key: ${{ secrets.PRIVATE_KEY }}
         source: "bin/app"
         target: "/home/ubuntu/backend/"
+
+    - name: Configs
+      run: 'echo "MAIN_CONFIG" > configs/config.yaml'
+      shell: bash
+      env:
+        MAIN_CONFIG: ${{secrets.MAIN_CONFIG}}
+
     - name: chmod
       uses: appleboy/ssh-action@master
       with:
