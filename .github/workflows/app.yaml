@@ -28,9 +28,9 @@ jobs:
       with:
         name: bin
         path: |
-          ./auth
-          ./vacancy
-          ./app
+          auth
+          vacancy
+          app
 
   deploy:
     runs-on: ubuntu-latest
