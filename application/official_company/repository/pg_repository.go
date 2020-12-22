@@ -54,7 +54,7 @@ func (p *pgRepository) SearchCompanies(params models.CompanySearchParams) ([]mod
 
 	err := p.db.Table("main.official_companies").Scopes(func(q *gorm.DB) *gorm.DB {
 		if params.VacCount > 0 {
-			q = q.Where("count_company >= (?)", params.VacCount)
+			q = q.Where("count_vacancy >= (?)", params.VacCount)
 		}
 		if len(params.AreaSearch) != 0 {
 			q = q.Where("area_search IN (?)", params.AreaSearch)
@@ -63,12 +63,12 @@ func (p *pgRepository) SearchCompanies(params models.CompanySearchParams) ([]mod
 			q = q.Where("LOWER(name) LIKE (?)", "%"+params.KeyWords+"%")
 		}
 		if len(params.Sphere) != 0 {
-			q = q.Where("spheres @> (?)", pq.Array(params.Sphere))
+			q = q.Where("spheres && (?)", pq.Array(params.Sphere))
 		}
 		if params.OrderBy != "" {
 			return q.Order(params.OrderBy)
 		}
-		return q
+		return q.Order("date_create desc")
 	}).Find(&compList).Error
 	if err != nil {
 		return nil, fmt.Errorf("error in companies list selection with searchParams: %s", err)
