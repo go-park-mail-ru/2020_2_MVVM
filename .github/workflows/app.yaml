@@ -37,22 +37,22 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: bin
+
+    - name: Configs
+      run: |
+        echo "$MAIN_CONFIG" > bin/config.yaml
+      shell: bash
+      env:
+        MAIN_CONFIG: ${{secrets.MAIN_CONFIG}}
+
     - name: Transfer bin file to server
       uses: appleboy/scp-action@v0.0.10
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
-        source: "bin/app"
+        source: "bin/*"
         target: "/home/ubuntu/backend/"
-
-    - name: Configs
-      run: |
-        mkdir configs
-        echo "MAIN_CONFIG" > configs/config.yaml
-      shell: bash
-      env:
-        MAIN_CONFIG: ${{secrets.MAIN_CONFIG}}
 
     - name: chmod
       uses: appleboy/ssh-action@master
@@ -60,7 +60,11 @@ jobs:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.PRIVATE_KEY }}
-        script: chmod 755 /home/ubuntu/backend/bin/app
+        script: |
+          cd /home/ubuntu/backend/bin
+          chmod 755 app
+          mkdir configs
+          mv *.yaml configs/
 #    - name: restart service
 #      uses: appleboy/ssh-action@master
 #      with:
