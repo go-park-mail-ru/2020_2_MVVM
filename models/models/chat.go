@@ -67,13 +67,13 @@ type ChatHistory struct {
 }
 
 type ChatSummary struct {
-	ChatID      uuid.UUID `json:"chat_id"`
-	TotalUnread uint      `json:"total_unread"`
-	Name        string    `json:"name"`
-	Surname     string    `json:"surname"`
-	Avatar      string    `json:"avatar"`
-	AvatarCand  string
-	AvatarEmpl  string
+	ChatID      uuid.UUID   `json:"chat_id"`
+	TotalUnread uint        `json:"total_unread"`
+	Name        string      `json:"name"`
+	Surname     string      `json:"surname"`
+	Avatar      string      `json:"avatar"`
+	AvatarCand  string      `json:"-"`
+	AvatarEmpl  string      `json:"-"`
 	Type        string      `json:"type"`
 	Message     interface{} `json:"message"`
 }

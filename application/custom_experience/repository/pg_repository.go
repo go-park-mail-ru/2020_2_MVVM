@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/google/uuid"
@@ -46,8 +47,14 @@ func (p *pgRepository) Create(experience models.ExperienceCustomComp) (*models.E
 
 
 func (p *pgRepository) DropAllFromResume(resumeID uuid.UUID) error {
-	//var experience models.ExperienceCustomComp
-	//_, err := p.db.Model(&experience).Where("resume_id = ?", resumeID).Delete()
-	//return err
+	exp := models.ExperienceCustomComp{}
+	err := p.db.
+		Where("resume_id = ?", resumeID).
+		Delete(&exp).
+		Error
+	if err != nil {
+		return fmt.Errorf("error in delete resume experience with id: %s, err: %w", resumeID, err)
+	}
 	return nil
+
 }

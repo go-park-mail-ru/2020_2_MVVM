@@ -77,10 +77,10 @@ func (u *ResumeUseCase) Update(resume models.Resume) (*models.Resume, error) {
 	if resume.Sphere == nil {
 		resume.Sphere = &common.DefaultSphere
 	}
-	//err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
-	//if err != nil {
-	//	return nil, err
-	//}
+	err = u.customExpUseCase.DropAllFromResume(resume.ResumeID)
+	if err != nil {
+		return nil, err
+	}
 	return u.strg.Update(resume)
 }
 
@@ -90,7 +90,6 @@ func (u *ResumeUseCase) GetAllUserResume(userid uuid.UUID) ([]models.BriefResume
 		err = fmt.Errorf("error in get my resume: %w", err)
 		return nil, err
 	}
-
 	return DoBriefRespResume(r)
 }
 
@@ -115,6 +114,10 @@ func (u *ResumeUseCase) GetById(id uuid.UUID) (*models.Resume, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+func (u *ResumeUseCase) GetByIdWithCand(id uuid.UUID) (*models.Resume, error) {
+	return u.strg.GetByIdWithCand(id)
 }
 
 func (u *ResumeUseCase) List(start, limit uint) ([]models.BriefResumeInfo, error) {

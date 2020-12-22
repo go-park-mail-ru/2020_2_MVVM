@@ -178,8 +178,8 @@ func (u *UseCaseResponse) GetAllEmployerResponses(emplID uuid.UUID, respIds []uu
 			return nil, err
 		}
 		responses[i].ResumeName = res.Title
-		responses[i].CandName = res.Candidate.User.Name
-		responses[i].CandSurname = res.Candidate.User.Surname
+		responses[i].CandName = res.CandName
+		responses[i].CandSurname = res.CandSurname
 	}
 	return responses, nil
 }
