@@ -1,5 +1,7 @@
 .PHONY: build
 build:
+	go build -o auth .application/microservices/auth/cmd
+	go build -o vacancy ./application/microservices/vacancy/cmd
 	go build -o app ./cmd/api
 
 
