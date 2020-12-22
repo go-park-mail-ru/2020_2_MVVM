@@ -24,7 +24,7 @@ jobs:
       run: make build
 
     - name: Upload build result
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: bin
         path: ./build/*
@@ -34,7 +34,7 @@ jobs:
     needs: build
     steps:
     - name: Download bin file
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
       with:
         name: bin
 
