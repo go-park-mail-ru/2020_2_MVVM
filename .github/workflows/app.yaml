@@ -3,8 +3,6 @@ name: Simple Build
 on:
   push:
     branches: [ rk4 ]
-  pull_request:
-    branches: [ rk4 ]
 
 jobs:
   build:
@@ -71,10 +69,13 @@ jobs:
           chmod 755 app
           mkdir configs
           mv *.yaml configs/
-#    - name: restart service
-#      uses: appleboy/ssh-action@master
-#      with:
-#        host: ${{ secrets.HOST }}
-#        username: ${{ secrets.USERNAME }}
-#        key: ${{ secrets.PRIVATE_KEY }}
-#        script: sudo systemctl restart api.service
+    - name: restart service
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        script: |
+          sudo systemctl restart auth.service
+          sudo systemctl restart vacancy.service
+          sudo systemctl restart api.service
