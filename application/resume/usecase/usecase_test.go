@@ -243,7 +243,6 @@ func TestResumeRemoveFavorite(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-//GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
 func TestResumeGetAllEmplFavoriteResume(t *testing.T) {
 	mockRepo, _, _, _, usecase := beforeTest(t)
 
@@ -254,6 +253,27 @@ func TestResumeGetAllEmplFavoriteResume(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Equal(t, answer, listBrief)
+}
+
+func TestDeleteResume(t *testing.T) {
+	mockRepo, _, _, _, usecase := beforeTest(t)
+	id := uuid.New()
+	mockRepo.On("Delete", id, id).Return(nil)
+	err := usecase.DeleteResume(id, id)
+	assert.Nil(t, err)
+}
+
+func TestMakePdf(t *testing.T) {
+	mockRepo, _, _, _, usecase := beforeTest(t)
+	id := uuid.New()
+	res := models.Resume{}
+
+	mockRepo.On("GetByIdWithCand", id).Return(&res, nil).Once()
+	mockRepo.On("GetByIdWithCand", id).Return(nil, assert.AnError).Once()
+	err1 := usecase.MakePdf(id)
+	err2 := usecase.MakePdf(id)
+	assert.Error(t, err1)
+	assert.Error(t, err2)
 }
 
 func TestNewUseCase(t *testing.T) {

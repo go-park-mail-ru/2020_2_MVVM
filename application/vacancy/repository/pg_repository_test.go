@@ -274,3 +274,29 @@ func TestSearchVacancies(t *testing.T) {
 	assert.Nil(t, res)
 	assert.Error(t, err2)
 }
+
+func TestCreateVacancy(t *testing.T) {
+	repo, mock := beforeTest(t)
+	vac := models.Vacancy{Title: "test"}
+	query := "SELECT \\* FROM \"main\".\"employers\" WHERE empl_id = (.*) LIMIT 1"
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnRows(sqlmock.NewRows([]string{"empl_id", "comp_id"}).AddRow(vac.EmpID, vac.CompID))
+	res, err1 := repo.CreateVacancy(vac)
+	assert.Nil(t, res)
+	assert.Equal(t, err1, errors.New("error: employer must have company for vacancy creation"))
+	vac.CompID = uuid.New()
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnRows(sqlmock.NewRows([]string{"empl_id", "comp_id"}).AddRow(vac.EmpID, vac.CompID))
+	res, err2 := repo.CreateVacancy(vac)
+	assert.Nil(t, res)
+	assert.Error(t, err2)
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnError(errors.New("TEST ERROR"))
+	res, err3 := repo.CreateVacancy(vac)
+	assert.Nil(t, res)
+	assert.Error(t, err3)
+
+}

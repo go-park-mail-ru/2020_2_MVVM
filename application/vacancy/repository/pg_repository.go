@@ -51,10 +51,6 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 		err = fmt.Errorf("error in inserting vacancy with title: %s : error: %w", vac.Title, err)
 		return nil, err
 	}
-	//err = p.db.Table("main.official_companies").Where("comp_id", vac.CompID).UpdateColumn("count_vacancy", gorm.Expr("count_vacancy + ?", 1)).Error
-	//if err != nil {
-	//	return nil, fmt.Errorf("error in update company with id:  %s vacCount  : error: %w", company.ID.String(), err)
-	//}
 	return &vac, nil
 }
 
