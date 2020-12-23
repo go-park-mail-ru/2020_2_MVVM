@@ -167,6 +167,26 @@ func TestGetRecommendation(t *testing.T) {
 	assert.Error(t, errNotNil)
 }
 
+func TestGetVacancyTopSpheres(t *testing.T) {
+	var cnt int32 = 5
+	spheres := []models.Sphere{{Sph: 0, VacCnt: 1}}
+	vacTopCnt := models.VacTopCnt{AllVacCnt: 1, NewVacCnt: 1}
+	mockRepo, useCase := beforeTest()
+	mockRepo.On("GetVacancyTopSpheres", cnt).Return(spheres, &vacTopCnt, nil)
+	ansSph, ansTop, err := useCase.GetVacancyTopSpheres(cnt)
+	assert.Nil(t, err)
+	assert.Equal(t, ansSph, spheres)
+	assert.Equal(t, vacTopCnt, *ansTop)
+}
+
+func TestDeleteVacancy(t *testing.T) {
+	id := uuid.New()
+	mockRepo, useCase := beforeTest()
+	mockRepo.On("DeleteVacancy", id, id).Return(nil)
+	err := useCase.DeleteVacancy(id, id)
+	assert.Nil(t, err)
+}
+
 func TestNewVacUseCase(t *testing.T) {
 	vacancyRep := RepositoryVacancy.NewPgRepository(nil)
 	vac := NewVacUseCase(nil, nil, vacancyRep)

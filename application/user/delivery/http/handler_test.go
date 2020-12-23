@@ -410,3 +410,32 @@ func TestRegister(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteUserHandler(t *testing.T) {
+	td := beforeTest()
+	td.router.POST("/", td.userHandler.CreateUserHandler)
+
+	id := uuid.New()
+	idErr := uuid.New()
+	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
+	td.mockSession.On("GetUserID").Return(id).Once()
+	td.mockSession.On("GetUserID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetUserID").Return(idErr).Once()
+	td.mockSession.On("GetSessionID").Return(id.String())
+	td.mockAuth.On("Logout", id.String()).Return(nil)
+	td.mockUseCase.On("DeleteUser", id).Return(nil).Once()
+	td.mockUseCase.On("DeleteUser", idErr).Return(assert.AnError).Once()
+
+	testExpectedBody := []interface{}{nil, common.SessionErr, common.DataBaseErr}
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for CreateUser handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodDelete, userUrlGroup, nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, td.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}

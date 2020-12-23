@@ -195,6 +195,9 @@ func (v *VacancyHandler) DeleteVacancyHandler(ctx *gin.Context) {
 		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
 func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {

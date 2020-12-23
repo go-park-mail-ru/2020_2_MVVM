@@ -179,6 +179,15 @@ func TestUserGetCandidateByID(t *testing.T) {
 	assert.Error(t, errNotNil)
 }
 
+func TestDeleteUser(t *testing.T) {
+	mockRepo, usecase := beforeTest(t)
+
+	id := uuid.Nil
+	mockRepo.On("DeleteUser", id).Return(nil)
+	err := usecase.DeleteUser(id)
+	assert.Nil(t, err)
+}
+
 func TestNewUserUseCase(t *testing.T) {
 	UserRep := UserRepository.NewPgRepository(nil)
 	userUseCase := NewUserUseCase(nil, nil, UserRep)

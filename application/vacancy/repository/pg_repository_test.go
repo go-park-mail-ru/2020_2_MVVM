@@ -11,6 +11,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"testing"
+	"time"
 )
 
 type Dummies struct {
@@ -39,7 +40,7 @@ func makeDummies() Dummies {
 		CompID: ID,
 	}
 	return Dummies{
-		ID: ID,
+		ID:      ID,
 		Vacancy: vac,
 		ListVac: []models.Vacancy{vac},
 	}
@@ -136,7 +137,7 @@ func TestUpdateVacancy(t *testing.T) {
 func TestGetVacancyList(t *testing.T) {
 	repo, mock := beforeTest(t)
 	dummies := makeDummies()
-	var  start uint = 0
+	var start uint = 0
 	var limit uint = 2
 
 	// all
@@ -178,4 +179,98 @@ func TestGetVacancyList(t *testing.T) {
 	result, err = repo.GetVacancyList(start, limit, dummies.Vacancy.ID, -1)
 	assert.Nil(t, result)
 	assert.Error(t, err)
+}
+
+func TestDeleteVacancy(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	query := "DELETE FROM \"main\".\"vacancy\" WHERE vac_id = (.*) AND empl_id = (.*)"
+	dvacancy := dummies.Vacancy
+	mock.ExpectQuery(query).
+		WithArgs(nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	err2 := repo.DeleteVacancy(dvacancy.ID, dvacancy.ID)
+	assert.Error(t, err2)
+}
+
+func TestGetRecommendation(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	query := "SELECT \\* FROM \"main\".\"vacancy\" WHERE sphere IN (.*) ORDER BY date_create desc LIMIT 1 OFFSET 1"
+	mock.ExpectQuery(query).
+		WithArgs(0).
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+	res, err1 := repo.GetRecommendation(1, 1, 0, []int{0})
+	assert.Nil(t, err1)
+	assert.Equal(t, []models.Vacancy{dummies.Vacancy}, res)
+	mock.ExpectQuery(query).
+		WithArgs(nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	res, err2 := repo.GetRecommendation(1, -1, 0, []int{0})
+	assert.Nil(t, res)
+	assert.Error(t, err2)
+}
+
+func TestGetPreferredSalary(t *testing.T) {
+	repo, mock := beforeTest(t)
+
+	query := "select avg(.*) as avg from main.resume " +
+		"join main.candidates on resume.cand_id = candidates.cand_id where user_id = (.*) and salary_min>0 and salary_max>0"
+	mock.ExpectQuery(query).
+		WithArgs(uuid.Nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	res, err2 := repo.GetPreferredSalary(uuid.Nil)
+	assert.Nil(t, res)
+	assert.Nil(t, err2)
+}
+
+func TestGetPreferredSpheres(t *testing.T) {
+	repo, mock := beforeTest(t)
+
+	rec := models.Recommendation{}
+	id := uuid.New()
+	query := "SELECT \\* FROM \"main\".\"recommendation\" WHERE user_id = (.*)"
+	mock.ExpectQuery(query).
+		WithArgs(id).
+		WillReturnRows(sqlmock.NewRows([]string{"rec_id"}).AddRow(rec.ID))
+	res, err1 := repo.GetPreferredSpheres(id)
+	//assert.Equal(t, rec, res)
+	assert.Nil(t, err1)
+	mock.ExpectQuery(query).
+		WithArgs(uuid.Nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	res, err2 := repo.GetPreferredSpheres(uuid.Nil)
+	assert.Nil(t, res)
+	assert.Error(t, err2)
+}
+
+func TestAddRecommendation(t *testing.T) {
+	repo, mock := beforeTest(t)
+	query := "insert into main.recommendation (user_id, sphere0) values (.*) ON CONFLICT (.*) DO UPDATE SET (.*)"
+	mock.ExpectQuery(query).
+		WithArgs(uuid.Nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	err2 := repo.AddRecommendation(uuid.Nil, 0)
+	assert.Error(t, err2)
+}
+
+func TestSearchVacancies(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+	params := models.VacancySearchParams{Sphere: []int{0, 1}, StartDate: time.Now().String()}
+	query := "SELECT \\* FROM \"main\".\"vacancy\" WHERE date(.*) >= (.*) AND sphere IN (.*) ORDER BY date_create desc"
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnRows(makeVacRow(dummies.Vacancy))
+	res, err1 := repo.SearchVacancies(params)
+	assert.Equal(t, []models.Vacancy{dummies.Vacancy}, res)
+	assert.Nil(t, err1)
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnError(errors.New("TEST ERROR"))
+	res, err2 := repo.SearchVacancies(params)
+	assert.Nil(t, res)
+	assert.Error(t, err2)
 }

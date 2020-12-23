@@ -342,6 +342,15 @@ func TestGetCandidateByID(t *testing.T) {
 	assert.Error(t, err)
 }
 
-//GetEmployerByID(id string) (*models.Employer, error)
-//GetCandidateByID(id string) (*models.Candidate, error)
-//UpdateEmployer(employer models.Employer) (*models.Employer, error)
+func TestDeleteUser(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	query := "DELETE FROM \"main\".\"users\" WHERE user_id = (.*)"
+	duser := dummies.User
+	mock.ExpectQuery(query).
+		WithArgs(nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	err2 := repo.DeleteUser(duser.ID)
+	assert.Error(t, err2)
+}

@@ -207,7 +207,6 @@ func (p *pgRepository) GetPreferredSpheres(userID uuid.UUID) ([]vacancy2.Pair, e
 
 func (p *pgRepository) GetPreferredSalary(userID uuid.UUID) (*float64, error) {
 	preferredSalary := new(float64)
-	//sal := &preferredSalary
 	err := p.db.Raw(`select avg(main.resume.salary_max - main.resume.salary_min) as avg
 		from main.resume
 		join main.candidates on resume.cand_id = candidates.cand_id

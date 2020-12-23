@@ -70,6 +70,9 @@ func getRespStruct(entity interface{}) interface{} {
 	case []models.Vacancy:
 		vacList := entity.([]models.Vacancy)
 		return vacancy2.RespList{vacList}
+	case vacancy2.RespTop:
+		resp := entity.(vacancy2.RespTop)
+		return resp
 	case string:
 		err := entity.(string)
 		return models.RespError{Err: err}
@@ -307,3 +310,81 @@ func TestGetRecommendationUserVacancy(t *testing.T) {
 	}
 }
 
+func TestGetVacancyTopSpheresAll(t *testing.T) {
+	r, mockVacClient := testData.router, testData.mockVacClient
+	spheresInfo := []models.Sphere{{Sph: 0, VacCnt: 42}}
+	vacInfo := models.VacTopCnt{AllVacCnt: 1, NewVacCnt: 1}
+
+	mockVacClient.On("GetVacancyTopSpheres", int32(vacancy.TopAll)).Return(spheresInfo, &vacInfo, nil).Once()
+	mockVacClient.On("GetVacancyTopSpheres", int32(vacancy.TopAll)).Return(nil, nil, assert.AnError).Once()
+	testExpectedBody := []interface{}{vacancy2.RespTop{TopSpheres: spheresInfo, NewVacCnt: vacInfo.NewVacCnt, AllVacCnt: vacInfo.AllVacCnt}, common.DataBaseErr}
+	testStatus := []int{http.StatusOK, http.StatusInternalServerError}
+	url := fmt.Sprintf("%stop", vacUrlGroup)
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for getVacancyTopSpheresAll handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodGet, url, nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestGetVacancyTopSpheres(t *testing.T) {
+	r, mockVacClient := testData.router, testData.mockVacClient
+	spheresInfo := []models.Sphere{{Sph: 0, VacCnt: 42}}
+	vacInfo := models.VacTopCnt{AllVacCnt: 1, NewVacCnt: 1}
+
+	mockVacClient.On("GetVacancyTopSpheres", int32(5)).Return(spheresInfo, &vacInfo, nil).Once()
+	mockVacClient.On("GetVacancyTopSpheres", int32(5)).Return(nil, nil, assert.AnError).Once()
+	testExpectedBody := []interface{}{vacancy2.RespTop{TopSpheres: spheresInfo, NewVacCnt: vacInfo.NewVacCnt, AllVacCnt: vacInfo.AllVacCnt}, common.EmptyFieldErr, common.DataBaseErr}
+	testUrls := []string{
+		fmt.Sprintf("%stop/%d", vacUrlGroup, 5),
+		fmt.Sprintf("%stop/%s", vacUrlGroup, "err"),
+		fmt.Sprintf("%stop/%d", vacUrlGroup, 5),
+	}
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for getVacancyTopSpheres handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodGet, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testData.httpStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestDeleteVacancyHandler(t *testing.T) {
+	r, mockVacClient := testData.router, testData.mockVacClient
+
+	id := uuid.New()
+	testData.mockSB.On("Build", mock.Anything).Return(testData.mockSession)
+	testData.mockSession.On("GetEmplID").Return(uuid.Nil).Once()
+	testData.mockSession.On("GetEmplID").Return(id).Twice()
+	mockVacClient.On("DeleteVacancy", id, id).Return(nil).Once()
+	mockVacClient.On("DeleteVacancy", id, id).Return(assert.AnError).Once()
+	testExpectedBody := []interface{}{common.SessionErr, nil, common.EmptyFieldErr, common.DataBaseErr}
+	testStatus := []int{http.StatusBadRequest, http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError}
+	testUrls := []string{
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
+		fmt.Sprintf("%s%s", vacUrlGroup, "err"),
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
+	}
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for deleteVacancy handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodDelete, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
