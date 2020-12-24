@@ -197,3 +197,37 @@ func TestSearch(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }
+
+func TestGetAllCompaniesNames(t *testing.T) {
+	repo, mock := beforeTest(t)
+	listComp := []models.BriefCompany{{ID: uuid.New(), Name: "test"}}
+
+	query := "SELECT \\* FROM (.*).\"official_companies\""
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnRows(sqlmock.NewRows([]string{"comp_id","name"}).AddRow(listComp[0].ID.String(), listComp[0].Name))
+	result, err := repo.GetAllCompaniesNames()
+	assert.Nil(t, err)
+	assert.Equal(t, listComp, result)
+	mock.ExpectQuery(query).
+		WithArgs().
+		WillReturnError(errors.New("TEST ERROR"))
+	result, err = repo.GetAllCompaniesNames()
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestDelete(t *testing.T) {
+	repo, _ := beforeTest(t)
+	id := uuid.New()
+	err := repo.DeleteOfficialCompany(id, id)
+	assert.Nil(t, err)
+}
+
+func TestUpdate(t *testing.T) {
+	repo, _ := beforeTest(t)
+	id := uuid.New()
+	comp, err := repo.UpdateOfficialCompany(models.OfficialCompany{}, id)
+	assert.Nil(t, err)
+	assert.Nil(t, comp)
+}
