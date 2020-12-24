@@ -37,11 +37,11 @@ var candidate = models.Candidate{
 	User:   testUser,
 }
 var testResume = models.Resume{
-	ResumeID:  ID,
-	CandID:    ID,
-	Candidate: candidate,
-	Title:     "ID",
-	CandName: "ID",
+	ResumeID:    ID,
+	CandID:      ID,
+	Candidate:   candidate,
+	Title:       "ID",
+	CandName:    "ID",
 	CandSurname: "ID",
 }
 var briefResume = models.BriefResumeInfo{
@@ -251,6 +251,38 @@ func TestGetAllVacancyWithoutResponse(t *testing.T) {
 	answerCorrect, errNill := usecase.GetAllVacancyWithoutResponse(ID, ID)
 	assert.Nil(t, errNill)
 	assert.Equal(t, answerCorrect, listVacancy)
+}
+
+func TestGetResponsesCnt(t *testing.T) {
+	mockRepo, _, _, _, _, useCase := beforeTest(t)
+	id := uuid.New()
+	cntN := uint(0)
+	mockRepo.On("GetResponsesCnt", id, "1").Return(cntN, nil)
+	cnt, err := useCase.GetResponsesCnt(id, "1")
+	assert.Nil(t, err)
+	assert.Equal(t, cntN, cnt)
+}
+
+func TestGetRecommendedVacCnt(t *testing.T) {
+	mockRepo, _, _, _, _, useCase := beforeTest(t)
+	id := uuid.New()
+	cntN := uint(10)
+	mockRepo.On("GetRecommendedVacCnt", id, mock.Anything).Return(cntN, nil)
+	cnt, err := useCase.GetRecommendedVacCnt(id, 7)
+	assert.Nil(t, err)
+	assert.Equal(t, cntN, cnt)
+}
+
+func TestGetRecommendedVacancies(t *testing.T) {
+	mockRepo, _, _, _, _, useCase := beforeTest(t)
+	id := uuid.New()
+	start := 0
+	limit := 2
+	vac := []models.Vacancy{{Title: "test"}}
+		mockRepo.On("GetRecommendedVacancies", id, start, limit, mock.Anything).Return(vac, nil)
+	res, err := useCase.GetRecommendedVacancies(id, uint(start), uint(limit), 7)
+	assert.Nil(t, err)
+	assert.Equal(t, res, vac)
 }
 
 func TestNewUsecase(t *testing.T) {

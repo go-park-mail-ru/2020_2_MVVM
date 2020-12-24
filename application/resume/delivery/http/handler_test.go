@@ -1,4 +1,3 @@
-
 package http
 
 import (
@@ -90,6 +89,8 @@ func getRespStruct(entity interface{}) interface{} {
 	case []models.BriefResumeInfo:
 		resumeList := entity.([]models.BriefResumeInfo)
 		return resumeList
+	case models.LinkToPdf:
+		return entity.(models.LinkToPdf)
 	case string:
 		err := entity.(string)
 		return models.RespError{Err: err}
@@ -177,7 +178,7 @@ func TestGetResumeByID(t *testing.T) {
 		Candidate: cand,
 	}
 
-	favorite := models.FavoritesForEmpl{ FavoriteID: ID }
+	favorite := models.FavoritesForEmpl{FavoriteID: ID}
 
 	td.mockUseCase.On("GetById", ID).Return(&res, nil)
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
@@ -257,15 +258,15 @@ func TestCreateResume(t *testing.T) {
 	user := models.User{ID: ID}
 	cand := models.Candidate{User: user}
 	res := models.Resume{
-		ResumeID:  ID,
-		CandID: ID,
-		Candidate: cand,
-		CandEmail: "a@a.ru",
-		CandName: "test",
+		ResumeID:    ID,
+		CandID:      ID,
+		Candidate:   cand,
+		CandEmail:   "a@a.ru",
+		CandName:    "test",
 		CandSurname: "test",
-		Gender: "male",
-		Skills: "asdasd ad asd ads",
-		Title: "!@#DSAD",
+		Gender:      "male",
+		Skills:      "asdasd ad asd ads",
+		Title:       "!@#DSAD",
 		Description: "MYSUPERJOBFPREFSD!",
 	}
 
@@ -303,7 +304,6 @@ func TestCreateResume(t *testing.T) {
 	}
 }
 
-
 func TestUpdateResume(t *testing.T) {
 	td := beforeTest()
 	td.router.PUT("/", td.resumeHandler.UpdateResume)
@@ -312,15 +312,15 @@ func TestUpdateResume(t *testing.T) {
 	user := models.User{ID: ID}
 	cand := models.Candidate{User: user}
 	res := models.Resume{
-		ResumeID:  ID,
-		CandID: ID,
-		Candidate: cand,
-		CandEmail: "a@a.ru",
-		CandName: "test",
+		ResumeID:    ID,
+		CandID:      ID,
+		Candidate:   cand,
+		CandEmail:   "a@a.ru",
+		CandName:    "test",
 		CandSurname: "test",
-		Gender: "male",
-		Skills: "asdasd ad asd ads",
-		Title: "!@#DSAD",
+		Gender:      "male",
+		Skills:      "asdasd ad asd ads",
+		Title:       "!@#DSAD",
 		Description: "MYSUPERJOBFPREFSD!",
 	}
 
@@ -372,7 +372,6 @@ func TestAddFavorite(t *testing.T) {
 	favoriteForEmplInvalid := models.FavoritesForEmpl{EmplID: ID, ResumeID: uuid.Nil}
 	td.mockUseCase.On("AddFavorite", favoriteForEmplInvalid).Return(nil, assert.AnError).Once()
 
-
 	testUrls := []string{
 		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, ID),
 		fmt.Sprintf("%sfavorite/by/id/invalidID", resumeUrlGroup),
@@ -398,15 +397,14 @@ func TestRemoveFavorite(t *testing.T) {
 	td.router.DELETE("/favorite/by/id/:resume_id", td.resumeHandler.RemoveFavorite)
 
 	ID := uuid.New()
-	favoriteForEmpl := models.FavoritesForEmpl{FavoriteID:ID, EmplID: ID}
+	favoriteForEmpl := models.FavoritesForEmpl{FavoriteID: ID, EmplID: ID}
 
 	td.mockSB.On("Build", mock.AnythingOfType("*gin.Context")).Return(td.mockSession)
 	td.mockSession.On("GetEmplID").Return(ID)
 	td.mockUseCase.On("RemoveFavorite", favoriteForEmpl).Return(nil).Once()
 
-	favoriteForEmplInvalid := models.FavoritesForEmpl{FavoriteID:uuid.Nil, EmplID: ID}
+	favoriteForEmplInvalid := models.FavoritesForEmpl{FavoriteID: uuid.Nil, EmplID: ID}
 	td.mockUseCase.On("RemoveFavorite", favoriteForEmplInvalid).Return(assert.AnError).Once()
-
 
 	testUrls := []string{
 		fmt.Sprintf("%sfavorite/by/id/%s", resumeUrlGroup, ID),
@@ -484,6 +482,35 @@ func TestDeleteResumeHandler(t *testing.T) {
 	for i := range testExpectedBody {
 		t.Run("test responses on different urls for deleteVacancy handler", func(t *testing.T) {
 			w, err := general.PerformRequest(td.router, http.MethodDelete, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestMakePdf(t *testing.T) {
+	td := beforeTest()
+	td.router.GET("/make/pdf/:resume_id", td.resumeHandler.MakePdf)
+
+	id := uuid.New()
+	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + id.String() + ".pdf"}
+	td.mockUseCase.On("MakePdf", id).Return(nil).Once()
+	td.mockUseCase.On("MakePdf", id).Return(assert.AnError).Once()
+	testExpectedBody := []interface{}{link, common.EmptyFieldErr, common.DataBaseErr}
+	testStatus := []int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError}
+	testUrls := []string{
+		fmt.Sprintf("%smake/pdf/%s", resumeUrlGroup, id),
+		fmt.Sprintf("%smake/pdf/err", resumeUrlGroup),
+		fmt.Sprintf("%smake/pdf/%s", resumeUrlGroup, id),
+	}
+
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for deleteVacancy handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodGet, testUrls[i], nil)
 			if err != nil {
 				t.Fatalf("Couldn't create request: %v\n", err)
 			}

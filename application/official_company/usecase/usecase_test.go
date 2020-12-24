@@ -121,7 +121,6 @@ func TestSearchCompanies(t *testing.T) {
 	assert.Nil(t, ansWrong)
 }
 
-
 func TestNewCompUseCase(t *testing.T) {
 	useCase := NewCompUseCase(nil, nil, nil)
 	assert.Equal(t, useCase, &CompanyUseCase{nil, nil, nil})
@@ -158,4 +157,13 @@ func TestUpdateOfficialCompany(t *testing.T) {
 	ansWrong, errNotNil := useCase.UpdateOfficialCompany(comp, uuid.Nil)
 	assert.Nil(t, ansWrong)
 	assert.Error(t, errNotNil)
+}
+
+func TestGetAllCompaniesNames(t *testing.T) {
+	mockRepo, useCase := beforeTest()
+	compList := []models.BriefCompany{{Name: "test"}}
+	mockRepo.On("GetAllCompaniesNames").Return(compList, nil).Once()
+	res, err := useCase.GetAllCompaniesNames()
+	assert.Equal(t, compList, res)
+	assert.Nil(t, err)
 }

@@ -9,9 +9,9 @@ import (
 )
 
 type UseCaseChat struct {
-	infoLogger     *logger.Logger
-	errorLogger    *logger.Logger
-	strg           chat.ChatRepository
+	infoLogger  *logger.Logger
+	errorLogger *logger.Logger
+	strg        chat.ChatRepository
 }
 
 func NewUsecase(infoLogger *logger.Logger,
@@ -19,9 +19,9 @@ func NewUsecase(infoLogger *logger.Logger,
 	strg chat.ChatRepository,
 ) *UseCaseChat {
 	usecase := UseCaseChat{
-		infoLogger:     infoLogger,
-		errorLogger:    errorLogger,
-		strg:           strg,
+		infoLogger:  infoLogger,
+		errorLogger: errorLogger,
+		strg:        strg,
 	}
 	return &usecase
 }
@@ -60,7 +60,6 @@ func (u *UseCaseChat) GetChatHistory(chatID uuid.UUID, utype string, from *time.
 	return history, err
 }
 
-
 func (u *UseCaseChat) GetUnreadMessages(chatID uuid.UUID, utype string) (models.ChatHistory, error) {
 	history := models.ChatHistory{ChatID: chatID}
 
@@ -87,7 +86,6 @@ func (u *UseCaseChat) GetUnreadMessages(chatID uuid.UUID, utype string) (models.
 	return history, err
 }
 
-
 func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*models.Message, error) {
 	mes.DateCreate = time.Now()
 	return u.strg.CreateMessage(mes, sender)
@@ -96,7 +94,6 @@ func (u *UseCaseChat) CreateMessage(mes models.Message, sender uuid.UUID) (*mode
 func (u *UseCaseChat) ListChats(userID uuid.UUID, userType string) ([]models.ChatSummary, error) {
 	return u.strg.ListChats(userID, userType)
 }
-
 
 func (u *UseCaseChat) GetTotalUnreadMes(userID uuid.UUID, userType string) (*uint, error) {
 	return u.strg.GetTotalUnreadMes(userID, userType)
