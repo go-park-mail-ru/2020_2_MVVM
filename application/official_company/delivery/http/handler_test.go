@@ -65,7 +65,10 @@ func getRespStruct(entity interface{}) interface{} {
 		return models.Resp{&comp}
 	case []models.OfficialCompany:
 		compList := entity.([]models.OfficialCompany)
-		return models.RespList{compList}
+		return models.RespList{Companies: compList}
+	case []models.BriefCompany:
+		compList := entity.([]models.BriefCompany)
+		return compList
 	case string:
 		err := entity.(string)
 		return models.RespError{Err: err}
@@ -244,4 +247,26 @@ func TestUpdateCompanyHandler(t *testing.T) {
 	}
 }
 
+func TestGetAllCompaniesNamesHandler(t *testing.T) {
+	c, r, mockUseCase := testData.compHandler, testData.router, testData.mockUseCase
+	r.GET("/", c.GetAllCompaniesNamesHandler)
+	compList := []models.BriefCompany{{Name: "test"}}
+
+	mockUseCase.On("GetAllCompaniesNames").Return(compList, nil).Once()
+	mockUseCase.On("GetAllCompaniesNames").Return(nil, assert.AnError)
+	testExpectedBody := []interface{}{compList, common.DataBaseErr}
+	testStatus := []int{http.StatusOK, http.StatusInternalServerError}
+	url := fmt.Sprintf("%snames", compUrlGroup)
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for getUserCompany handler", func(t *testing.T) {
+			w, err := general.PerformRequest(r, http.MethodGet, url, nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
 

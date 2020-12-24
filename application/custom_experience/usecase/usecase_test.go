@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/apsdehal/go-logger"
+	RepositoryExp "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/testing/mocks/application/custom_experience"
 	"github.com/google/uuid"
@@ -49,4 +50,22 @@ func TestEducationDropAll(t *testing.T) {
 	mockRepo.On("DropAllFromResume", uuid.Nil).Return(assert.AnError)
 	err2 := usecase.DropAllFromResume(uuid.Nil)
 	assert.Error(t, err2)
+}
+
+func TestDropAllFromResume(t *testing.T) {
+	mockRepo, usecase := beforeTest()
+
+	mockRepo.On("DropAllFromResume", ID).Return(nil)
+	err := usecase.DropAllFromResume(ID)
+	assert.Nil(t, err)
+
+	mockRepo.On("DropAllFromResume", uuid.Nil).Return(assert.AnError)
+	err2 := usecase.DropAllFromResume(uuid.Nil)
+	assert.Error(t, err2)
+}
+
+func TestNewExpUseCase(t *testing.T) {
+	expRep := RepositoryExp.NewPgRepository(nil)
+	vac := NewUsecase(nil, nil, expRep)
+	assert.Equal(t, vac, &UseCase{infoLogger: nil, errorLogger: nil,customExperienceRepository: expRep})
 }
