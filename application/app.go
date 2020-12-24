@@ -66,8 +66,8 @@ func NewApp(config Config) *App {
 	gin.Default()
 	r := gin.New()
 
-	infoLogger, err := logger.New("Info logger", 1, os.Stdout)
-	errorLogger, err := logger.New("Error logger", 2, os.Stderr)
+	infoLogger, _ := logger.New("Info logger", 1, os.Stdout)
+	errorLogger, _ := logger.New("Error logger", 2, os.Stderr)
 
 	log := common.Logger{
 		Info:  infoLogger,

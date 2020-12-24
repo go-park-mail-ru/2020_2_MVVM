@@ -20,7 +20,7 @@ type CompanyHandler struct {
 const (
 	compCreate = 0
 	compUpdate = 1
-	compDelete = 2
+	//compDelete = 2
 	compPath   = "company/"
 )
 

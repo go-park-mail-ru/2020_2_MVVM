@@ -66,10 +66,10 @@ func getRespStruct(entity interface{}) interface{} {
 	switch entity.(type) {
 	case models.Vacancy:
 		vac := entity.(models.Vacancy)
-		return vacancy2.Resp{&vac}
+		return vacancy2.Resp{Vacancy: &vac}
 	case []models.Vacancy:
 		vacList := entity.([]models.Vacancy)
-		return vacancy2.RespList{vacList}
+		return vacancy2.RespList{Vacancies: vacList}
 	case vacancy2.RespTop:
 		resp := entity.(vacancy2.RespTop)
 		return resp

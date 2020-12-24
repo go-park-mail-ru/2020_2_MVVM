@@ -18,12 +18,6 @@ import (
 )
 
 var ID, _ = uuid.Parse("77b2e989-6be6-4db5-a657-f25487638af9")
-var testResponse = models.Response{
-	ID:        ID,
-	ResumeID:  ID,
-	VacancyID: ID,
-	Status:    "sent",
-}
 var testUser = models.User{
 	ID:       ID,
 	UserType: common.Candidate,
