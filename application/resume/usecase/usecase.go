@@ -191,10 +191,10 @@ func (u *ResumeUseCase) MakePdf(id uuid.UUID) error {
 	pgf := pdfGenerator.NewRequestPdf("")
 
 	//html template path
-	templatePath := "makePdf/templates/resume.html"
+	templatePath := "/home/ubuntu/backend/2020_2_MVVM/makePdf/templates/resume.html"
 
 	//path for download pdf
-	outputPath := fmt.Sprintf(`static/pdf/%s.pdf`, id.String())
+	outputPath := fmt.Sprintf(`/home/ubuntu/backend/2020_2_MVVM/static/pdf/%s.pdf`, id.String())
 
 	//html template data
 	template := models.СonvertToTemplate(*r)

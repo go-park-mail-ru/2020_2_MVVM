@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ImgDir          = "static"
+	ImgDir          = "/home/ubuntu/backend/2020_2_MVVM/static"
 	MaxImgSize      = 32 << 15 // ~1024 Kb
 	MaxImgHeight    = 1250     //px
 	MaxImgWidth     = 1250     //px
@@ -30,8 +30,8 @@ func AddOrUpdateUserFile(data io.Reader, imgName string) *Err {
 	if data == nil {
 		return nil
 	}
-	fileDir, _ := os.Getwd()
-	imgPath := path.Join(fileDir, ImgDir, imgName)
+	//fileDir, _ := os.Getwd()
+	imgPath := path.Join(ImgDir, imgName)
 
 	dst, err := os.Create(imgPath)
 	if err != nil {

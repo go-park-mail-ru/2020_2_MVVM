@@ -10,7 +10,7 @@ const (
 	Vacancy   = 0
 	Resume    = 1
 	DOMAIN    = "https://studhunt.ru/"
-	PathToPdf = "static/pdf/"
+	PathToPdf = "/home/ubuntu/backend/2020_2_MVVM/static/pdf/"
 	Week      = 7
 )
 
