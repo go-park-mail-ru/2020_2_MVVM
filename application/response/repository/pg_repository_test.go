@@ -17,18 +17,16 @@ import (
 )
 
 var ID = uuid.New()
-var testResponse = models.Response{
-	ID:        ID,
-	ResumeID:  ID,
-	VacancyID: ID,
-}
-var testResume = models.Resume{
-	ResumeID: ID,
-	CandID:   ID,
-	Title:    "ID",
-}
-var listResp = []models.Response{testResponse}
-var listResume = []models.Resume{testResume}
+//var testResponse = models.Response{
+//	ID:        ID,
+//	ResumeID:  ID,
+//	VacancyID: ID,
+//}
+//var testResume = models.Resume{
+//	ResumeID: ID,
+//	CandID:   ID,
+//	Title:    "ID",
+//}
 
 type Dummies struct {
 	Response    models.Response
