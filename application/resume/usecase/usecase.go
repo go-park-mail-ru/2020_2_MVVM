@@ -194,7 +194,7 @@ func (u *ResumeUseCase) MakePdf(id uuid.UUID) error {
 	templatePath := "/home/ubuntu/backend/2020_2_MVVM/makePdf/templates/resume.html"
 
 	//path for download pdf
-	outputPath := fmt.Sprintf(`/home/ubuntu/backend/2020_2_MVVM/static/pdf/%s.pdf`, id.String())
+	outputPath := fmt.Sprintf(`%s/pdf/%s.pdf`, common.PathToSaveStatic, id.String())
 
 	//html template data
 	template := models.СonvertToTemplate(*r)
