@@ -59,22 +59,22 @@ func setUp() {
 }
 
 func getRespStruct(entity interface{}) interface{} {
-	switch entity.(type) {
+	switch entity := entity.(type) {
 	case models.OfficialCompany:
-		comp := entity.(models.OfficialCompany)
-		return models.Resp{&comp}
+		//comp := entity.(models.OfficialCompany)
+		return models.Resp{Company: &entity}
 	case []models.OfficialCompany:
-		compList := entity.([]models.OfficialCompany)
-		return models.RespList{Companies: compList}
+		//compList := entity.([]models.OfficialCompany)
+		return models.RespList{Companies: entity}
 	case []models.BriefCompany:
-		compList := entity.([]models.BriefCompany)
-		return compList
+		//compList := entity.([]models.BriefCompany)
+		return entity
 	case string:
-		err := entity.(string)
-		return models.RespError{Err: err}
+		//err := entity.(string)
+		return models.RespError{Err: entity}
 	case error:
-		err := entity.(error)
-		return models.RespError{Err: err.Error()}
+		//err := entity.(error)
+		return models.RespError{Err: entity.Error()}
 	}
 	return nil
 }

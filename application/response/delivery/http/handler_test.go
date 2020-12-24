@@ -57,28 +57,21 @@ func beforeTest() TestData {
 }
 
 func getRespStruct(entity interface{}) interface{} {
-	switch entity.(type) {
+	switch entity := entity.(type) {
 	case response2.RespNotifications:
-		notify := entity.(response2.RespNotifications)
-		return &notify
+		return &entity
 	case models.Response:
-		response := entity.(models.Response)
-		return &response
+		return &entity
 	case []models.ResponseWithTitle:
-		responseList := entity.([]models.ResponseWithTitle)
-		return &responseList
+		return &entity
 	case []models.BriefResumeInfo:
-		resumeList := entity.([]models.BriefResumeInfo)
-		return &resumeList
+		return &entity
 	case []models.Vacancy:
-		vacancyList := entity.([]models.Vacancy)
-		return &vacancyList
+		return &entity
 	case string:
-		err := entity.(string)
-		return models.RespError{Err: err}
+		return models.RespError{Err: entity}
 	case error:
-		err := entity.(error)
-		return models.RespError{Err: err.Error()}
+		return models.RespError{Err: entity.Error()}
 	}
 	return nil
 }

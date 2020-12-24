@@ -21,8 +21,6 @@ type FavoriteID struct {
 }
 
 type FavoritesForCand struct {
-	tableName struct{} `gorm:"column:main.favorite_for_cand;discard_unknown_columns"`
-
 	ID        uuid.UUID `gorm:"column:favorite_id;pk;type:uuid" json:"favorite_id"`
 	CandID    uuid.UUID `gorm:"column:cand_id; fk; type:uuid" json:"cand_id"`
 	VacancyID uuid.UUID `gorm:"column:vacancy_id; fk; type:uuid" json:"vacancy_id"`

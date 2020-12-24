@@ -2,7 +2,6 @@ package general
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,12 +25,12 @@ func PerformRequest(r http.Handler, method, path string, bodyIn interface{}) (*h
 
 func ResponseComparator(w httptest.ResponseRecorder, expectedCode int, expectedBodyIn interface{}) error {
 	if w.Code != expectedCode {
-		return errors.New(fmt.Sprintf("Expected to get status %d but instead got %d\n", expectedCode, w.Code))
+		return fmt.Errorf("Expected to get status %d but instead got %d\n", expectedCode, w.Code)
 	}
 	expectedBody := getStrFromJson(expectedBodyIn)
 	actualBody := w.Body.String()
 	if expectedBody != actualBody {
-		return errors.New(fmt.Sprintf("Expected to get response %s but instead got %s\n", expectedBody, actualBody))
+		return fmt.Errorf("Expected to get response %s but instead got %s\n", expectedBody, actualBody)
 	}
 	return nil
 }

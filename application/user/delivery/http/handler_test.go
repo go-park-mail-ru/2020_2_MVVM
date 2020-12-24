@@ -58,16 +58,13 @@ func beforeTest() TestData {
 }
 
 func getRespStruct(entity interface{}) interface{} {
-	switch entity.(type) {
+	switch entity := entity.(type)  {
 	case models.User:
-		user := entity.(models.User)
-		return models.RespUser{&user}
+		return models.RespUser{User: &entity}
 	case string:
-		err := entity.(string)
-		return models.RespError{Err: err}
+		return models.RespError{Err: entity}
 	case error:
-		err := entity.(error)
-		return models.RespError{Err: err.Error()}
+		return models.RespError{Err: entity.Error()}
 	}
 	return nil
 }

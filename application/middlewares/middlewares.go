@@ -94,7 +94,7 @@ func RequestLogger(log *logger.Logger) gin.HandlerFunc {
 		c.Next()
 
 		message := fmt.Sprintf("\tExecution time: %s\tURL: %s\tMethod: %s\tHeaders: %s\tResponse status: %d\tX-Request-Id: %s",
-			time.Now().Sub(startTime),
+			time.Since(startTime),
 			c.Request.RequestURI,
 			c.Request.Method,
 			c.Request.Header,

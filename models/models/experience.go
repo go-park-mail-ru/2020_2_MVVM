@@ -22,8 +22,6 @@ func (r ExperienceCustomComp) TableName() string {
 }
 
 type ExperienceOfficialComp struct {
-	tableName struct{} `pg:"main.experience_in_official_company,discard_unknown_columns"`
-
 	ID              uuid.UUID  `gorm:"column:exp_official_id,pk,type:uuid" json:"id" form:"id"`
 	CandID          uuid.UUID  `gorm:"column:cand_id,pk,type:uuid" json:"cand_id" form:"cand_id"`
 	ResumeID        uuid.UUID  `gorm:"column:resume_id,pk,type:uuid" json:"resume_id" form:"resume_id"`

@@ -15,7 +15,7 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           version: v1.29
-          args: "--disable-all -E errcheck"
+          args: "--disable-all -E varcheck -E unused -E typecheck -E structcheck -E deadcode -E errcheck -E gosimple"
 
   tests:
     needs: linter
