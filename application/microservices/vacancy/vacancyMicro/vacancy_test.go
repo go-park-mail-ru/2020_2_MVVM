@@ -62,3 +62,43 @@ func TestConvertSphToDbModels(t *testing.T) {
 	res2 := ConvertSphToDbModels(pbModels)
 	assert.Equal(t, models.Sphere{Sph: 0, VacCnt: 1}, res2[0])
 }
+
+func TestConvertToStringListPbModels(t *testing.T) {
+	res1 := ConvertToStringListPbModels(nil)
+	assert.Nil(t, res1)
+	var pbModels = new(vacancy.StringArr)
+	pbModels.Elem = make([]string, 1)
+	pbModels.Elem[0] = "test"
+	res2 := ConvertToStringListPbModels(pbModels)
+	assert.Equal(t, res2, []string{"test"})
+}
+
+func TestConvertToIntListPbModels(t *testing.T) {
+	res1 := ConvertToIntListPbModels(nil)
+	assert.Nil(t, res1)
+	var pbModels = new(vacancy.IntArr)
+	pbModels.Elem = make([]int32, 1)
+	pbModels.Elem[0] = 0
+	res2 := ConvertToIntListPbModels(pbModels)
+	assert.Equal(t, res2, []int{0})
+}
+
+func TestConvertIntListToPbModel(t *testing.T) {
+	res1 := ConvertIntListToPbModel(nil)
+	assert.Nil(t, res1)
+	var pbModels = new(vacancy.IntArr)
+	pbModels.Elem = make([]int32, 1)
+	pbModels.Elem[0] = 0
+	res2 := ConvertIntListToPbModel([]int{0})
+	assert.Equal(t, res2, pbModels)
+}
+
+func TestConvertStringListToPbModel(t *testing.T) {
+	res1 := ConvertStringListToPbModel(nil)
+	assert.Nil(t, res1)
+	var pbModels = new(vacancy.StringArr)
+	pbModels.Elem = make([]string, 1)
+	pbModels.Elem[0] = "test"
+	res2 := ConvertStringListToPbModel([]string{"test"})
+	assert.Equal(t, res2, pbModels)
+}
