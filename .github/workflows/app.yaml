@@ -31,7 +31,8 @@ jobs:
 
       - name: Tests
         run: |
-          go test -v -coverpkg=./... -coverprofile=profile.cov ./...
+          cd application
+          go test -coverpkg=./... -coverprofile=profile.cov ./...
           go tool cover -func profile.cov
           rm -rf profile.cov
 
