@@ -16,3 +16,5 @@
 .idea
 static/
 application/profile.cov
+
+configs/

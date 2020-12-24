@@ -11,7 +11,6 @@ const (
 	Resume    = 1
 	DOMAIN    = "https://studhunt.ru/"
 	PathToPdf = "static/pdf/"
-	Month     = 30
 	Week      = 7
 )
 

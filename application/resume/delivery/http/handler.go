@@ -450,7 +450,7 @@ func (r *ResumeHandler) MakePdf(ctx *gin.Context) {
 
 	err := r.UseCaseResume.MakePdf(resumeID)
 	if err != nil {
-		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, err.Error())
 		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
