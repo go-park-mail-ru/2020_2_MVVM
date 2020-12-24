@@ -463,3 +463,33 @@ func TestGetAllFavoritesResume(t *testing.T) {
 	}
 }
 
+func TestDeleteResumeHandler(t *testing.T) {
+	td := beforeTest()
+	td.router.DELETE("/resume/:resume_id", td.resumeHandler.DeleteResume)
+
+	id := uuid.New()
+	td.mockSB.On("Build", mock.Anything).Return(td.mockSession)
+	td.mockSession.On("GetCandID").Return(uuid.Nil).Once()
+	td.mockSession.On("GetCandID").Return(id).Twice()
+	td.mockUseCase.On("DeleteResume", id, id).Return(nil).Once()
+	td.mockUseCase.On("DeleteResume", id, id).Return(assert.AnError).Once()
+	testExpectedBody := []interface{}{common.SessionErr, nil, common.EmptyFieldErr, common.DataBaseErr}
+	testStatus := []int{http.StatusBadRequest, http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError}
+	testUrls := []string{
+		fmt.Sprintf("%sresume/%s", resumeUrlGroup, id),
+		fmt.Sprintf("%sresume/%s", resumeUrlGroup, id),
+		fmt.Sprintf("%sresume/err", resumeUrlGroup),
+		fmt.Sprintf("%sresume/%s", resumeUrlGroup, id),
+	}
+	for i := range testExpectedBody {
+		t.Run("test responses on different urls for deleteVacancy handler", func(t *testing.T) {
+			w, err := general.PerformRequest(td.router, http.MethodDelete, testUrls[i], nil)
+			if err != nil {
+				t.Fatalf("Couldn't create request: %v\n", err)
+			}
+			if err := general.ResponseComparator(*w, testStatus[i], getRespStruct(testExpectedBody[i])); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
