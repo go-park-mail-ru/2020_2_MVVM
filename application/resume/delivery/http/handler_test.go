@@ -497,7 +497,7 @@ func TestMakePdf(t *testing.T) {
 	td.router.GET("/make/pdf/:resume_id", td.resumeHandler.MakePdf)
 
 	id := uuid.New()
-	link := models.LinkToPdf{Link: common.DOMAIN + common.PathToPdf + id.String() + ".pdf"}
+	link := models.LinkToPdf{Link: common.DOMAIN + "static/pdf/" + id.String() + ".pdf"}
 	td.mockUseCase.On("MakePdf", id).Return(nil).Once()
 	td.mockUseCase.On("MakePdf", id).Return(assert.AnError).Once()
 	testExpectedBody := []interface{}{link, common.EmptyFieldErr, common.DataBaseErr}
