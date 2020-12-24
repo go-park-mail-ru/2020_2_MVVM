@@ -442,3 +442,29 @@ func TestGetFavoriteByID(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Error(t, err)
 }
+
+func TestDelete(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	query := "DELETE FROM \"main\".\"resume\" WHERE resume_id = (.*) AND cand_id = (.*)"
+	dres := dummies.Resume
+	mock.ExpectQuery(query).
+		WithArgs(nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	err2 := repo.Drop(dres)
+	assert.Error(t, err2)
+}
+
+func TestDrop(t *testing.T) {
+	repo, mock := beforeTest(t)
+	dummies := makeDummies()
+
+	query := "DELETE FROM \"main\".\"resume\" WHERE resume_id = (.*)"
+	dres := dummies.Resume
+	mock.ExpectQuery(query).
+		WithArgs(nil).
+		WillReturnError(errors.New("TEST ERROR"))
+	err2 := repo.Delete(dres.ResumeID, dres.CandID)
+	assert.Error(t, err2)
+}
