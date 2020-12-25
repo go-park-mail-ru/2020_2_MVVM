@@ -14,9 +14,9 @@ import (
 
 const (
 	ImgDir          = "static"
-	MaxImgSize      = 32 << 15 // ~1024 Kb
-	MaxImgHeight    = 1250     //px
-	MaxImgWidth     = 1250     //px
+	MaxImgSize      = 32 << 16 // 2 Mb
+	MaxImgHeight    = 2500     //px
+	MaxImgWidth     = 2500     //px
 	UploadFileError = -1
 	//FileValid       = 0
 	PngMime         = "image/png"
@@ -47,7 +47,7 @@ func AddOrUpdateUserFile(data io.Reader, imgName string) *Err {
 
 func imgValidation(imgReader *strings.Reader) *Err {
 	if imgReader.Size() > MaxImgSize {
-		return &Err{UploadFileError, fmt.Sprintf("Превышен максимальный размер изображения. Максимальный размер: %d kB.", MaxImgSize/1024), nil}
+		return &Err{UploadFileError, fmt.Sprintf("Превышен максимальный размер изображения. Максимальный размер: %d mB.", MaxImgSize/(1024*1024)), nil}
 	}
 	img, _, errDecode := image.DecodeConfig(imgReader)
 	if _, errSeek := imgReader.Seek(0, 0); errSeek != nil || errDecode != nil {
