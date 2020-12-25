@@ -17,6 +17,7 @@ type VacancyHandler struct {
 	vacancyClient  vacancyMicro.VacClient
 	SessionBuilder common.SessionBuilder
 	authClient     authmicro.AuthClient
+	favoriteCase   vacancy.IUseCaseVacancy
 }
 
 const (
@@ -29,11 +30,12 @@ func NewRest(router *gin.RouterGroup,
 	sessionBuilder common.SessionBuilder,
 	AuthRequired gin.HandlerFunc,
 	vacancyClient vacancyMicro.VacClient,
-	authClient authmicro.AuthClient) *VacancyHandler {
+	authClient authmicro.AuthClient, favoriteCase vacancy.IUseCaseVacancy) *VacancyHandler {
 	rest := &VacancyHandler{
 		SessionBuilder: sessionBuilder,
 		vacancyClient:  vacancyClient,
 		authClient:     authClient,
+		favoriteCase:   favoriteCase,
 	}
 	rest.routes(router, AuthRequired)
 	return rest
@@ -50,9 +52,14 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	{
 		router.GET("/mine", v.GetUserVacancyListHandler)
 		router.PUT("/", v.UpdateVacancyHandler)
-		router.DELETE("/:vacancy_id", v.DeleteVacancyHandler)
+		router.DELETE("/vacancy/:vacancy_id", v.DeleteVacancyHandler)
 		router.POST("/", v.CreateVacancyHandler)
 		router.GET("/recommendation", v.GetRecommendationUserVacancy)
+
+		//router.GET("/favorite/:vacancy_id", v.GetFavorite)
+		router.POST("/favorite/:vacancy_id", v.AddFavorite)
+		router.DELETE("/favorite/:favorite_id", v.RemoveFavorite)
+		router.GET("/favorite/my", v.GetAllFavoritesVacancy)
 	}
 }
 
@@ -196,6 +203,76 @@ func (v *VacancyHandler) DeleteVacancyHandler(ctx *gin.Context) {
 		return
 	}
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) AddFavorite(ctx *gin.Context) {
+	var request struct {
+		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(request.VacancyID)
+
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		return
+	}
+	favoriteForCand := models.FavoritesForCand{CandID: candId, VacancyID: vacId}
+	favorite, err := v.favoriteCase.AddFavorite(favoriteForCand)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(*favorite, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) RemoveFavorite(ctx *gin.Context) {
+	var request struct {
+		FavoriteID string `uri:"favorite_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	id, _ := uuid.Parse(request.FavoriteID)
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		return
+	}
+	favoriteForCand := models.FavoritesForCand{ID: id, CandID: candId}
+	err := v.favoriteCase.RemoveFavorite(favoriteForCand)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) GetAllFavoritesVacancy(ctx *gin.Context) {
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.AuthRequiredErr)
+		return
+	}
+	candFavorites, err := v.favoriteCase.GetAllCandFavoriteVacancy(candId)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefVacancyInfo(candFavorites), ctx.Writer); err != nil {
 		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
 }

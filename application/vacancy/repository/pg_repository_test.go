@@ -298,5 +298,4 @@ func TestCreateVacancy(t *testing.T) {
 	res, err3 := repo.CreateVacancy(vac)
 	assert.Nil(t, res)
 	assert.Error(t, err3)
-
 }

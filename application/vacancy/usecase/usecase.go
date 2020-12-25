@@ -138,3 +138,32 @@ func (v VacancyUseCase) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphe
 func (v VacancyUseCase) DeleteVacancy(id uuid.UUID, empId uuid.UUID) error {
 	return v.repos.DeleteVacancy(id, empId)
 }
+
+
+
+func DoBriefRespVacancy(vacancyList []models.Vacancy) ([]models.BriefVacancyInfo, error) {
+	var briefRespResumes []models.BriefVacancyInfo
+	for i := range vacancyList {
+		brief, err := vacancyList[i].Brief()
+		if err != nil {
+			return nil, err
+		}
+		briefRespResumes = append(briefRespResumes, *brief)
+	}
+	return briefRespResumes, nil
+}
+
+func (v VacancyUseCase) AddFavorite(favorite models.FavoritesForCand) (*models.FavoriteID, error) {
+	return v.repos.AddFavorite(favorite)
+}
+func (v VacancyUseCase) RemoveFavorite(favorite models.FavoritesForCand) error {
+	return v.repos.RemoveFavorite(favorite)
+}
+func (v VacancyUseCase) GetAllCandFavoriteVacancy(candId uuid.UUID) ([]models.BriefVacancyInfo, error) {
+	vac, err := v.repos.GetAllCandFavoriteVacancy(candId)
+	if err != nil {
+		err = fmt.Errorf("error in get list favorite vacancy %w", err)
+		return nil, err
+	}
+	return DoBriefRespVacancy(vac)
+}

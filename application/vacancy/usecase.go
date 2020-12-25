@@ -24,4 +24,8 @@ type IUseCaseVacancy interface {
 	GetRecommendation(uuid.UUID, int, int) ([]models.Vacancy, error)
 	GetVacancyTopSpheres(int32) ([]models.Sphere, *models.VacTopCnt, error)
 	DeleteVacancy(id uuid.UUID, empId uuid.UUID) error
+
+	AddFavorite(models.FavoritesForCand) (*models.FavoriteID, error)
+	RemoveFavorite(models.FavoritesForCand) error
+	GetAllCandFavoriteVacancy(candId uuid.UUID) ([]models.BriefVacancyInfo, error)
 }

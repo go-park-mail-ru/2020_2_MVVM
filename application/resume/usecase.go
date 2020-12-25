@@ -22,7 +22,7 @@ type UseCase interface {
 	GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
 	RemoveFavorite(favorite models.FavoritesForEmpl) error
 	GetAllEmplFavoriteResume(userID uuid.UUID) ([]models.BriefResumeInfo, error)
-	DeleteResume(resId uuid.UUID, candId uuid.UUID) error
 
+	DeleteResume(resId uuid.UUID, candId uuid.UUID) error
 	MakePdf(id uuid.UUID) error
 }

@@ -280,3 +280,42 @@ func (p *pgRepository) DeleteVacancy(vacId uuid.UUID, empId uuid.UUID) error {
 	}
 	return nil
 }
+
+func (p *pgRepository) AddFavorite(favoriteForCand models.FavoritesForCand) (*models.FavoriteID, error) {
+	favoriteID := new(models.FavoriteID)
+	err := p.db.Create(&favoriteForCand).Error
+	fmt.Println(err.Error())
+	if err != nil {
+		if err.Error() == "ERROR: duplicate key value violates unique constraint \"like_unique_cand\" (SQLSTATE 23505)" {
+			err = p.db.Find(&favoriteForCand).Error
+		} else {
+			return nil, fmt.Errorf("error in inserting favorite vacancy: %w", err)
+		}
+	}
+	favoriteID.FavoriteID = &favoriteForCand.ID
+	return favoriteID, nil
+}
+
+func (p *pgRepository) RemoveFavorite(favoriteForCand models.FavoritesForCand) error {
+	var favorite models.FavoritesForCand
+	err := p.db.Where("favorite_id = ?", favoriteForCand.ID.String()).Delete(&favorite).Error
+	if err != nil {
+		return fmt.Errorf("error in delete favorite vacancy: %s", err.Error())
+	}
+	return nil
+}
+
+func (p *pgRepository) GetAllCandFavoriteVacancy(candId uuid.UUID) ([]models.Vacancy, error) {
+	var vacancies []models.Vacancy
+	var idsTemp []uuid.UUID
+
+	if candId != uuid.Nil {
+		p.db.Raw("select vacancy_id from main.favorite_for_cand where cand_id = ?", candId).Find(&idsTemp)
+		err := p.db.Raw("select vac_id, empl_id, title, description, location, area_search, path_to_avatar from main.vacancy where vac_id IN (?) ", idsTemp).Scan(&vacancies).Error
+		if err != nil && err != gorm.ErrRecordNotFound {
+			err = fmt.Errorf("error in delete favorite vacancy: %s", err.Error())
+			return nil, err
+		}
+	}
+	return vacancies, nil
+}
