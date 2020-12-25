@@ -58,3 +58,29 @@ func (v Vacancy) TableName() string {
 
 //easyjson:json
 type ListVacancy []Vacancy
+
+func (v *Vacancy) Brief() (*BriefVacancyInfo, error) {
+	return &BriefVacancyInfo{
+		VacancyID: v.ID,
+		EmplId:    v.EmpID,
+		Title:       v.Title,
+		Description: v.Description,
+		Place:       v.Location,
+		AreaSearch:  v.AreaSearch,
+		Avatar: v.Avatar,
+	}, nil
+}
+
+// TODO ВСЕГДА ИСПОЛЬЗОВАТЬ ТОЛЬКО ОДИН ID
+type BriefVacancyInfo struct {
+	Avatar      string    `json:"avatar"`
+	VacancyID   uuid.UUID `json:"vacancy_id"`
+	EmplId      uuid.UUID `json:"empl_id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Place       string    `json:"place"`
+	AreaSearch  string    `json:"location"`
+}
+
+//easyjson:json
+type ListBriefVacancyInfo []BriefVacancyInfo

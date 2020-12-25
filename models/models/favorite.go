@@ -21,7 +21,12 @@ type FavoriteID struct {
 }
 
 type FavoritesForCand struct {
-	ID        uuid.UUID `gorm:"column:favorite_id;pk;type:uuid" json:"favorite_id"`
-	CandID    uuid.UUID `gorm:"column:cand_id; fk; type:uuid" json:"cand_id"`
-	VacancyID uuid.UUID `gorm:"column:vacancy_id; fk; type:uuid" json:"vacancy_id"`
+	ID        uuid.UUID `gorm:"column:favorite_id; primaryKey; default:uuid_generate_v4()" json:"favorite_id"`
+	CandID    uuid.UUID `gorm:"column:cand_id" json:"cand_id"`
+	VacancyID uuid.UUID `gorm:"column:vacancy_id" json:"vacancy_id"`
+	Vacancy   Vacancy   `gorm:"foreignKey:VacancyID"`
+}
+
+func (v FavoritesForCand) TableName() string {
+	return "main.favorite_for_cand"
 }

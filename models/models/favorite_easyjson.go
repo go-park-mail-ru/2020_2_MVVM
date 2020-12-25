@@ -142,6 +142,8 @@ func easyjson404e7428DecodeGithubComGoParkMailRu20202MVVMGitModelsModels1(in *jl
 			if data := in.UnsafeBytes(); in.Ok() {
 				in.AddError((out.VacancyID).UnmarshalText(data))
 			}
+		case "Vacancy":
+			(out.Vacancy).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -170,6 +172,11 @@ func easyjson404e7428EncodeGithubComGoParkMailRu20202MVVMGitModelsModels1(out *j
 		const prefix string = ",\"vacancy_id\":"
 		out.RawString(prefix)
 		out.RawText((in.VacancyID).MarshalText())
+	}
+	{
+		const prefix string = ",\"Vacancy\":"
+		out.RawString(prefix)
+		(in.Vacancy).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
