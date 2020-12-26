@@ -284,7 +284,6 @@ func (p *pgRepository) DeleteVacancy(vacId uuid.UUID, empId uuid.UUID) error {
 func (p *pgRepository) AddFavorite(favoriteForCand models.FavoritesForCand) (*models.FavoriteID, error) {
 	favoriteID := new(models.FavoriteID)
 	err := p.db.Create(&favoriteForCand).Error
-	fmt.Println(err.Error())
 	if err != nil {
 		if err.Error() == "ERROR: duplicate key value violates unique constraint \"like_unique_cand\" (SQLSTATE 23505)" {
 			err = p.db.Find(&favoriteForCand).Error
@@ -318,4 +317,16 @@ func (p *pgRepository) GetAllCandFavoriteVacancy(candId uuid.UUID) ([]models.Vac
 		}
 	}
 	return vacancies, nil
+}
+
+func (p *pgRepository) GetFavoriteByVacancy(candId uuid.UUID, vacId uuid.UUID) (*models.FavoriteID, error) {
+	var id models.FavoritesForCand
+	err := p.db.Raw("select favorite_id from main.favorite_for_cand where cand_id = ? and vacancy_id = ?", candId, vacId).Scan(&id).Error
+	if err != nil {
+		return nil, fmt.Errorf("error in get favorite for vacancy: %s", err.Error())
+	}
+	if id.ID == uuid.Nil {
+		return &models.FavoriteID{FavoriteID: nil}, nil
+	}
+	return &models.FavoriteID{FavoriteID: &id.ID}, nil
 }

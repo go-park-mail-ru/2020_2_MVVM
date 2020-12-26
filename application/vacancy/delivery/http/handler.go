@@ -56,7 +56,7 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 		router.POST("/", v.CreateVacancyHandler)
 		router.GET("/recommendation", v.GetRecommendationUserVacancy)
 
-		//router.GET("/favorite/:vacancy_id", v.GetFavorite)
+		router.GET("/favorite/vac/:vacancy_id", v.GetFavorite)
 		router.POST("/favorite/:vacancy_id", v.AddFavorite)
 		router.DELETE("/favorite/:favorite_id", v.RemoveFavorite)
 		router.GET("/favorite/my", v.GetAllFavoritesVacancy)
@@ -275,6 +275,32 @@ func (v *VacancyHandler) GetAllFavoritesVacancy(ctx *gin.Context) {
 	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefVacancyInfo(candFavorites), ctx.Writer); err != nil {
 		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
+}
+
+func (v *VacancyHandler) GetFavorite(ctx *gin.Context) {
+	var request struct {
+		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(request.VacancyID)
+	fId := new(models.FavoriteID)
+	var err error
+	session := v.SessionBuilder.Build(ctx)
+	candID := session.GetCandID()
+	if candID != uuid.Nil {
+		fId, err = v.favoriteCase.GetFavoriteByVacancy(candID, vacId)
+		if err != nil {
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(fId, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+
 }
 
 func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
