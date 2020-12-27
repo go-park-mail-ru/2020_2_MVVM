@@ -153,6 +153,10 @@ func DoBriefRespVacancy(vacancyList []models.Vacancy) ([]models.BriefVacancyInfo
 	return briefRespResumes, nil
 }
 
+func (v VacancyUseCase) GetFavoriteByVacancy(candId uuid.UUID, vacId uuid.UUID) (*models.FavoriteID, error) {
+	return v.repos.GetFavoriteByVacancy(candId, vacId)
+}
+
 func (v VacancyUseCase) AddFavorite(favorite models.FavoritesForCand) (*models.FavoriteID, error) {
 	return v.repos.AddFavorite(favorite)
 }
