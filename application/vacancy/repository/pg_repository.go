@@ -214,7 +214,7 @@ func (p *pgRepository) GetPreferredSalary(userID uuid.UUID) (*float64, error) {
 	return preferredSalary, nil
 }
 
-func (p *pgRepository) GetRecommendation(start int, limit int, spheres []int) ([]models.Vacancy, error) {
+func (p *pgRepository) GetRecommendation(start int, limit int, salary float64, spheres []int) ([]models.Vacancy, error) {
 	var vacList []models.Vacancy
 	err := p.db.Table("main.vacancy").
 		//

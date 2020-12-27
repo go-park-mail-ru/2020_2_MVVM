@@ -13,7 +13,7 @@ type RepositoryVacancy interface {
 	GetVacancyList(uint, uint, uuid.UUID, int) ([]models.Vacancy, error)
 	SearchVacancies(models.VacancySearchParams) ([]models.Vacancy, error)
 	AddRecommendation(uuid.UUID, int) error
-	GetRecommendation(start int, limit int, spheres []int) ([]models.Vacancy, error)
+	GetRecommendation(start int, limit int, salary float64, spheres []int) ([]models.Vacancy, error)
 	GetPreferredSpheres(userID uuid.UUID) ([]vacancy.Pair, error)
 	GetPreferredSalary(uuid.UUID) (*float64, error)
 	GetVacancyTopSpheres(int32) ([]models.Sphere, *models.VacTopCnt, error)

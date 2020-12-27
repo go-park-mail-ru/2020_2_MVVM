@@ -115,7 +115,7 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 
 	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
 		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
-		list, err := v.repos.GetRecommendation(start, limit, arr)
+		list, err := v.repos.GetRecommendation(start, limit, 0, arr)
 		vacList = append(vacList, list...)
 		if err != nil {
 			err = fmt.Errorf("error in GetRecommendation: %w", err)
