@@ -366,10 +366,10 @@ func TestDeleteVacancyHandler(t *testing.T) {
 	testExpectedBody := []interface{}{common.SessionErr, nil, common.EmptyFieldErr, common.DataBaseErr}
 	testStatus := []int{http.StatusBadRequest, http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError}
 	testUrls := []string{
-		fmt.Sprintf("%svacancy/%s", vacUrlGroup, id.String()),
-		fmt.Sprintf("%svacancy/%s", vacUrlGroup, id.String()),
-		fmt.Sprintf("%svacancy/%s", vacUrlGroup, "err"),
-		fmt.Sprintf("%svacancy/%s", vacUrlGroup, id.String()),
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
+		fmt.Sprintf("%s%s", vacUrlGroup, "err"),
+		fmt.Sprintf("%s%s", vacUrlGroup, id.String()),
 	}
 	for i := range testExpectedBody {
 		t.Run("test responses on different urls for deleteVacancy handler", func(t *testing.T) {
