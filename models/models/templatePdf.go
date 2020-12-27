@@ -32,7 +32,7 @@ type ResumeTemplate struct {
 var ExperienceMonth = map[int]string{
 	0:  "Не работал",
 	1:  "Полгода",
-	5:  "1 год",
+	5:  "Один год",
 	10: "Больше года",
 }
 
