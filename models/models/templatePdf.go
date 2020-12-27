@@ -31,9 +31,9 @@ type ResumeTemplate struct {
 
 var ExperienceMonth = map[int]string{
 	0:  "Не работал",
-	1:  "Меньше года",
-	5:  "1-5 лет",
-	10: "5-10 лет",
+	1:  "Полгода",
+	5:  "1 год",
+	10: "Больше года",
 }
 
 var EducationLevel = map[string]string{
