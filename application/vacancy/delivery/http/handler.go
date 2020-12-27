@@ -52,14 +52,14 @@ func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.Handle
 	{
 		router.GET("/mine", v.GetUserVacancyListHandler)
 		router.PUT("/", v.UpdateVacancyHandler)
-		router.DELETE("/vacancy/:vacancy_id", v.DeleteVacancyHandler)
+		router.DELETE("/:vacancy_id", v.DeleteVacancyHandler)
 		router.POST("/", v.CreateVacancyHandler)
 		router.GET("/recommendation", v.GetRecommendationUserVacancy)
 
-		router.GET("/favorite/vac/:vacancy_id", v.GetFavorite)
-		router.POST("/favorite/:vacancy_id", v.AddFavorite)
-		router.DELETE("/favorite/:favorite_id", v.RemoveFavorite)
-		router.GET("/favorite/my", v.GetAllFavoritesVacancy)
+		//router.GET("/favorite/vac/:vacancy_id", v.GetFavorite)
+		//router.POST("/favorite/:vacancy_id", v.AddFavorite)
+		//router.DELETE("/favorite/:favorite_id", v.RemoveFavorite)
+		//router.GET("/favorite/my", v.GetAllFavoritesVacancy)
 	}
 }
 
