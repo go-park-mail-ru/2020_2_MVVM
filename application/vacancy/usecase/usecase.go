@@ -6,7 +6,6 @@ import (
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
-	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	"github.com/google/uuid"
 	"math"
 	"strings"
@@ -105,35 +104,34 @@ func (v VacancyUseCase) GetRecommendation(userID uuid.UUID, start int, limit int
 		return nil, fmt.Errorf("error in GetUserRecommendations: %w", err)
 	}
 
-	//var sphereList []int
-	//for _, pair := range preferredSphere {
-	//	if pair.Score != 0 {
-	//		sphereList = append(sphereList, pair.SphereInd)
-	//	}
-	//	//if i == limit {
-	//	//	break
-	//	//}
-	//}
-	//list, err := v.repos.GetRecommendation(start, limit, 0, sphereList)
-	step := 2
-	curSphere := 0
-	var vacList []models.Vacancy
-	for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
-		arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
-		list, err := v.repos.GetRecommendation(start, limit, 0, arr)
-		vacList = append(vacList, list...)
-		if err != nil {
-			err = fmt.Errorf("error in GetRecommendation: %w", err)
-			return nil, err
+	var sphereList []int
+	for _, pair := range preferredSphere {
+		if pair.Score != 0 {
+			sphereList = append(sphereList, pair.SphereInd)
 		}
-		curSphere += step
-		start = 0
+		//if i == limit {
+		//	break
+		//}
 	}
-	end := limit
-	if limit > len(vacList) {
-		end = len(vacList)
-	}
-	return vacList[0:end], err
+	list, err := v.repos.GetRecommendation(start, limit, 0, sphereList)
+	//var vacList []models.Vacancy
+	//for len(vacList) < limit && curSphere < vacancy2.CountSpheres {
+	//	arr := []int{preferredSphere[curSphere].SphereInd, preferredSphere[curSphere+1].SphereInd}
+	//	list, err := v.repos.GetRecommendation(start, limit, 0, arr)
+	//	vacList = append(vacList, list...)
+	//	if err != nil {
+	//		err = fmt.Errorf("error in GetRecommendation: %w", err)
+	//		return nil, err
+	//	}
+	//	curSphere += step
+	//	start = 0
+	//}
+	//end := limit
+	//if limit > len(vacList) {
+	//	end = len(vacList)
+	//}
+	//return vacList[0:end], err
+	return list, err
 }
 
 func (v VacancyUseCase) GetVacancyTopSpheres(topSpheresCnt int32) ([]models.Sphere, *models.VacTopCnt, error) {
