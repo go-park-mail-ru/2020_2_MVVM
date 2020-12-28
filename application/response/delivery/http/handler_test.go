@@ -404,7 +404,7 @@ func TestGetAllNotifications(t *testing.T) {
 	}
 
 	td.mockUseCase.On("GetAllEmployerResponses", ID, []uuid.UUID{ID}).Return(listResp, nil).Once()
-	td.mockUseCase.On("GetRecommendedVacancies", ID, start, end, 1).Return(listVacancy, nil).Once()
+	td.mockUseCase.On("GetRecommendedVacancies", ID, start, end, common.Week).Return(listVacancy, nil).Once()
 
 	testUrls := []string{
 		fmt.Sprintf("%snotify", responseUrlGroup),
