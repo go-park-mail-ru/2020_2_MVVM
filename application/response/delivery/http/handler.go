@@ -280,7 +280,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 		return
 	}
 	if req.VacInLastNDays != nil {
-		if daysFromNow = *req.VacInLastNDays; daysFromNow == 0 {
+		if daysFromNow = *req.VacInLastNDays; daysFromNow <= 1 {
 			daysFromNow = common.Week
 		}
 	}
@@ -293,7 +293,7 @@ func (r *ResponseHandler) handlerGetAllNotifications(ctx *gin.Context) {
 
 	unId = session.GetUserID()
 	if req.OnlyVacCnt && req.VacInLastNDays != nil {
-		if daysFromNow == 0 {
+		if daysFromNow <= 1 {
 			daysFromNow = common.Week
 		}
 		notifications.RecommendedVacCnt, err = r.UsecaseResponse.GetRecommendedVacCnt(unId, daysFromNow)
