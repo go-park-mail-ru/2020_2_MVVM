@@ -36,7 +36,7 @@ func (p *pgRepository) CreateVacancy(vac models.Vacancy) (*models.Vacancy, error
 	if compId := employer.CompanyID; compId != uuid.Nil {
 		//fileDir, _ := os.Getwd()
 		avatarName := path.Join(common.ImgDir, "company", compId.String())
-		imgPath := path.Join(common.PathToSaveStatic, avatarName)
+		imgPath := path.Join(common.PathToSaveStatic, "company", compId.String())
 		if _, err = os.Stat(imgPath); err == nil {
 			vac.Avatar = common.DOMAIN + avatarName
 		}
