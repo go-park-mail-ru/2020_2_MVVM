@@ -2,7 +2,7 @@ name: Studhunt
 
 on:
   push:
-    branches: [ rk4 ]
+    branches: [ dev ]
 
 jobs:
   linter:
