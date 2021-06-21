@@ -2,13 +2,24 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	jwt "github.com/appleboy/gin-jwt/v2"
-	"github.com/gin-contrib/cors"
+	"github.com/apsdehal/go-logger"
+	"github.com/asaskevich/govalidator"
 	"github.com/gin-gonic/gin"
+	ChatHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/delivery/http"
+	RepositoryChat "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/repository"
+	chatUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/chat/usecase"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	SessionBuilder "github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	CustomExperienceRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/repository"
+	CustomExperienceUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/custom_experience/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/middlewares"
+	CompanyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/delivery/http"
+	RepositoryCompany "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/repository"
+	CompanyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/official_company/usecase"
+	ResponseHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/delivery/http"
+	RepositoryResponse "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/repository"
+	ResponseUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/response/usecase"
 	ResumeHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/delivery/http"
 	ResumeRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/repository"
 	ResumeUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/resume/usecase"
@@ -18,10 +29,12 @@ import (
 	VacancyHandler "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/delivery/http"
 	RepositoryVacancy "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/repository"
 	VacancyUseCase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy/usecase"
-	"github.com/go-pg/pg/v9"
-	"github.com/google/uuid"
-	logger "github.com/rowdyroad/go-simple-logger"
-	"golang.org/x/crypto/bcrypt"
+	//EducationRepository "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/repository"
+	//EducationUsecase "github.com/go-park-mail-ru/2020_2_MVVM.git/application/education/usecase"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,195 +42,118 @@ import (
 	"time"
 )
 
-type dbConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Name     string `yaml:"name"`
+type Microservices struct {
+	Auth common.MicroserviceConfig `yaml:"auth"`
+	Vac  common.MicroserviceConfig `yaml:"vacancy"`
 }
 
 type Config struct {
-	Listen  string    `yaml:"listen"`
-	Db      *dbConfig `yaml:"db"`
-	DocPath string    `yaml:"docPath"`
-}
-
-type Logger struct {
-	InfoLogger  *logger.Logger
-	ErrorLogger *logger.Logger
+	Listen  string           `yaml:"listen"`
+	Db      *common.DBConfig `yaml:"db"`
+	DocPath string           `yaml:"docPath"`
+	Micro   Microservices    `yaml:"microservices"`
 }
 
 type App struct {
 	config   Config
-	log      *Logger
+	log      common.Logger
 	doneChan chan bool
 	route    *gin.Engine
-	db       *pg.DB
+	db       *gorm.DB
 }
 
-var log *Logger
-
 func NewApp(config Config) *App {
-	log := &Logger{
-		InfoLogger:  logger.New(os.Stdout, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelInfo),
-		ErrorLogger: logger.New(os.Stderr, "", logger.Lshortfile|logger.LstdFlags|logger.Llevel, logger.LevelWarning),
+	gin.Default()
+	r := gin.New()
+
+	infoLogger, _ := logger.New("Info logger", 1, os.Stdout)
+	errorLogger, _ := logger.New("Error logger", 2, os.Stderr)
+
+	log := common.Logger{
+		Info:  infoLogger,
+		Error: errorLogger,
+	}
+	infoLogger.SetLogLevel(logger.DebugLevel)
+	if config.DocPath != "" {
+		r.Static("/doc/api", config.DocPath)
+	} else {
+		log.Error.Warning("Document path is undefined")
 	}
 
-	r := gin.New()
-	r.Use(common.RequestLogger(log.InfoLogger))
-	r.Use(common.ErrorLogger(log.ErrorLogger))
-	r.Use(common.ErrorMiddleware())
-	r.Use(common.Recovery(log.ErrorLogger))
-
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"*"}
-	corsConfig.AllowCredentials = true
-	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-	r.Use(cors.New(corsConfig))
-
+	credentials := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d", config.Db.User,
+		config.Db.Password, config.Db.Name,
+		config.Db.Host, config.Db.Port)
+	db, err := gorm.Open(postgres.Open(credentials), &gorm.Config{})
+	if err != nil {
+		log.Error.Fatal("connection to postgres db failed...")
+	}
+	r.Use(middlewares.RequestLogger(log.Info))
+	r.Use(middlewares.ErrorLogger(log.Error))
+	r.Use(middlewares.ErrorMiddleware())
+	r.Use(middlewares.Recovery(log.Error))
+	r.Use(middlewares.Cors())
 	r.NoRoute(func(c *gin.Context) {
 		c.AbortWithStatus(http.StatusNotFound)
 	})
 	r.GET("/health", healthCheck())
 
-	if config.DocPath != "" {
-		r.Static("/doc/api", config.DocPath)
-	} else {
-		log.ErrorLogger.Warn("Document path is undefined")
-	}
-
-	db := pg.Connect(&pg.Options{
-		Addr:     fmt.Sprintf("%s:%d", config.Db.Host, config.Db.Port),
-		User:     config.Db.User,
-		Password: config.Db.Password,
-		Database: config.Db.Name,
-	})
-
-	// the jwt middleware
-	identityKey := "myid"
-
-	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:       "my super test zone",
-		Key:         []byte("my super secret and long secret-secret key"),
-		Timeout:     time.Hour,
-		MaxRefresh:  time.Hour,
-		IdentityKey: identityKey,
-
-		SendCookie:     true,
-		SecureCookie:   false, //non HTTPS dev environments
-		CookieHTTPOnly: true,  // JS can't modify
-		//CookieDomain:     "localhost",
-		CookieDomain: "95.163.212.36",
-
-		Authenticator: func(c *gin.Context) (interface{}, error) {
-			// This function should verify the user credentials given the gin context
-			//(i.e. password matches hashed password for a given user email, and any other authentication logic).
-			var credentials struct {
-				Nickname string `form:"nickname" json:"nickname" binding:"required"`
-				Email    string `form:"email" json:"email" binding:"required"`
-				Password string `form:"password" json:"password" binding:"required"`
-			}
-			if err := c.ShouldBindJSON(&credentials); err != nil {
-				return "", errors.New("missing Username, Password, or Email") // make error constant
-			}
-
-			// go to the database and fetch the user
-			var user models.User
-			err := db.Model(&user).
-				Where("email = ?", credentials.Email).
-				Where("nickname = ?", credentials.Nickname).
-				Select()
-			if err != nil {
-				return nil, err
-			}
-
-			// compare password with the hashed one
-			err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(credentials.Password))
-			if err != nil {
-				return nil, err
-			}
-
-			// user is OK
-			return &models.JWTUserData{
-				ID:       user.ID,
-				Nickname: user.Nickname,
-				Email:    user.Email,
-			}, nil
-		},
-		PayloadFunc: func(data interface{}) jwt.MapClaims {
-			if v, ok := data.(*models.JWTUserData); ok {
-				return jwt.MapClaims{
-					identityKey: v.ID,
-					"nickname":  v.Nickname,
-					"email":     v.Email,
-				}
-			}
-			return jwt.MapClaims{}
-		},
-		IdentityHandler: func(c *gin.Context) interface{} {
-			claims := jwt.ExtractClaims(c)
-			uid, _ := uuid.Parse(claims[identityKey].(string))
-			return &models.JWTUserData{
-				ID:       uid,
-				Nickname: claims["nickname"].(string),
-				Email:    claims["email"].(string),
-			}
-		},
-		Authorizator: func(data interface{}, c *gin.Context) bool {
-			return true
-		},
-		Unauthorized: func(c *gin.Context, code int, message string) {
-			c.JSON(code, gin.H{
-				"code":    code,
-				"message": message,
-			})
-		},
-		// TokenLookup is a string in the form of "<source>:<name>" that is used
-		// to extract token from the request.
-		// Optional. Default value "header:Authorization".
-		// Possible values:
-		// - "header:<name>"
-		// - "query:<name>"
-		// - "cookie:<name>"
-		// - "param:<name>"
-		TokenLookup: "header: Authorization, query: token, cookie: jwt",
-		// TokenLookup: "query:token",
-		// TokenLookup: "cookie:token",
-
-		// TokenHeadName is a string in the header. Default value is "Bearer"
-		TokenHeadName: "Bearer",
-
-		// TimeFunc provides the current time. You can override it to use another time value. This is useful for testing or if your server uses a different time zone than your tokens.
-		TimeFunc: time.Now,
-	})
-
-	if err != nil {
-		log.ErrorLogger.Fatal("JWT Error:" + err.Error())
-	}
-
-	errInit := authMiddleware.MiddlewareInit()
-
-	if errInit != nil {
-		log.ErrorLogger.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
-	}
+	govalidator.SetFieldsRequiredByDefault(false)
 
 	api := r.Group("/api/v1")
-	api.POST("/auth/login", authMiddleware.LoginHandler)
-	// end jwt middleware
+
+	authMicro, err := authmicro.NewAuthClient(config.Micro.Auth.Host, config.Micro.Auth.Port, log)
+	if err != nil {
+		log.Error.Fatal("connection to the auth microservice failed...")
+	}
+	vacMicro, err := vacancyMicro.NewVacClient(config.Micro.Vac.Host, config.Micro.Vac.Port, log)
+	if err != nil {
+		log.Error.Fatal("connection to the vacancy microservice failed...")
+	}
+
+	authCookieConfig := common.AuthCookieConfig{
+		Key:    "session",
+		Path:   "/",
+		//Domain: "localhost", // for postman
+		Domain: "studhunt.ru",
+		//Secure:   false, // for postman
+		Secure: true,
+		MaxAge: int((time.Hour * 12).Seconds()),
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+		//SameSite: http.SameSiteStrictMode, prevent csrf
+	}
+	sessionBuilder := SessionBuilder.NewSessionBuilder{}
+	authMiddleware := middlewares.AuthRequired(authCookieConfig, authMicro)
 
 	UserRep := UserRepository.NewPgRepository(db)
-	userCase := UserUseCase.NewUserUseCase(log.InfoLogger, log.ErrorLogger, UserRep)
-	UserHandler.NewRest(api.Group("/users"), userCase, authMiddleware)
-
-	resumeRep := ResumeRepository.NewPgRepository(db)
-	resume := ResumeUsecase.NewUsecase(log.InfoLogger, log.ErrorLogger, resumeRep)
-	ResumeHandler.NewRest(api.Group("/resume"), resume, authMiddleware)
+	userCase := UserUseCase.NewUserUseCase(log.Info, log.Error, UserRep)
+	UserHandler.NewRest(api.Group("/users"), userCase, authMicro, authCookieConfig, &sessionBuilder, authMiddleware)
 
 	vacancyRep := RepositoryVacancy.NewPgRepository(db)
-	vacancy := VacancyUseCase.NewVacUseCase(log.InfoLogger, log.ErrorLogger, vacancyRep)
-	VacancyHandler.NewRest(api, vacancy)
+	vacancy := VacancyUseCase.NewVacUseCase(log.Info, log.Error, vacancyRep)
+	VacancyHandler.NewRest(api.Group("/vacancy"), &sessionBuilder, authMiddleware, vacMicro, authMicro, vacancy)
+
+	companyRep := RepositoryCompany.NewPgRepository(db)
+	company := CompanyUseCase.NewCompUseCase(log.Info, log.Error, companyRep)
+	CompanyHandler.NewRest(api.Group("/company"), company, &sessionBuilder, authMiddleware)
+
+	resumeRep := ResumeRepository.NewPgRepository(db)
+	//educationRep := EducationRepository.NewPgRepository(db)
+	customExperienceRep := CustomExperienceRepository.NewPgRepository(db)
+
+	//education := EducationUsecase.NewUsecase(log.Info, log.Error, educationRep)
+	customExperience := CustomExperienceUsecase.NewUsecase(log.Info, log.Error, customExperienceRep)
+	resume := ResumeUsecase.NewUseCase(log.Info, log.Error, userCase, customExperience, resumeRep)
+
+	ResumeHandler.NewRest(api.Group("/resume"), resume, customExperience, &sessionBuilder, authMiddleware)
+
+	chatRep := RepositoryChat.NewPgRepository(db)
+	chat := chatUseCase.NewUsecase(log.Info, log.Error, chatRep)
+	ChatHandler.NewRest(api.Group("/chat"), chat, &sessionBuilder, authMiddleware)
+
+	responseRep := RepositoryResponse.NewPgRepository(db, vacancyRep)
+	response := ResponseUseCase.NewUsecase(log.Info, log.Error, resume, *vacancy, company, responseRep)
+	ResponseHandler.NewRest(api.Group("/response"), response, chat, &sessionBuilder, authMiddleware)
 
 	app := App{
 		config:   config,
@@ -241,9 +177,9 @@ func (a *App) Run() {
 	}
 
 	go func() {
-		a.log.InfoLogger.Infof("Start listening on %s", a.config.Listen)
+		a.log.Info.Infof("Start listening on %s", a.config.Listen)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			a.log.ErrorLogger.Fatalf("listen: %s\n", err)
+			a.log.Error.Fatalf("listen: %s\n", err)
 		}
 	}()
 
@@ -253,19 +189,19 @@ func (a *App) Run() {
 	case <-quit:
 	case <-a.doneChan:
 	}
-	a.log.InfoLogger.Info("Shutdown Server (timeout of 1 seconds) ...")
+	a.log.Info.Info("Shutdown Server (timeout of 1 seconds) ...")
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		a.log.ErrorLogger.Fatal("Server Shutdown:", err)
+		mes := fmt.Sprint("Server Shutdown:", err)
+		a.log.Error.Fatal(mes)
 	}
 
 	<-ctx.Done()
-	a.log.InfoLogger.Info("Server exiting")
+	a.log.Info.Info("Server exiting")
 }
 
 func (a *App) Close() {
-	a.db.Close()
 	a.doneChan <- true
 }
 

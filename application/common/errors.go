@@ -2,6 +2,24 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/mailru/easyjson"
+	"io"
+	"net/http"
+)
+
+const (
+	EmptyFieldErr    = "Обязательные поля не заполнены."
+	SessionErr       = "Ошибка авторизации. Попробуйте авторизоваться повторно."
+	AuthRequiredErr  = "Необходима авторизация."
+	DataBaseErr      = "Что-то пошло не так. Попробуйте позже."
+	UserExistErr     = "Пользователь уже существует."
+	AuthErr          = "Пользователь с такими данными не зарегистрирован."
+	WrongPasswd      = "Неверное имя пользователя или пароль."
+	EmpHaveComp      = "Работодатель может являться представителем только одной компании."
+	NoRecommendation = "Для этого пользователя еще нет рекомендаций."
 )
 
 type Err struct {
@@ -38,7 +56,19 @@ func NewErr(code int, message string, meta interface{}) Err {
 	}
 }
 
-var ErrBadRequest = NewErr(400, "Неправильный запрос к серверу", nil)
-var ErrInternalServerError = NewErr(500, "Внутренняя ошибка сервера", nil)
+func WriteErrResponse(ctx *gin.Context, code int, message string) {
+	resp := models.RespError{
+		Err: message,
+	}
+	ctx.Status(code)
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
 
-var ErrInvalidUpdatePassword = NewErr(1001, "неверный пароль", nil)
+func UnmarshalFromReaderWithNilCheck(r io.Reader, v easyjson.Unmarshaler) error {
+	if r == nil {
+		return errors.New(EmptyFieldErr)
+	}
+	return easyjson.UnmarshalFromReader(r, v)
+}

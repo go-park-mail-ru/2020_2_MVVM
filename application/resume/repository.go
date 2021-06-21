@@ -1,15 +1,25 @@
 package resume
 
 import (
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/resume"
 	"github.com/google/uuid"
 )
 
-type ResumeRepository interface {
-	CreateResume(resume models.Resume) (*models.Resume, error)
-	//UpdateResume(id uuid.UUID, updResume *models.Resume) (*models.Resume, error)
-	GetResumeById(id string) (*models.Resume, error)
+type Repository interface {
+	Create(resume models.Resume) (*models.Resume, error)
+	Drop(resume models.Resume) error
+	Update(resume models.Resume) (*models.Resume, error)
+	Delete(resId uuid.UUID, candId uuid.UUID) error
+	Search(searchParams *resume.SearchParams) ([]models.Resume, error)
+	GetById(id uuid.UUID) (*models.Resume, error)
+	GetByIdWithCand(id uuid.UUID) (*models.Resume, error)
 	GetAllUserResume(userID uuid.UUID) ([]models.Resume, error)
-	GetResumeByName(name string) (*models.Resume, error)
-	GetResumeArr(start, limit uint) ([]models.Resume, error)
+	List(start, limit uint) ([]models.Resume, error)
+
+	AddFavorite(favoriteForEmpl models.FavoritesForEmpl) (*models.FavoriteID, error)
+	RemoveFavorite(favoriteForEmpl uuid.UUID) error
+	GetAllEmplFavoriteResume(emplID uuid.UUID) ([]models.Resume, error)
+	GetFavoriteForResume(userID uuid.UUID, resumeID uuid.UUID) (*models.FavoritesForEmpl, error)
+	GetFavoriteByID(favoriteID uuid.UUID) (*models.FavoritesForEmpl, error)
 }

@@ -2,130 +2,401 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/vacancy/vacancyMicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/vacancy"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	vacancy2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/vacancy"
 	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"net/http"
 )
 
 type VacancyHandler struct {
-	VacUseCase vacancy.IUseCaseVacancy
+	vacancyClient  vacancyMicro.VacClient
+	SessionBuilder common.SessionBuilder
+	authClient     authmicro.AuthClient
+	favoriteCase   vacancy.IUseCaseVacancy
 }
 
-func NewRest(router *gin.RouterGroup, useCase vacancy.IUseCaseVacancy) *VacancyHandler {
-	rest := &VacancyHandler{VacUseCase: useCase}
-	rest.routes(router)
+const (
+	vacCreate = 0
+	vacUpdate = 1
+	vacPath   = "vacancy/"
+)
+
+func NewRest(router *gin.RouterGroup,
+	sessionBuilder common.SessionBuilder,
+	AuthRequired gin.HandlerFunc,
+	vacancyClient vacancyMicro.VacClient,
+	authClient authmicro.AuthClient, favoriteCase vacancy.IUseCaseVacancy) *VacancyHandler {
+	rest := &VacancyHandler{
+		SessionBuilder: sessionBuilder,
+		vacancyClient:  vacancyClient,
+		authClient:     authClient,
+		favoriteCase:   favoriteCase,
+	}
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (V *VacancyHandler) routes(router *gin.RouterGroup) {
-	router.GET("/vacancy/id/:vacancy_id", V.handlerGetVacancyById)
-	router.GET("/vacancy/page", V.handlerGetVacancyList)
-	router.PUT("/vacancy/update/:vacancy_id", V.handlerUpdateVacancy)
-	router.POST("/vacancy/add", V.handlerCreateVacancy)
+func (v *VacancyHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.GET("/by/id/:vacancy_id", v.GetVacancyByIdHandler)
+	router.GET("/comp", v.GetCompVacancyListHandler)
+	router.GET("/top/:top_spheres_cnt", v.GetVacancyTopSpheres)
+	router.GET("/top", v.GetVacancyTopSpheresAll)
+	router.GET("/page", v.GetVacancyListHandler)
+	router.POST("/search", v.SearchVacanciesHandler)
+	router.Use(AuthRequired)
+	{
+		router.GET("/mine", v.GetUserVacancyListHandler)
+		router.PUT("/", v.UpdateVacancyHandler)
+		router.DELETE("/:vacancy_id", v.DeleteVacancyHandler)
+		router.POST("/", v.CreateVacancyHandler)
+		router.GET("/recommendation", v.GetRecommendationUserVacancy)
+
+		//router.GET("/favorite/vac/:vacancy_id", v.GetFavorite)
+		//router.POST("/favorite/:vacancy_id", v.AddFavorite)
+		//router.DELETE("/favorite/:favorite_id", v.RemoveFavorite)
+		//router.GET("/favorite/my", v.GetAllFavoritesVacancy)
+	}
 }
 
-func (V *VacancyHandler) handlerGetVacancyById(ctx *gin.Context) {
+func (v *VacancyHandler) GetVacancyByIdHandler(ctx *gin.Context) {
 	var req struct {
-		VacID uuid.UUID `json:"vacancy_id" binding:"required"`
+		VacID string `uri:"vacancy_id" binding:"required,uuid"`
 	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
-
-	vac, err := V.VacUseCase.GetVacancy(req.VacID.String())
+	vacId, _ := uuid.Parse(req.VacID)
+	vac, err := v.vacancyClient.GetVacancy(vacId)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
-	type Resp struct {
-		Vacancy models.Vacancy `json:"vacancy"`
+	sessionID, _ := ctx.Cookie("session")
+	if sessionID != "" {
+		if session, _ := v.authClient.Check(sessionID); session != nil {
+			if session.GetCandID() != uuid.Nil && vac.Sphere != -1 {
+				err := v.vacancyClient.AddRecommendation(session.GetUserID(), vac.Sphere)
+				if err != nil {
+					_ = ctx.Error(err)
+				}
+			}
+		}
 	}
-
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vac}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
-func (V *VacancyHandler) handlerCreateVacancy(ctx *gin.Context) {
-	var req struct {
-		VacancyName        string `json:"vacancy_name" binding:"required"`
-		CompanyName        string `json:"company_name" binding:"required"`
-		VacancyDescription string `json:"vacancy_description" binding:"required"`
-		WorkExperience     string `json:"work_experience" binding:"required"`
-		CompanyAddress     string `json:"company_address" binding:"required"`
-		Skills             string `json:"skills" binding:"required"`
-		Salary             int    `json:"salary" binding:"required"`
-	}
-	identityKey := "myid"
-	jwtUser, _ := ctx.Get(identityKey)
-	userID := jwtUser.(*models.JWTUserData).ID
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	vac, err := V.VacUseCase.CreateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
-		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
-		Skills: req.Skills, Salary: req.Salary})
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	type Resp struct {
-		Vacancy models.Vacancy `json:"vacancyUser"`
-	}
-
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
+func (v *VacancyHandler) CreateVacancyHandler(ctx *gin.Context) {
+	vacHandlerCommon(v, ctx, vacCreate)
 }
 
-func (V *VacancyHandler) handlerGetVacancyList(ctx *gin.Context) {
-	var req struct {
-		Start uint `form:"start"`
-		End   uint `form:"end"`
-	}
+func (v *VacancyHandler) UpdateVacancyHandler(ctx *gin.Context) {
+	vacHandlerCommon(v, ctx, vacUpdate)
+}
+
+func (v *VacancyHandler) GetVacancyListHandler(ctx *gin.Context) {
+	vacListHandlerCommon(v, ctx, vacancy.ByVacId)
+}
+
+func (v *VacancyHandler) GetUserVacancyListHandler(ctx *gin.Context) {
+	vacListHandlerCommon(v, ctx, vacancy.ByEmpId)
+}
+
+func (v *VacancyHandler) GetCompVacancyListHandler(ctx *gin.Context) {
+	vacListHandlerCommon(v, ctx, vacancy.ByCompId)
+}
+
+func (v *VacancyHandler) GetRecommendationUserVacancy(ctx *gin.Context) {
+	var (
+		req     vacancy2.VacListRequest
+		err     error
+		vacList []models.Vacancy
+	)
+
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
-	vacList, err := V.VacUseCase.GetVacancyList(req.Start, req.End)
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
+	session := v.SessionBuilder.Build(ctx)
+	if session.GetCandID() != uuid.Nil {
+		vacList, err = v.vacancyClient.GetRecommendation(session.GetUserID(), int(req.Start), int(req.Limit))
+		if err != nil {
+			if err.Error() == common.NoRecommendation {
+				common.WriteErrResponse(ctx, http.StatusOK, common.NoRecommendation)
+				return
+			}
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+			return
+		}
 	}
-	type Resp struct {
-		Vacancy []models.Vacancy `json:"vacancyList"`
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
 	}
-
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vacList})
 }
 
-func (V *VacancyHandler) handlerUpdateVacancy(ctx *gin.Context) {
-	var req struct {
-		VacancyName        string `json:"vacancy_name" binding:"required"`
-		CompanyName        string `json:"company_name" binding:"required"`
-		VacancyDescription string `jsnewon:"vacancy_description" binding:"required"`
-		WorkExperience     string `json:"work_experience" binding:"required"`
-		CompanyAddress     string `json:"company_address" binding:"required"`
-		Skills             string `json:"skills" binding:"required"`
-		Salary             int    `json:"salary" binding:"required"`
-	}
-	identityKey := "myid"
-	jwtUser, _ := ctx.Get(identityKey)
-	userID := jwtUser.(*models.JWTUserData).ID
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+func (v *VacancyHandler) SearchVacanciesHandler(ctx *gin.Context) {
+	var searchParams models.VacancySearchParams
+
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &searchParams); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 		return
 	}
-	vac, err := V.VacUseCase.UpdateVacancy(models.Vacancy{FK: userID, VacancyName: req.VacancyName, CompanyName: req.CompanyName,
-		VacancyDescription: req.VacancyDescription, WorkExperience: req.WorkExperience, CompanyAddress: req.CompanyAddress,
-		Skills: req.Skills, Salary: req.Salary})
-	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+	if err := common.ReqValidation(&searchParams); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
-	}
-	type Resp struct {
-		Vacancy models.Vacancy `json:"vacancyUser"`
 	}
 
-	ctx.JSON(http.StatusOK, Resp{Vacancy: vac})
+	vacList, err := v.vacancyClient.SearchVacancies(searchParams)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) GetVacancyTopSpheresAll(ctx *gin.Context) {
+	topSphereHandlerCommon(v, ctx, vacancy.TopAll)
+}
+
+func (v *VacancyHandler) GetVacancyTopSpheres(ctx *gin.Context) {
+	var (
+		req    vacancy2.TopSpheres
+		topCnt int32 = vacancy.TopDefaultCnt
+	)
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if *req.TopSpheresCnt > 0 {
+		topCnt = *req.TopSpheresCnt
+	}
+	topSphereHandlerCommon(v, ctx, topCnt)
+}
+
+func (v *VacancyHandler) DeleteVacancyHandler(ctx *gin.Context) {
+	var req struct {
+		VacID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(req.VacID)
+	session := v.SessionBuilder.Build(ctx)
+	empId := session.GetEmplID()
+	if empId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+		return
+	}
+	if err := v.vacancyClient.DeleteVacancy(vacId, empId); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) AddFavorite(ctx *gin.Context) {
+	var request struct {
+		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(request.VacancyID)
+
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		return
+	}
+	favoriteForCand := models.FavoritesForCand{CandID: candId, VacancyID: vacId}
+	favorite, err := v.favoriteCase.AddFavorite(favoriteForCand)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(*favorite, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) RemoveFavorite(ctx *gin.Context) {
+	var request struct {
+		FavoriteID string `uri:"favorite_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	id, _ := uuid.Parse(request.FavoriteID)
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusForbidden, common.AuthRequiredErr)
+		return
+	}
+	favoriteForCand := models.FavoritesForCand{ID: id, CandID: candId}
+	err := v.favoriteCase.RemoveFavorite(favoriteForCand)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) GetAllFavoritesVacancy(ctx *gin.Context) {
+	session := v.SessionBuilder.Build(ctx)
+	candId := session.GetCandID()
+	if candId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.AuthRequiredErr)
+		return
+	}
+	candFavorites, err := v.favoriteCase.GetAllCandFavoriteVacancy(candId)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(models.ListBriefVacancyInfo(candFavorites), ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (v *VacancyHandler) GetFavorite(ctx *gin.Context) {
+	var request struct {
+		VacancyID string `uri:"vacancy_id" binding:"required,uuid"`
+	}
+	if err := ctx.ShouldBindUri(&request); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	vacId, _ := uuid.Parse(request.VacancyID)
+	fId := new(models.FavoriteID)
+	var err error
+	session := v.SessionBuilder.Build(ctx)
+	candID := session.GetCandID()
+	if candID != uuid.Nil {
+		fId, err = v.favoriteCase.GetFavoriteByVacancy(candID, vacId)
+		if err != nil {
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+			return
+		}
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(fId, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+
+}
+
+func topSphereHandlerCommon(v *VacancyHandler, ctx *gin.Context, topCnt int32) {
+	spheresInfo, vacInfo, err := v.vacancyClient.GetVacancyTopSpheres(topCnt)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespTop{TopSpheres: spheresInfo, NewVacCnt: vacInfo.NewVacCnt, AllVacCnt: vacInfo.AllVacCnt}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func vacHandlerCommon(v *VacancyHandler, ctx *gin.Context, treatmentType int) {
+	var (
+		req vacancy2.VacRequest
+		err error
+	)
+
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body, &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if err := common.ReqValidation(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	file, errImg := common.GetImageFromBase64(req.Avatar)
+	if errImg != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
+		return
+	}
+	if req.Sphere == nil {
+		noSphere := -1
+		req.Sphere = &noSphere
+	}
+	vacNew := &models.Vacancy{Title: req.Title, SalaryMin: req.SalaryMin, SalaryMax: req.SalaryMax, AreaSearch: req.AreaSearch,
+		Description: req.Description, Requirements: req.Requirements, Duties: req.Duties, Skills: req.Skills, Sphere: *req.Sphere,
+		Employment: req.Employment, ExperienceMonth: req.ExperienceMonth, Location: req.Location, CareerLevel: req.CareerLevel,
+		EducationLevel: req.EducationLevel, EmpPhone: req.EmpPhone, EmpEmail: req.EmpEmail, Gender: req.Gender}
+	session := v.SessionBuilder.Build(ctx)
+	vacNew.EmpID = session.GetEmplID()
+	if treatmentType == vacCreate {
+		if session == nil {
+			common.WriteErrResponse(ctx, http.StatusForbidden, common.SessionErr)
+			return
+		}
+		vacNew, err = v.vacancyClient.CreateVacancy(*vacNew)
+	} else if vacNew.ID, _ = uuid.Parse(req.Id); vacNew.ID != uuid.Nil {
+		vacNew, err = v.vacancyClient.UpdateVacancy(*vacNew)
+	} else {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, vacPath+vacNew.ID.String()); err != nil {
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, err.Error())
+		}
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.Resp{Vacancy: vacNew}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func vacListHandlerCommon(v *VacancyHandler, ctx *gin.Context, entityType int) {
+	var (
+		req     vacancy2.VacListRequest
+		err     error
+		vacList []models.Vacancy
+		id      = uuid.Nil
+	)
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if entityType == vacancy.ByEmpId {
+		session := v.SessionBuilder.Build(ctx)
+		emplID := session.GetEmplID()
+		if id, err = uuid.Parse(emplID.String()); err != nil {
+			common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+			return
+		}
+	} else if entityType == vacancy.ByCompId {
+		id, _ = uuid.Parse(req.CompId)
+	}
+	vacList, err = v.vacancyClient.GetVacancyList(req.Start, req.Limit, id, entityType)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(vacancy2.RespList{Vacancies: vacList}, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }

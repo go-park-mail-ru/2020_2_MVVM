@@ -1,171 +1,325 @@
 package http
 
 import (
-	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/common"
-	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/models"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/microservices/auth/authmicro"
 	"github.com/go-park-mail-ru/2020_2_MVVM.git/application/user"
+	"github.com/go-park-mail-ru/2020_2_MVVM.git/models/models"
+	user2 "github.com/go-park-mail-ru/2020_2_MVVM.git/models/user"
+	"github.com/google/uuid"
+	"github.com/mailru/easyjson"
 	"golang.org/x/crypto/bcrypt"
-	"io"
 	"net/http"
-	"os"
-	"path/filepath"
+	"net/url"
+	"path"
 )
 
-const IMAGE_DIR = "static"
-
 type UserHandler struct {
-	UserUseCase user.IUseCaseUser
+	UserUseCase    user.UseCase
+	authClient     authmicro.AuthClient
+	cookieConfig   common.AuthCookieConfig
+	SessionBuilder common.SessionBuilder
 }
 
-type Resp struct {
-	User models.User `json:"user"`
-}
+const userPath = "user/"
 
-type RespError struct {
-	Err string `json:"error"`
-}
-
-func NewRest(router *gin.RouterGroup, useCase user.IUseCaseUser, authMiddleware *jwt.GinJWTMiddleware) *UserHandler {
-	rest := &UserHandler{UserUseCase: useCase}
-	rest.routes(router, authMiddleware)
+func NewRest(router *gin.RouterGroup,
+	useCase user.UseCase,
+	authClient authmicro.AuthClient,
+	authCookieConfig common.AuthCookieConfig,
+	sessionBuilder common.SessionBuilder,
+	AuthRequired gin.HandlerFunc) *UserHandler {
+	rest := &UserHandler{UserUseCase: useCase, cookieConfig: authCookieConfig,
+		SessionBuilder: sessionBuilder, authClient: authClient}
+	rest.routes(router, AuthRequired)
 	return rest
 }
 
-func (U *UserHandler) routes(router *gin.RouterGroup, authMiddleware *jwt.GinJWTMiddleware) {
-	router.GET("/by/id/:user_id", U.handlerGetUserByID)
-	router.POST("/add", U.handlerCreateUser)
-	router.PUT("/update/:user_id", U.handlerUpdateUser)
-	router.Use(authMiddleware.MiddlewareFunc())
+func (u *UserHandler) routes(router *gin.RouterGroup, AuthRequired gin.HandlerFunc) {
+	router.GET("/by/id/:user_id", u.GetUserByIdHandler)
+	router.GET("cand/by/id/:cand_id", u.GetCandByIdHandler)
+	router.GET("empl/by/id/:empl_id", u.GetEmplByIdHandler)
+	router.POST("/", u.CreateUserHandler)
+	router.POST("/login", u.LoginHandler)
+	router.Use(AuthRequired)
 	{
-		router.GET("/me", U.handlerGetCurrentUser)
-		router.PUT("/update", U.handlerUpdateUser)
+		router.POST("/logout", u.LogoutHandler)
+		router.GET("/me", u.GetCurrentUserHandler)
+		router.PUT("/", u.UpdateUserHandler)
+		router.DELETE("/", u.DeleteUserHandler)
 	}
 }
 
-func (U *UserHandler) handlerGetCurrentUser(ctx *gin.Context) {
-	// move to constants
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
+func (u *UserHandler) GetCurrentUserHandler(ctx *gin.Context) {
+	session := u.SessionBuilder.Build(ctx)
+	userID := session.GetUserID()
 
-	userById, err := U.UserUseCase.GetUserByID(userID.String())
+	userById, err := u.UserUseCase.GetUserByID(userID.String())
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userById})
+	resp := models.RespUser{User: userById}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
-func (U *UserHandler) handlerGetUserByID(ctx *gin.Context) {
+func (u *UserHandler) GetUserByIdHandler(ctx *gin.Context) {
 	var req struct {
 		UserID string `uri:"user_id" binding:"required,uuid"`
 	}
 
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
+	user, err := u.UserUseCase.GetUserByID(req.UserID)
 
-	user, err := U.UserUseCase.GetUserByID(req.UserID)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: user})
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
-func (U *UserHandler) handlerCreateUser(ctx *gin.Context) {
+func (u *UserHandler) GetCandByIdHandler(ctx *gin.Context) {
 	var req struct {
-		NickName string `form:"nickname" json:"nickname" binding:"required"`
-		Name     string `form:"name" json:"name" binding:"required"`
-		Surname  string `form:"surname" json:"surname" binding:"required"`
-		Email    string `form:"email" json:"email" binding:"required"`
-		Password string `form:"password" json:"password" binding:"required"`
+		UserID string `uri:"cand_id" binding:"required,uuid"`
 	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	user, err := u.UserUseCase.GetCandByID(req.UserID)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (u *UserHandler) GetEmplByIdHandler(ctx *gin.Context) {
+	var req struct {
+		UserID string `uri:"empl_id" binding:"required,uuid"`
+	}
+
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		//_ = ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	user, err := u.UserUseCase.GetEmplByID(req.UserID)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		//_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+		return
+	}
+	resp := models.RespUser{User: user}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (u *UserHandler) login(ctx *gin.Context, reqUser models.UserLogin) error {
+	session, err := u.authClient.Login(reqUser.Email, reqUser.Password)
+	if err != nil {
+		return err
+	}
+
+	// Save session id to the cookie
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     u.cookieConfig.Key,
+		Value:    url.QueryEscape(session.GetSessionID()),
+		MaxAge:   u.cookieConfig.MaxAge,
+		Path:     u.cookieConfig.Path,
+		Domain:   u.cookieConfig.Domain,
+		SameSite: u.cookieConfig.SameSite,
+		Secure:   u.cookieConfig.Secure,
+		HttpOnly: u.cookieConfig.HttpOnly,
+	})
+	return nil
+}
+
+func (u *UserHandler) LoginHandler(ctx *gin.Context) {
+	var reqUser models.UserLogin
+
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &reqUser); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if err := common.ReqValidation(&reqUser); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	err := u.login(ctx, reqUser)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (u *UserHandler) LogoutHandler(ctx *gin.Context) {
+	session := u.SessionBuilder.Build(ctx)
+	// clear cookie
+	http.SetCookie(ctx.Writer, &http.Cookie{
+		Name:     u.cookieConfig.Key,
+		Value:    "",
+		MaxAge:   -1,
+		Path:     u.cookieConfig.Path,
+		Domain:   u.cookieConfig.Domain,
+		SameSite: u.cookieConfig.SameSite,
+		Secure:   u.cookieConfig.Secure,
+		HttpOnly: u.cookieConfig.HttpOnly,
+	})
+	err := u.authClient.Logout(session.GetSessionID())
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.SessionErr)
+		return
+	}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(nil, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
+
+func (u *UserHandler) CreateUserHandler(ctx *gin.Context) {
+	var req user2.Register
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if err := common.ReqValidation(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
-	userNew, err := U.UserUseCase.CreateUser(models.User{
-		Nickname:     req.NickName,
-		Name:         req.Name,
-		Surname:      req.Surname,
-		Email:        req.Email,
-		PasswordHash: passwordHash,
-	})
-	if err != nil {
-		if errMsg := err.Error(); errMsg == "user already exists" {
-			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
-		} else {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
-		}
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, Resp{User: userNew})
-}
-
-func (U *UserHandler) handlerUpdateUser(ctx *gin.Context) {
-	var req struct {
-		NickName    string `form:"nickname" json:"nickname"`
-		Name        string `form:"name" json:"name"`
-		Surname     string `form:"surname" json:"surname"`
-		Email       string `form:"email" json:"email"`
-		NewPassword string `form:"new_password" json:"new_password"`
-		OldPassword string `form:"old_password" json:"old_password"`
-		//Avatar   multipart.FileHeader `form:"img" json:"img"`
-	}
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	identityKey := "myid"
-	jwtuser, _ := ctx.Get(identityKey)
-	userID := jwtuser.(*models.JWTUserData).ID
-	userUpdate, err := U.UserUseCase.UpdateUser(userID, req.NewPassword, req.OldPassword, req.NickName, req.Name, req.Surname, req.Email)
-	if err != nil {
-		if err == common.ErrInvalidUpdatePassword {
-			ctx.AbortWithError(http.StatusForbidden, err)
+	var uuidComp *uuid.UUID = nil
+	if req.Company != "" {
+		uuidTmp, err := uuid.Parse(req.Company)
+		uuidComp = &uuidTmp
+		if err != nil {
+			common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
 			return
 		}
 	}
+
+	userNew, err := u.UserUseCase.CreateUser(models.User{
+		UserType:      req.UserType,
+		Name:          req.Name,
+		Surname:       req.Surname,
+		Email:         req.Email,
+		PasswordHash:  passwordHash,
+		Phone:         &req.Phone,
+		SocialNetwork: &req.SocialNetwork,
+	}, uuidComp)
 	if err != nil {
-		if errMsg := err.Error(); errMsg == "user already exists" {
-			ctx.JSON(http.StatusOK, RespError{Err: errMsg})
+		if errMsg := err.Error(); errMsg == common.UserExistErr {
+			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
 		} else {
-			ctx.AbortWithError(http.StatusInternalServerError, err)
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
 		}
 		return
 	}
-	/*img, err := req.Avatar.Open()
-	if err := addOrUpdateUserImage(userNew.ID.String(), img); err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+
+	reqUser := models.UserLogin{
+		Email:    userNew.Email,
+		Password: req.Password,
+	}
+
+	err = u.login(ctx, reqUser)
+	if err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-	ctx.JSON(http.StatusOK, Resp{User: userNew})*/
-	ctx.JSON(http.StatusOK, userUpdate)
+	resp := models.RespUser{User: userNew}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
 }
 
-func addOrUpdateUserImage(imgPath string, data io.Reader) error {
-	path := filepath.Join(IMAGE_DIR, imgPath)
-
-	dst, err := os.Create(path)
+func (u *UserHandler) UpdateUserHandler(ctx *gin.Context) {
+	var (
+		req user2.Update
+		avatarPath string
+	)
+	if err := common.UnmarshalFromReaderWithNilCheck(ctx.Request.Body,  &req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.EmptyFieldErr)
+		return
+	}
+	if err := common.ReqValidation(&req); err != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	file, errImg := common.GetImageFromBase64(req.Avatar)
+	if errImg != nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, errImg.Error())
+		return
+	}
+	session := u.SessionBuilder.Build(ctx)
+	userIDFromSession := session.GetUserID()
+	userID, errSession := uuid.Parse(userIDFromSession.String())
+	if errSession != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	avatarName := userPath + userID.String()
+	if file != nil {
+		avatarPath = common.DOMAIN + path.Join(common.ImgDir, avatarName)
+	}
+	userUpdate, err := u.UserUseCase.UpdateUser(models.User{ID: userID, Name: req.Name, Surname: req.Surname,
+		Phone: &req.Phone, Email: req.Email, SocialNetwork: &req.SocialNetwork, AvatarPath: avatarPath})
 	if err != nil {
-		return err
+		if errMsg := err.Error(); errMsg == common.WrongPasswd {
+			common.WriteErrResponse(ctx, http.StatusConflict, errMsg)
+		} else {
+			common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		}
+		return
 	}
-	defer dst.Close()
+	if file != nil {
+		if err := common.AddOrUpdateUserFile(file, avatarName); err != nil {
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+	resp := models.RespUser{User: userUpdate}
+	if _, _, err := easyjson.MarshalToHTTPResponseWriter(resp, ctx.Writer); err != nil {
+		_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+	}
+}
 
-	if _, err := io.Copy(dst, data); err != nil {
-		return err
+func (u *UserHandler) DeleteUserHandler(ctx *gin.Context) {
+	session := u.SessionBuilder.Build(ctx)
+	userId := session.GetUserID()
+	if userId == uuid.Nil {
+		common.WriteErrResponse(ctx, http.StatusBadRequest, common.SessionErr)
+		return
 	}
-	return nil
+	if err := u.UserUseCase.DeleteUser(userId); err != nil {
+		common.WriteErrResponse(ctx, http.StatusInternalServerError, common.DataBaseErr)
+		return
+	}
+	u.LogoutHandler(ctx)
 }
